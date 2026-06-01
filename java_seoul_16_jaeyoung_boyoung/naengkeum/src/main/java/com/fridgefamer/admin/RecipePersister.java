@@ -60,14 +60,29 @@ public class RecipePersister {
         String summary = buildSummary(category, way);
         String imageUrl = blankToNull(row.path("ATT_FILE_NO_MAIN").asText(""));
 
+        // 영양정보 (식약처 COOKRCP01 제공, 완성 요리 1인분 기준)
+        Integer calories = parseIntOrNull(row.path("INFO_ENG").asText(""));   // 열량(kcal)
+        Double carbs = parseDoubleOrNull(row.path("INFO_CAR").asText(""));    // 탄수화물(g)
+        Double protein = parseDoubleOrNull(row.path("INFO_PRO").asText(""));  // 단백질(g)
+        Double fat = parseDoubleOrNull(row.path("INFO_FAT").asText(""));      // 지방(g)
+        Double sodium = parseDoubleOrNull(row.path("INFO_NA").asText(""));    // 나트륨(mg)
+
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(conn -> {
             PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO recipe (title, summary, image_url, source) VALUES (?, ?, ?, 'PUBLIC')",
+                    "INSERT INTO recipe (title, summary, image_url, source, " +
+                    "calories, carbs, protein, fat, sodium) " +
+                    "VALUES (?, ?, ?, 'PUBLIC', ?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, truncate(title, 100));
             ps.setString(2, summary);
             ps.setString(3, truncate(imageUrl, 500));
+            // setObject: null이면 NULL로, 값 있으면 숫자로 (식약처 결측치 안전 처리)
+            ps.setObject(4, calories);
+            ps.setObject(5, carbs);
+            ps.setObject(6, protein);
+            ps.setObject(7, fat);
+            ps.setObject(8, sodium);
             return ps;
         }, keyHolder);
         long recipeId = keyHolder.getKey().longValue();
@@ -147,6 +162,30 @@ public class RecipePersister {
 
     private String blankToNull(String s) {
         return (s == null || s.isBlank()) ? null : s;
+    }
+
+    /**
+     * 영양정보 정수 파싱. 식약처 데이터는 빈 값, "0", 비정상 문자가 섞여있어
+     * 파싱 실패 시 null 반환 (적재 자체는 계속 진행).
+     */
+    private Integer parseIntOrNull(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            // "120.5" 같은 소수 표기도 정수로 (열량은 정수 컬럼)
+            return (int) Math.round(Double.parseDouble(s.trim().replaceAll(",", "")));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** 영양정보 실수 파싱 (탄단지나트륨, g/mg 단위). 실패 시 null. */
+    private Double parseDoubleOrNull(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return Double.parseDouble(s.trim().replaceAll(",", ""));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private String truncate(String s, int max) {
