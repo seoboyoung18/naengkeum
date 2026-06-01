@@ -91,6 +91,12 @@ CREATE TABLE recipe (
     cook_time       INT           DEFAULT NULL                     COMMENT '조리 시간 (분)',
     image_url       VARCHAR(500)  DEFAULT NULL,
     source          VARCHAR(50)   DEFAULT 'PUBLIC'                 COMMENT '출처 (PUBLIC/USER/AI_SAVED)',
+    -- 영양정보 (식약처 COOKRCP01 제공, 완성 요리 1인분 기준)
+    calories        INT           DEFAULT NULL                     COMMENT '열량(kcal)',
+    carbs           DECIMAL(6,1)  DEFAULT NULL                     COMMENT '탄수화물(g)',
+    protein         DECIMAL(6,1)  DEFAULT NULL                     COMMENT '단백질(g)',
+    fat             DECIMAL(6,1)  DEFAULT NULL                     COMMENT '지방(g)',
+    sodium          DECIMAL(7,1)  DEFAULT NULL                     COMMENT '나트륨(mg)',
     view_count      INT           NOT NULL DEFAULT 0,
     created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP
