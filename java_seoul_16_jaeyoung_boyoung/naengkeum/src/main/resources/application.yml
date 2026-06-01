@@ -10,7 +10,12 @@
 spring:
   application:
     name: naengkeum
-
+  # ⭐ 추가: 매핑 안 된 URL을 NoResourceFoundException으로 전환
+  web:
+    resources:
+      add-mappings: false   # 정적 리소스 자동 매핑 비활성화
+  mvc:
+    throw-exception-if-no-handler-found: true   # 핸들러 없으면 즉시 예외
   # ⚠️ 임시: ②-3에서 SecurityConfig 만들면 이 블록 통째로 삭제
   # autoconfigure:
   #   exclude:
