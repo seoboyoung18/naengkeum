@@ -71,7 +71,9 @@ public class SecurityConfig {
                         // 공개 경로
                         .requestMatchers(
                                 "/health", // 헬스체크
-                                "/api/test/token", // 임시 JWT 발급 (②-3 테스트용)
+                                "/error",    
+                                "/api/test/token", // 임시 JWT 발급
+                                "/api/test/error/**", // (②-3 테스트용)
                                 "/api/auth/login", // 로그인
                                 "/api/auth/register", // 회원가입
                                 "/api/auth/check-email", // 이메일 중복 확인

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  HealthMapper XML (WBS-②-5)
+
+  - namespace: 매핑되는 Java 인터페이스 풀패키지 경로 (반드시 정확히 일치)
+  - statement id: Java 인터페이스의 메서드명과 1:1 매칭
+  - resultType: 반환 타입 (단순 타입은 풀패키지 또는 별칭)
+  - parameterType: 파라미터 타입 (선택, MyBatis가 추론 가능)
+
+  snake_case ↔ camelCase 자동 매핑이 application.yml에 활성화되어 있으므로,
+  resultMap 없이 resultType="map"으로 받으면 자동으로 카멜케이스 키가 됨.
+-->
+<mapper namespace="com.fridgefamer.mapper.system.HealthMapper">
+
+    <!-- 회원 수 -->
+    <select id="countMembers" resultType="int">
+        SELECT COUNT(*) FROM member WHERE is_active = 1
+    </select>
+
+    <!-- 냉장고 재료 수 -->
+    <select id="countFridgeItems" resultType="int">
+        SELECT COUNT(*) FROM fridge_item
+    </select>
+
+    <!--
+      첫 회원 정보 (id 오름차순 첫 번째).
+      Map으로 받으면 컬럼명이 키가 됨. snake_case → camelCase 자동 변환 확인.
+      예: member_id → memberId
+    -->
+    <select id="findFirstMember" resultType="map">
+        SELECT
+            member_id AS memberId,
+            email,
+            nickname,
+            created_at
+          FROM member
+         WHERE is_active = 1
+         ORDER BY member_id ASC
+         LIMIT 1
+    </select>
+
+    <!--
+      임박 재료 수 (오늘부터 D-3 이내).
+      2주차 GET /api/fridge/dashboard의 핵심 쿼리 미리보기.
+      idx_fridge_expiry 인덱스가 작동해야 함 (V2에서 생성).
+    -->
+    <select id="countExpiringSoon" resultType="int">
+        SELECT COUNT(*)
+          FROM fridge_item
+         WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+    </select>
+
+</mapper>
