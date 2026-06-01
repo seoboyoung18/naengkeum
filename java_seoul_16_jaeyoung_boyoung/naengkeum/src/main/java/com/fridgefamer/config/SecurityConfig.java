@@ -1,0 +1,175 @@
+package com.fridgefamer.config;
+
+import com.fridgefamer.exception.ErrorCode;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * Spring Security 설정 — WBS-②-3 본격 버전.
+ *
+ * <p>
+ * 핵심 정책:
+ * <ul>
+ * <li>Stateless (세션 미사용, JWT 기반)</li>
+ * <li>CSRF 비활성화 (JWT라 불필요)</li>
+ * <li>CORS 허용 (Vue dev 서버 localhost:5173)</li>
+ * <li>공개/보호 경로 분리 (API 명세서 기준)</li>
+ * <li>인증 실패 시 9종 에러 코드 JSON 응답</li>
+ * <li>BCryptPasswordEncoder 빈 등록 (회원가입/로그인용)</li>
+ * </ul>
+ * </p>
+ *
+ * <p>
+ * 응답 JSON은 단순한 2-필드 구조라 ObjectMapper 의존성 없이 수동 작성.
+ * Jackson 자동 빈 등록이 환경에 따라 달라지는 문제를 회피한다.
+ * </p>
+ */
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                // ----- CSRF: JWT stateless API는 불필요 -----
+                .csrf(csrf -> csrf.disable())
+
+                // ----- CORS: Vue dev 서버 호출 허용 -----
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // ----- Session: 사용하지 않음 (모든 요청은 JWT로 인증) -----
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // ----- Basic/Form Login 비활성화 -----
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(form -> form.disable())
+
+                // ----- 경로별 접근 권한 -----
+                .authorizeHttpRequests(auth -> auth
+                        // 공개 경로
+                        .requestMatchers(
+                                "/health", // 헬스체크
+                                "/api/test/token", // 임시 JWT 발급 (②-3 테스트용)
+                                "/api/auth/login", // 로그인
+                                "/api/auth/register", // 회원가입
+                                "/api/auth/check-email", // 이메일 중복 확인
+                                "/api/recipe/**", // 레시피 검색/상세 (조회만)
+                                "/api/review", // 리뷰 목록 조회 (GET만 공개)
+                                "/api/challenge", // 챌린지 목록 (조회)
+                                "/api/challenge/stats", // 챌린지 통계
+                                "/api/member/*/profile" // 타 유저 프로필
+                        ).permitAll()
+
+                        // OPTIONS preflight 허용 (CORS)
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 나머지는 모두 인증 필요
+                        .anyRequest().authenticated())
+
+                // ----- 인증 실패/권한 부족 시 통일된 JSON 응답 -----
+                .exceptionHandling(eh -> eh
+                        .authenticationEntryPoint(this::onAuthenticationFailure) // 401
+                        .accessDeniedHandler((req, res, ex) -> writeError(res, ErrorCode.FORBIDDEN)))
+
+                // ----- JWT 필터를 표준 인증 필터 앞에 등록 -----
+                .addFilterBefore(jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    /**
+     * 인증 실패 시 (401).
+     * JwtAuthenticationFilter가 request.setAttribute로 남긴 jwtErrorCode를 확인하여
+     * 만료(TOKEN_EXPIRED) / 위조(INVALID_TOKEN) / 부재(UNAUTHORIZED) 구분.
+     */
+    private void onAuthenticationFailure(HttpServletRequest request,
+            HttpServletResponse response,
+            org.springframework.security.core.AuthenticationException ex)
+            throws IOException {
+        Object marker = request.getAttribute("jwtErrorCode");
+        ErrorCode code;
+        if ("TOKEN_EXPIRED".equals(marker)) {
+            code = ErrorCode.TOKEN_EXPIRED;
+        } else if ("INVALID_TOKEN".equals(marker)) {
+            code = ErrorCode.INVALID_TOKEN;
+        } else {
+            code = ErrorCode.UNAUTHORIZED;
+        }
+        writeError(response, code);
+    }
+
+    /**
+     * 9종 에러 코드 응답 헬퍼.
+     *
+     * <p>
+     * 단순한 2-필드 JSON 응답이라 ObjectMapper 없이 수동 작성.
+     * 향후 GlobalExceptionHandler(②-4)에서는 정식 ObjectMapper 사용.
+     * </p>
+     */
+    private void writeError(HttpServletResponse response, ErrorCode code) throws IOException {
+        response.setStatus(code.getStatus().value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+
+        // 안전한 JSON 수동 작성. message는 따옴표 이스케이프 처리.
+        String json = String.format(
+                "{\"code\":\"%s\",\"message\":\"%s\"}",
+                code.getCode(),
+                code.getDefaultMessage().replace("\"", "\\\""));
+        response.getWriter().write(json);
+    }
+
+    /** CORS — Vue dev 서버(5173) 및 운영 도메인 허용 */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration cfg = new CorsConfiguration();
+        cfg.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173", // Vue dev (Vite 기본)
+                "http://localhost:3000", // 혹시 React/다른 dev 서버
+                "https://*.fridgefamer.com"));
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        cfg.setAllowedHeaders(List.of("*"));
+        cfg.setExposedHeaders(List.of("Authorization"));
+        cfg.setAllowCredentials(true);
+        cfg.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", cfg);
+        return source;
+    }
+
+    /**
+     * 비밀번호 인코더 — BCrypt 사용.
+     * <p>
+     * SSAFY 시드 데이터의 'Test1234!' 비밀번호도 strength=10 BCrypt 해시로 생성되어 있음.
+     * AuthService에서 회원가입/로그인 시 이 빈을 주입받아 사용.
+     * </p>
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(); // 기본 strength=10
+    }
+}

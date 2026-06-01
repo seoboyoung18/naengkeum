@@ -1,0 +1,64 @@
+# ============================================================================
+#  냉큼(Naeng-Keum) — application.yml (공통 설정)
+#
+#  실행 프로파일 선택 우선순위:
+#   1. JVM 인자:           -Dspring.profiles.active=prod
+#   2. 환경변수:           SPRING_PROFILES_ACTIVE=prod
+#   3. 본 파일의 active:    dev (아래 기본값)
+# ============================================================================
+
+spring:
+  application:
+    name: naengkeum
+
+  # ⚠️ 임시: ②-3에서 SecurityConfig 만들면 이 블록 통째로 삭제
+  # autoconfigure:
+  #   exclude:
+  #     - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+  profiles:
+    # 기본 dev. 운영 배포 시 환경변수로 prod 지정
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # ----- Flyway 공통 설정 -----
+  # 환경별 locations는 application-dev.yml / application-prod.yml에서 override
+  flyway:
+    enabled: true
+    baseline-on-migrate: true       # 기존 DB에 처음 적용할 때 baseline 생성
+    validate-on-migrate: true       # 마이그레이션 파일 변경 감지
+    out-of-order: false             # 버전 순서 엄격 준수 (V1→V2→V3)
+    table: flyway_schema_history    # 마이그레이션 이력 테이블명
+
+# ----- MyBatis 공통 설정 -----
+mybatis:
+  # XML Mapper 위치 (Java 인터페이스의 메서드와 1:1 매칭)
+  mapper-locations: classpath:mapper/**/*.xml
+
+  # 타입 별칭 자동 등록 (DTO를 패키지로 일괄 등록 시 사용 — 추후 활용)
+  type-aliases-package: com.fridgefamer.dto
+
+  configuration:
+    # DB의 snake_case ↔ Java의 camelCase 자동 매핑
+    # 예: member_id → memberId 자동 매핑 (수동 @Result 불필요)
+    map-underscore-to-camel-case: true
+
+    # SELECT 결과의 NULL 컬럼도 매핑 (기본은 무시)
+    call-setters-on-nulls: true
+
+    # SQL 로그 출력 형식 (개발 시 디버깅용)
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# ----- 서버 설정 -----
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+# ----- 로깅 -----
+logging:
+  level:
+    root: INFO
+    com.fridgefamer: DEBUG
+    # MyBatis 실행 SQL 모두 출력 (개발용. prod에서는 INFO로)
+    com.fridgefamer.mapper: DEBUG
