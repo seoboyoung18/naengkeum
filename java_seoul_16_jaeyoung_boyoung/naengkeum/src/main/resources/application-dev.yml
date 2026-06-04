@@ -64,3 +64,19 @@ jwt:
 foodsafety:
   api-key: ${FOODSAFETY_API_KEY:sample}
   base-url: https://openapi.foodsafetykorea.go.kr/api
+
+  # ============================================================================
+#  GMS (SSAFY Gen AI Management System) — AI 추천/코칭용 LLM
+#
+#  🚨 api-key 보안:
+#   - GMS 키는 절대 Git에 커밋 금지 (탈취 시 크레딧 소진)
+#   - 환경변수 GMS_KEY로 주입 권장. 아래 기본값은 비워둠.
+#   - 키가 없으면(GMS_KEY 미설정) MockLlmClient가 자동 폴백 → Mock 응답
+# ============================================================================
+gms:
+  # GMS 경유 OpenAI 호환 엔드포인트 (가이드 기준)
+  base-url: https://gms.ssafy.io/gmsapi/api.openai.com/v1
+  # 환경변수 GMS_KEY 우선. 없으면 빈 값 → Mock 폴백.
+  api-key: ${GMS_KEY:}
+  # 모델 (크레딧 절약: mini 계열 권장)
+  model: gpt-4.1-mini

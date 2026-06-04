@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  RecipeMapper XML — Recipe 그룹 (recipe 테이블, API 명세 §4).
+
+  - map-underscore-to-camel-case 활성. 계산/별칭 컬럼은 명시적 AS.
+  - 검색 필터(keyword/ingredients/maxCookTime)와 정렬(sort)은
+    문자열 연결 없이 <if>/<choose>로 분기 (SQL injection 방어, Fridge 컨벤션 동일).
+  - avgRating/reviewCount는 review LEFT JOIN 집계.
+-->
+<mapper namespace="com.fridgefamer.mapper.recipe.RecipeMapper">
+
+    <!-- 카드 공통 집계 SELECT (검색/인기 공용) -->
+    <sql id="cardColumns">
+        r.recipe_id                         AS recipeId,
+        r.title                             AS title,
+        r.image_url                         AS thumbnailUrl,
+        r.cook_time                         AS cookTime,
+        ROUND(AVG(rv.rating), 1)            AS avgRating,
+        COUNT(DISTINCT rv.review_id)        AS reviewCount
+    </sql>
+
+    <!-- 검색 WHERE 절(검색/카운트 공용). keyword는 제목 또는 재료명 매칭. -->
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    r.title LIKE CONCAT('%', #{keyword}, '%')
+                    OR EXISTS (
+                        SELECT 1 FROM recipe_ingredient ri2
+                         WHERE ri2.recipe_id = r.recipe_id
+                           AND ri2.name LIKE CONCAT('%', #{keyword}, '%')
+                    )
+                )
+            </if>
+            <if test="maxCookTime != null">
+                AND r.cook_time IS NOT NULL
+                AND r.cook_time &lt;= #{maxCookTime}
+            </if>
+            <if test="ingredients != null and ingredients.size() > 0">
+                AND EXISTS (
+                    SELECT 1 FROM recipe_ingredient ri3
+                     WHERE ri3.recipe_id = r.recipe_id
+                       AND ri3.name IN
+                        <foreach collection="ingredients" item="ing" open="(" separator="," close=")">
+                            #{ing}
+                        </foreach>
+                )
+            </if>
+        </where>
+    </sql>
+
+    <!-- =========================================================== -->
+    <!--  검색                                                       -->
+    <!-- =========================================================== -->
+
+    <select id="search"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeCardRow">
+        SELECT <include refid="cardColumns"/>
+          FROM recipe r
+          LEFT JOIN review rv ON rv.recipe_id = r.recipe_id
+        <include refid="searchWhere"/>
+        GROUP BY r.recipe_id, r.title, r.image_url, r.cook_time, r.view_count, r.created_at
+        <choose>
+            <when test="sort == 'POPULAR'">ORDER BY reviewCount DESC, r.view_count DESC</when>
+            <when test="sort == 'RATING'">ORDER BY avgRating DESC, reviewCount DESC</when>
+            <when test="sort == 'COOK_TIME'">ORDER BY (r.cook_time IS NULL), r.cook_time ASC</when>
+            <otherwise>ORDER BY r.created_at DESC, r.recipe_id DESC</otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!--
+      검색 총 개수. GROUP BY 집계 전 distinct recipe 수가 필요하므로
+      서브쿼리 없이 recipe 기준으로만 카운트(review JOIN 불필요).
+    -->
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*)
+          FROM recipe r
+        <include refid="searchWhere"/>
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  자동완성                                                   -->
+    <!-- =========================================================== -->
+
+    <select id="autocomplete"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeAutocompleteItem">
+        SELECT recipe_id AS recipeId, title
+          FROM recipe
+         WHERE title LIKE CONCAT('%', #{keyword}, '%')
+         ORDER BY view_count DESC, recipe_id ASC
+         LIMIT #{limit}
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  인기                                                       -->
+    <!-- =========================================================== -->
+
+    <select id="popular"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeCardRow">
+        SELECT <include refid="cardColumns"/>
+          FROM recipe r
+          LEFT JOIN review rv ON rv.recipe_id = r.recipe_id
+         GROUP BY r.recipe_id, r.title, r.image_url, r.cook_time, r.view_count, r.created_at
+         ORDER BY reviewCount DESC, avgRating DESC, r.view_count DESC
+         LIMIT #{limit}
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  상세                                                       -->
+    <!-- =========================================================== -->
+
+    <select id="selectDetail"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeDetailRow">
+        SELECT
+            r.recipe_id                  AS recipeId,
+            r.title                      AS title,
+            r.summary                    AS description,
+            r.cook_time                  AS cookTime,
+            r.image_url                  AS thumbnailUrl,
+            ROUND(AVG(rv.rating), 1)     AS avgRating,
+            COUNT(DISTINCT rv.review_id) AS reviewCount,
+            r.calories                   AS calories,
+            r.carbs                      AS carbs,
+            r.protein                    AS protein,
+            r.fat                        AS fat,
+            r.sodium                     AS sodium
+          FROM recipe r
+          LEFT JOIN review rv ON rv.recipe_id = r.recipe_id
+         WHERE r.recipe_id = #{recipeId}
+         GROUP BY r.recipe_id, r.title, r.summary, r.cook_time, r.image_url,
+                  r.calories, r.carbs, r.protein, r.fat, r.sodium
+    </select>
+
+    <select id="selectIngredients"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeIngredientItem">
+        SELECT
+            name,
+            qty,
+            ROW_NUMBER() OVER (ORDER BY ingredient_id) AS sortOrder
+          FROM recipe_ingredient
+         WHERE recipe_id = #{recipeId}
+         ORDER BY ingredient_id
+    </select>
+
+    <select id="selectSteps"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeStepItem">
+        SELECT
+            step_number  AS stepNumber,
+            description,
+            image_url    AS imageUrl
+          FROM recipe_step
+         WHERE recipe_id = #{recipeId}
+         ORDER BY step_number
+    </select>
+
+    <select id="existsById" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM recipe WHERE recipe_id = #{recipeId})
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  보조: 카드 대표재료 / 찜 여부                               -->
+    <!-- =========================================================== -->
+
+    <!--
+      여러 레시피의 대표 재료(레시피당 최대 3개)를 한 번에.
+      윈도우 함수로 레시피별 순번을 매겨 3개까지만.
+    -->
+    <select id="selectMainIngredients"
+            resultType="com.fridgefamer.mapper.recipe.RecipeMapper$RecipeMainIngredientRow">
+        SELECT recipeId, name FROM (
+            SELECT
+                ri.recipe_id AS recipeId,
+                ri.name      AS name,
+                ROW_NUMBER() OVER (PARTITION BY ri.recipe_id ORDER BY ri.ingredient_id) AS rn
+              FROM recipe_ingredient ri
+             WHERE ri.recipe_id IN
+                <foreach collection="recipeIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+        ) t
+        WHERE t.rn &lt;= 3
+        ORDER BY recipeId, rn
+    </select>
+
+    <select id="selectWishlistedRecipeIds" resultType="long">
+        SELECT recipe_id
+          FROM wishlist
+         WHERE member_id = #{memberId}
+           AND recipe_id IN
+            <foreach collection="recipeIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+    </select>
+
+    <select id="isWishlisted" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM wishlist
+             WHERE member_id = #{memberId} AND recipe_id = #{recipeId}
+        )
+    </select>
+
+</mapper>

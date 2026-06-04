@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  WishlistMapper XML — Wishlist 그룹 (wishlist + ai_recipe, API 명세 §6).
+
+  - wishlist는 chk_wishlist_xor 제약: recipe_id/ai_recipe_id 중 하나만.
+    일반 찜은 recipe_id만, AI 찜은 ai_recipe_id만 INSERT(다른 쪽은 컬럼 생략 → NULL).
+  - ai_recipe의 JSON 컬럼: #{cmd.ingredientsJson}에 유효한 JSON 문자열을 넣으면
+    MySQL이 JSON 타입으로 저장(JSON_TYPE=ARRAY 제약 만족하려면 배열 문자열이어야 함).
+  - map-underscore-to-camel-case 활성. 계산/별칭 컬럼은 명시적 AS.
+-->
+<mapper namespace="com.fridgefamer.mapper.wishlist.WishlistMapper">
+
+    <!-- =========================================================== -->
+    <!--  일반 레시피 찜                                             -->
+    <!-- =========================================================== -->
+
+    <select id="recipeExists" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM recipe WHERE recipe_id = #{recipeId})
+    </select>
+
+    <select id="existsRecipeWish" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM wishlist
+             WHERE member_id = #{memberId} AND recipe_id = #{recipeId}
+        )
+    </select>
+
+    <insert id="insertRecipeWish">
+        INSERT INTO wishlist (member_id, recipe_id)
+        VALUES (#{memberId}, #{recipeId})
+    </insert>
+
+    <delete id="deleteRecipeWish">
+        DELETE FROM wishlist
+         WHERE member_id = #{memberId} AND recipe_id = #{recipeId}
+    </delete>
+
+    <!-- =========================================================== -->
+    <!--  찜 목록 (일반 레시피)                                      -->
+    <!-- =========================================================== -->
+
+    <select id="selectRecipeWishes"
+            resultType="com.fridgefamer.dto.response.wishlist.WishlistRecipeRow">
+        SELECT
+            w.wishlist_id                AS wishlistId,
+            r.recipe_id                  AS recipeId,
+            r.title                      AS title,
+            r.image_url                  AS thumbnailUrl,
+            r.cook_time                  AS cookTime,
+            ROUND(AVG(rv.rating), 1)     AS avgRating,
+            COUNT(DISTINCT rv.review_id) AS reviewCount,
+            w.created_at                 AS wishlistedAt
+          FROM wishlist w
+          JOIN recipe r ON r.recipe_id = w.recipe_id
+          LEFT JOIN review rv ON rv.recipe_id = r.recipe_id
+         WHERE w.member_id = #{memberId}
+           AND w.recipe_id IS NOT NULL
+         GROUP BY w.wishlist_id, r.recipe_id, r.title, r.image_url, r.cook_time, w.created_at
+         ORDER BY w.created_at DESC, w.wishlist_id DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countRecipeWishes" resultType="long">
+        SELECT COUNT(*)
+          FROM wishlist
+         WHERE member_id = #{memberId} AND recipe_id IS NOT NULL
+    </select>
+
+    <select id="selectMainIngredients"
+            resultType="com.fridgefamer.mapper.recipe.RecipeMapper$RecipeMainIngredientRow">
+        SELECT recipeId, name FROM (
+            SELECT
+                ri.recipe_id AS recipeId,
+                ri.name      AS name,
+                ROW_NUMBER() OVER (PARTITION BY ri.recipe_id ORDER BY ri.ingredient_id) AS rn
+              FROM recipe_ingredient ri
+             WHERE ri.recipe_id IN
+                <foreach collection="recipeIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+        ) t
+        WHERE t.rn &lt;= 3
+        ORDER BY recipeId, rn
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  AI 레시피 저장/삭제                                        -->
+    <!-- =========================================================== -->
+
+    <!--
+      AI 레시피 INSERT. JSON 컬럼에는 유효한 JSON 문자열을 그대로 바인딩.
+      #{cmd.ingredientsJson}이 '["두부 1모","계란 2개"]' 형태면 MySQL이 JSON으로 저장.
+    -->
+    <insert id="insertAiRecipe"
+            useGeneratedKeys="true"
+            keyProperty="cmd.aiRecipeId"
+            keyColumn="ai_recipe_id">
+        INSERT INTO ai_recipe (member_id, title, summary, ingredients_json, steps_json, cook_time)
+        VALUES (
+            #{cmd.memberId},
+            #{cmd.title},
+            #{cmd.summary},
+            #{cmd.ingredientsJson},
+            #{cmd.stepsJson},
+            #{cmd.cookTime}
+        )
+    </insert>
+
+    <!-- AI 레시피를 찜에 등록 (ai_recipe_id만 — XOR 제약) -->
+    <insert id="insertAiWish">
+        INSERT INTO wishlist (member_id, ai_recipe_id)
+        VALUES (#{memberId}, #{aiRecipeId})
+    </insert>
+
+    <select id="findAiRecipeOwner" resultType="java.lang.Long">
+        SELECT member_id FROM ai_recipe
+         WHERE ai_recipe_id = #{aiRecipeId}
+         LIMIT 1
+    </select>
+
+    <!--
+      AI 레시피 삭제 → wishlist의 해당 ai_recipe_id 행은
+      fk_wishlist_ai_recipe ON DELETE CASCADE로 자동 삭제됨.
+    -->
+    <delete id="deleteAiRecipe">
+        DELETE FROM ai_recipe WHERE ai_recipe_id = #{aiRecipeId}
+    </delete>
+
+</mapper>
