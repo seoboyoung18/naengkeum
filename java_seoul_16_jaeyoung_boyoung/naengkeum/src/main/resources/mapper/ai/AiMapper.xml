@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- AiMapper XML — AI 추천 보조 조회. 알레르기 CSV만. -->
+<mapper namespace="com.fridgefamer.mapper.ai.AiMapper">
+
+    <select id="selectAllergies" resultType="java.lang.String">
+        SELECT allergies FROM member WHERE member_id = #{memberId} LIMIT 1
+    </select>
+
+</mapper>

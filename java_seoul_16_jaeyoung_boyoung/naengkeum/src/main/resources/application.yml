@@ -60,6 +60,18 @@ server:
       charset: UTF-8
       force: true
 
+# ============================================================================
+#  OpenAI (AI 레시피 추천 / 코칭용 — WBS-③·④)
+#
+#  🚨 키 보안: 절대 Git에 커밋 금지. 반드시 OPENAI_API_KEY 환경변수로 주입.
+#     키가 없으면 AI 엔드포인트는 503(AI_SERVICE_ERROR)을 반환한다.
+# ============================================================================
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  # 기본값은 SSAFY GMS GPT 프록시(OpenAI 호환). 순정 OpenAI 사용 시 OPENAI_BASE_URL 오버라이드.
+  base-url: ${OPENAI_BASE_URL:https://gms.ssafy.io/gmsapi/api.openai.com/v1}
+  model: ${OPENAI_MODEL:gpt-4.1-mini}
+
 # ----- 로깅 -----
 logging:
   level:
