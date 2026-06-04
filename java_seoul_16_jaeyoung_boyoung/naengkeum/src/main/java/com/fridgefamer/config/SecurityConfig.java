@@ -79,11 +79,13 @@ public class SecurityConfig {
                                 "/api/auth/check-email", // 이메일 중복 확인
                                 "/api/recipe/**", // 레시피 검색/상세 (조회만)
                                 "/api/ingredients/**", // 식재료 사전 자동완성/제안 (조회만)
-                                "/api/review", // 리뷰 목록 조회 (GET만 공개)
                                 "/api/challenge", // 챌린지 목록 (조회)
                                 "/api/challenge/stats", // 챌린지 통계
                                 "/api/member/*/profile" // 타 유저 프로필
                         ).permitAll()
+
+                        // 리뷰 목록 조회는 GET만 공개 (POST/PUT/DELETE는 인증 필요)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/review").permitAll()
 
                         // OPTIONS preflight 허용 (CORS)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
