@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  ReviewMapper XML — Review 그룹 (review 테이블, API 명세 §5).
+
+  - nickname은 member JOIN.
+  - isOwner는 viewerId(조회자)와 review.member_id 비교로 SQL에서 계산.
+    viewerId가 null(비로그인)이면 항상 0(false).
+  - map-underscore-to-camel-case 활성. 계산/별칭 컬럼은 명시적 AS.
+-->
+<mapper namespace="com.fridgefamer.mapper.review.ReviewMapper">
+
+    <!-- =========================================================== -->
+    <!--  조회                                                       -->
+    <!-- =========================================================== -->
+
+    <select id="selectByRecipe"
+            resultType="com.fridgefamer.dto.response.review.ReviewRow">
+        SELECT
+            rv.review_id  AS reviewId,
+            rv.member_id  AS memberId,
+            m.nickname    AS nickname,
+            rv.rating     AS rating,
+            rv.content    AS content,
+            rv.created_at AS createdAt
+          FROM review rv
+          JOIN member m ON m.member_id = rv.member_id
+         WHERE rv.recipe_id = #{recipeId}
+         ORDER BY rv.created_at DESC, rv.review_id DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByRecipe" resultType="long">
+        SELECT COUNT(*) FROM review WHERE recipe_id = #{recipeId}
+    </select>
+
+    <select id="selectRatingDistribution"
+            resultType="com.fridgefamer.mapper.review.ReviewMapper$RatingCountRow">
+        SELECT rating AS rating, COUNT(*) AS count
+          FROM review
+         WHERE recipe_id = #{recipeId}
+         GROUP BY rating
+    </select>
+
+    <!--
+      단건 조회(작성/수정 응답). isOwner는 viewerId 비교.
+      viewerId가 null이면 비교 결과 NULL → COALESCE로 0(false) 처리.
+    -->
+    <select id="selectItemById"
+            resultType="com.fridgefamer.dto.response.review.ReviewItem">
+        SELECT
+            rv.review_id  AS reviewId,
+            rv.member_id  AS memberId,
+            m.nickname    AS nickname,
+            rv.rating     AS rating,
+            rv.content    AS content,
+            COALESCE(rv.member_id = #{viewerId}, 0) AS isOwner,
+            rv.created_at AS createdAt
+          FROM review rv
+          JOIN member m ON m.member_id = rv.member_id
+         WHERE rv.review_id = #{reviewId}
+         LIMIT 1
+    </select>
+
+    <select id="findAuthorId" resultType="java.lang.Long">
+        SELECT member_id FROM review
+         WHERE review_id = #{reviewId}
+         LIMIT 1
+    </select>
+
+    <select id="existsByMemberAndRecipe" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM review
+             WHERE member_id = #{memberId} AND recipe_id = #{recipeId}
+        )
+    </select>
+
+    <select id="recipeExists" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM recipe WHERE recipe_id = #{recipeId})
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  변경                                                       -->
+    <!-- =========================================================== -->
+
+    <insert id="insertReview"
+            useGeneratedKeys="true"
+            keyProperty="cmd.reviewId"
+            keyColumn="review_id">
+        INSERT INTO review (member_id, recipe_id, rating, content)
+        VALUES (#{cmd.memberId}, #{cmd.recipeId}, #{cmd.rating}, #{cmd.content})
+    </insert>
+
+    <update id="updateReview">
+        UPDATE review
+           SET rating  = #{rating},
+               content = #{content}
+         WHERE review_id = #{reviewId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM review WHERE review_id = #{reviewId}
+    </delete>
+
+</mapper>
