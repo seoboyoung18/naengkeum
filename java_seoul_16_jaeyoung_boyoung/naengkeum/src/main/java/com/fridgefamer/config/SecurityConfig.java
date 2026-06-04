@@ -1,6 +1,7 @@
 package com.fridgefamer.config;
 
 import com.fridgefamer.exception.ErrorCode;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -68,6 +69,11 @@ public class SecurityConfig {
 
                 // ----- 경로별 접근 권한 -----
                 .authorizeHttpRequests(auth -> auth
+                        // SSE(SseEmitter) 등 비동기 응답이 끝나고 ASYNC/ERROR 디스패치로
+                        // 되돌아올 때 SecurityContext가 비어 재인가에 걸리는 문제 방지.
+                        // (없으면 SSE 스트림이 끝에 Access Denied로 비정상 종료 → 브라우저 "network error")
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
+
                         // 공개 경로
                         .requestMatchers(
                                 "/health", // 헬스체크

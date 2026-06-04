@@ -5,6 +5,7 @@ import com.fridgefamer.dto.response.recipe.RecipeDetailRow;
 import com.fridgefamer.dto.response.recipe.RecipeIngredient;
 import com.fridgefamer.dto.response.recipe.RecipeListRow;
 import com.fridgefamer.dto.response.recipe.RecipeMainIngredient;
+import com.fridgefamer.dto.response.recipe.RecipeMatchCandidate;
 import com.fridgefamer.dto.response.recipe.RecipeStep;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -55,6 +56,22 @@ public interface RecipeMapper {
 
     /** 여러 레시피의 상위 3개 대표 재료명 (목록 enrich용). */
     List<RecipeMainIngredient> selectMainIngredients(@Param("recipeIds") List<Long> recipeIds);
+
+    /**
+     * "냉장고로 현실적으로 만들 수 있는" DB 레시피 후보 (AI 추천의 DB 우선 단계).
+     * 보유 재료가 minMatch개 이상 겹치고, 사야 하는 재료(보유분·기본양념 제외)가 maxBuy개 이하인
+     * 레시피만, 사야 할 게 적은 순으로 반환한다. 조리단계가 있는 레시피만 후보.
+     * @param names    냉장고 보유 재료명(비어있지 않음)
+     * @param staples  기본양념 등 "사야 할 것"에서 제외할 재료명(비어있지 않음)
+     * @param minMatch 보유 재료 최소 겹침 수
+     * @param maxBuy   사야 하는 재료 허용 최대 수
+     * @param limit    후보 최대 개수
+     */
+    List<RecipeMatchCandidate> selectFridgeMatches(@Param("names") List<String> names,
+                                                   @Param("staples") List<String> staples,
+                                                   @Param("minMatch") int minMatch,
+                                                   @Param("maxBuy") int maxBuy,
+                                                   @Param("limit") int limit);
 
     /** 단일 레시피 전체 재료(등록 순). */
     List<RecipeIngredient> selectIngredients(@Param("recipeId") Long recipeId);

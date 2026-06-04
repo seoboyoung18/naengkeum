@@ -141,6 +141,37 @@
          ORDER BY t.recipeId, t.rn
     </select>
 
+    <!--
+      냉장고 재료 ↔ DB 레시피 매칭 (AI 추천 DB 우선 단계).
+      matched   = 레시피 재료 중 보유한 개수
+      buyNeeded = 보유하지도, 기본양념(staples)도 아닌 = 실제로 사야 하는 재료 수
+      → 보유 minMatch개 이상 + 사야 할 게 maxBuy개 이하인 "현실적으로 만들 수 있는" 레시피만,
+        사야 할 게 적은 순으로. 조리단계 있는 레시피만(빈 단계 추천 방지).
+    -->
+    <select id="selectFridgeMatches"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeMatchCandidate">
+        SELECT r.recipe_id AS recipeId,
+               r.title,
+               r.summary,
+               r.cook_time AS cookTime,
+               COUNT(ri.ingredient_id) AS total,
+               SUM(CASE WHEN ri.name IN
+                   <foreach item="nm" collection="names" open="(" separator="," close=")">#{nm}</foreach>
+                   THEN 1 ELSE 0 END) AS matched,
+               SUM(CASE WHEN ri.name NOT IN
+                   <foreach item="nm" collection="names" open="(" separator="," close=")">#{nm}</foreach>
+                   AND ri.name NOT IN
+                   <foreach item="st" collection="staples" open="(" separator="," close=")">#{st}</foreach>
+                   THEN 1 ELSE 0 END) AS buyNeeded
+          FROM recipe r
+          JOIN recipe_ingredient ri ON ri.recipe_id = r.recipe_id
+         WHERE EXISTS (SELECT 1 FROM recipe_step s WHERE s.recipe_id = r.recipe_id)
+         GROUP BY r.recipe_id, r.title, r.summary, r.cook_time
+        HAVING matched >= #{minMatch} AND buyNeeded &lt;= #{maxBuy}
+         ORDER BY buyNeeded ASC, matched DESC, (matched / total) DESC, r.view_count DESC
+         LIMIT #{limit}
+    </select>
+
     <select id="selectIngredients"
             resultType="com.fridgefamer.dto.response.recipe.RecipeIngredient">
         SELECT name, qty
