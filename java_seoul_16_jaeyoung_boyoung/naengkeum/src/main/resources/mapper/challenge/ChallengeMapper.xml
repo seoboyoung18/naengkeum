@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  ChallengeMapper XML — Challenge 그룹 (challenge / challenge_participant / badge).
+
+  - participantCount: challenge_participant 집계 (LEFT JOIN + COUNT DISTINCT).
+  - myProgress: viewer(#{viewerId})의 참여 행 LEFT JOIN. 비로그인/미참여면 NULL.
+  - dDay: DATEDIFF(end_date, CURDATE()). 음수면 종료.
+  - status 필터: 문자열 연결 없이 <choose>/<if> (injection 방어).
+-->
+<mapper namespace="com.fridgefamer.mapper.challenge.ChallengeMapper">
+
+    <!-- 카드 공통 컬럼 (목록/상세/내챌린지 공용). viewerId 파라미터 필요. -->
+    <sql id="cardColumns">
+        c.challenge_id                       AS challengeId,
+        c.title                              AS title,
+        c.description                        AS description,
+        c.start_date                         AS startDate,
+        c.end_date                           AS endDate,
+        DATEDIFF(c.end_date, CURDATE())      AS dDay,
+        COUNT(DISTINCT cp.participant_id)    AS participantCount,
+        b.badge_id                           AS badgeId,
+        b.name                               AS badgeName,
+        b.icon_url                           AS badgeIconUrl,
+        MAX(CASE WHEN mp.member_id = #{viewerId} THEN mp.progress END) AS myProgress
+    </sql>
+
+    <sql id="cardJoins">
+          FROM challenge c
+          JOIN badge b ON b.badge_id = c.badge_id
+          LEFT JOIN challenge_participant cp ON cp.challenge_id = c.challenge_id
+          LEFT JOIN challenge_participant mp
+                 ON mp.challenge_id = c.challenge_id AND mp.member_id = #{viewerId}
+    </sql>
+
+    <sql id="cardGroupBy">
+        GROUP BY c.challenge_id, c.title, c.description, c.start_date, c.end_date,
+                 b.badge_id, b.name, b.icon_url
+    </sql>
+
+    <!-- =========================================================== -->
+    <!--  목록                                                       -->
+    <!-- =========================================================== -->
+    <select id="selectList" resultType="com.fridgefamer.dto.response.challenge.ChallengeRow">
+        SELECT <include refid="cardColumns"/>
+        <include refid="cardJoins"/>
+        <where>
+            <choose>
+                <when test="status == 'active'">
+                    AND CURDATE() BETWEEN c.start_date AND c.end_date
+                </when>
+                <when test="status == 'ended'">
+                    AND c.end_date &lt; CURDATE()
+                </when>
+            </choose>
+        </where>
+        <include refid="cardGroupBy"/>
+        ORDER BY c.start_date DESC, c.challenge_id DESC
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  내가 참여 중인 챌린지                                       -->
+    <!-- =========================================================== -->
+    <select id="selectMy" resultType="com.fridgefamer.dto.response.challenge.ChallengeRow">
+        SELECT <include refid="cardColumns"/>
+        <include refid="cardJoins"/>
+         WHERE EXISTS (
+             SELECT 1 FROM challenge_participant j
+              WHERE j.challenge_id = c.challenge_id AND j.member_id = #{viewerId}
+         )
+        <include refid="cardGroupBy"/>
+        ORDER BY c.start_date DESC, c.challenge_id DESC
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  상세                                                       -->
+    <!-- =========================================================== -->
+    <select id="selectDetail" resultType="com.fridgefamer.dto.response.challenge.ChallengeRow">
+        SELECT <include refid="cardColumns"/>
+        <include refid="cardJoins"/>
+         WHERE c.challenge_id = #{challengeId}
+        <include refid="cardGroupBy"/>
+    </select>
+
+    <select id="exists" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM challenge WHERE challenge_id = #{challengeId})
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  참여                                                       -->
+    <!-- =========================================================== -->
+    <select id="isJoined" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM challenge_participant
+             WHERE challenge_id = #{challengeId} AND member_id = #{memberId}
+        )
+    </select>
+
+    <insert id="insertParticipant">
+        INSERT INTO challenge_participant (challenge_id, member_id)
+        VALUES (#{challengeId}, #{memberId})
+    </insert>
+
+    <delete id="deleteParticipant">
+        DELETE FROM challenge_participant
+         WHERE challenge_id = #{challengeId} AND member_id = #{memberId}
+    </delete>
+
+    <!-- =========================================================== -->
+    <!--  통계 — 진행 중 챌린지의 (중복 제거) 참여 회원 수            -->
+    <!-- =========================================================== -->
+    <select id="countActiveParticipants" resultType="long">
+        SELECT COUNT(DISTINCT cp.member_id)
+          FROM challenge_participant cp
+          JOIN challenge c ON c.challenge_id = cp.challenge_id
+         WHERE CURDATE() BETWEEN c.start_date AND c.end_date
+    </select>
+
+</mapper>

@@ -93,6 +93,11 @@ public class SecurityConfig {
                         // 리뷰 목록 조회는 GET만 공개 (POST/PUT/DELETE는 인증 필요)
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/review").permitAll()
 
+                        // 챌린지: /my는 인증 필요 — 상세 공개 규칙보다 먼저 선언해 우선 매칭
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/challenge/my").authenticated()
+                        // 챌린지 상세는 GET만 공개 (/{id} 한 세그먼트 — /{id}/join은 두 세그먼트라 인증 유지)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/challenge/*").permitAll()
+
                         // OPTIONS preflight 허용 (CORS)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
