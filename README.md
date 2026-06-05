@@ -34,9 +34,9 @@
 | **1주차** | DB 스키마(Flyway) · 식재료 사전 150종 · 공공 레시피 175건 적재 · 인증/예외/MyBatis 기반 | ✅ 완료 |
 | **2주차** | 인증 4 · 회원 8 · 냉장고 6 · 식재료 사전 2 (총 **20종**) | ✅ 완료 |
 | **3주차** | 레시피 4 · 리뷰 4 · 찜 5 · **AI 추천 1(SSE + 하이브리드)** (총 **14종**) | ✅ 완료 |
-| **4주차** | 팔로우 2 · 챌린지 6 · AI 코칭 1 (총 9종) | ⏳ 예정 |
+| **4주차** | 팔로우 2 · 챌린지 6 · **AI 코칭 1(SSE)** (총 **9종**) | ✅ 완료 |
 
-**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천): 약 **35개 엔드포인트**
+**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천/팔로우/챌린지/AI코칭): 약 **44개 엔드포인트**
 
 ### 프론트엔드 (Vue 3)
 | 화면 | 내용 | 상태 |
@@ -87,6 +87,12 @@
 - **찜하기** : 일반/AI 레시피 모두 보관, 통합 목록 조회.
 - **대시보드** : 냉장고 요약 + 유통기한 D-3 임박 재료 알림.
 
+### ④ 팔로우 · 챌린지 · AI 식재료 코칭
+
+- **팔로우** : 자취 요리를 잘하는 사용자를 팔로우/언팔로우(자기 팔로우 차단, 중복 방지). 팔로워 수 즉시 반영.
+- **냉파 챌린지** : "이번 주 식비 0원" 등 챌린지 목록/상세/참여/통계 조회. 참여 여부·진행률·달성 배지 표시.
+- **AI 식재료 코칭** : `POST /api/ai/coaching` — 애매하게 남은 재료의 보관법(storage)과 활용 조합(combo)을 LLM이 분석해 **SSE 스트리밍**으로 제공.
+
 ---
 
 ## 🗄️ 데이터베이스 (실제 스키마)
@@ -101,7 +107,7 @@ Flyway 마이그레이션(`java_seoul_16_jaeyoung_boyoung/naengkeum/src/main/res
 | `recipe` / `recipe_ingredient` / `recipe_step` | 공공 레시피 본문·재료·조리단계 |
 | `review` | 레시피 리뷰 (별점 1~5, UNIQUE(member,recipe)) |
 | `wishlist` / `ai_recipe` | 찜 (일반·AI 레시피 XOR) / AI 생성 레시피(JSON) |
-| `follow` / `challenge` / `badge` | 팔로우 · 챌린지 · 뱃지 (4주차 예정) |
+| `follow` / `challenge` / `challenge_participant` / `badge` | 팔로우 · 챌린지 · 챌린지 참여 · 뱃지 (4주차 구현 완료) |
 
 | 마이그레이션 | 내용 |
 | --- | --- |
@@ -144,9 +150,9 @@ Flyway 마이그레이션(`java_seoul_16_jaeyoung_boyoung/naengkeum/src/main/res
 naengkeum/
 ├── src/main/java/com/fridgefamer/
 │   ├── config/        # SecurityConfig(JWT·CORS), JwtProvider, JwtAuthenticationFilter
-│   ├── controller/    # Auth/Member/Fridge/Ingredient/Recipe/Review/Wishlist/Ai/Health
-│   ├── service/       # 도메인별 비즈니스 로직 (AiRecommendService = 하이브리드 추천)
-│   ├── mapper/        # MyBatis 매퍼 인터페이스 (fridge/member/recipe/review/wishlist/ai/...)
+│   ├── controller/    # Auth/Member/Fridge/Ingredient/Recipe/Review/Wishlist/Follow/Challenge/Ai/Health
+│   ├── service/       # 도메인별 비즈니스 로직 (AiRecommendService=하이브리드 추천, AiCoachingService=식재료 코칭)
+│   ├── mapper/        # MyBatis 매퍼 인터페이스 (fridge/member/recipe/review/wishlist/follow/challenge/ai/...)
 │   ├── dto/           # request / response DTO (record)
 │   └── exception/     # GlobalExceptionHandler, ApiException, ErrorCode(9종)
 ├── src/main/resources/
@@ -215,6 +221,14 @@ TOKEN=$(curl -s "localhost:8080/api/test/token?memberId=1" | python3 -c "import 
 curl -N -X POST localhost:8080/api/ai/recommend \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"prioritizeExpiry":true,"applyAllergy":true}'
+
+# 챌린지 목록 (공개)
+curl localhost:8080/api/challenge
+
+# AI 식재료 코칭 (SSE) — storage/combo 스트리밍
+curl -N -X POST localhost:8080/api/ai/coaching \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"ingredientName":"egg"}'
 ```
 
 ---
@@ -230,8 +244,7 @@ curl -N -X POST localhost:8080/api/ai/recommend \
 
 ## 📅 향후 확장 로드맵
 
-- **4주차** : 팔로우 · 챌린지(게이미피케이션) · AI 식재료 코칭(SSE)
-- **Phase 2** : 영수증 OCR 등록 · 동네 식재료 쉐어링 · 냉파 챌린지 뱃지
+- **Phase 2** : 영수증 OCR 등록 · 동네 식재료 쉐어링 · 챌린지 배지 자동 지급(진행률 100% 달성 시) · 챌린지/배지 UI
 
 ---
 
