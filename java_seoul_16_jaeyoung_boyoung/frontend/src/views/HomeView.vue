@@ -19,6 +19,14 @@ onMounted(async () => {
   <section>
     <h2 class="h">홈 (대시보드)</h2>
 
+    <RouterLink to="/ai-recommend" class="ai-banner">
+      <div class="ai-txt">
+        <strong>🤖 냉장고 재료로 AI 추천 받기</strong>
+        <span>남은 재료로 만들 수 있는 레시피를 실시간으로</span>
+      </div>
+      <span class="arrow">›</span>
+    </RouterLink>
+
     <div v-if="me" class="box">
       <p class="hi">안녕하세요, <b>{{ me.nickname }}</b>님 👋</p>
       <ul class="stats">
@@ -35,6 +43,12 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.ai-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-decoration: none;
+  background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+.ai-banner .ai-txt { display: flex; flex-direction: column; gap: 3px; }
+.ai-banner strong { font-size: 15px; }
+.ai-banner span { font-size: 12px; opacity: .85; }
+.ai-banner .arrow { font-size: 24px; opacity: .8; }
 .box { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 18px; }
 .hi { margin: 0 0 14px; font-size: 16px; }
 .stats { list-style: none; display: flex; gap: 12px; padding: 0; margin: 0 0 14px; }

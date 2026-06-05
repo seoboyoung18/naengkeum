@@ -12,6 +12,8 @@ const routes = [
   { path: '/home', name: 'home', component: () => import('../views/HomeView.vue') },
   { path: '/fridge', name: 'fridge', component: () => import('../views/FridgeView.vue') },
   { path: '/recipe', name: 'recipe', component: () => import('../views/RecipeView.vue') },
+  { path: '/recipe/:recipeId', name: 'recipe-detail', component: () => import('../views/RecipeDetailView.vue'), props: true },
+  { path: '/ai-recommend', name: 'ai-recommend', component: () => import('../views/AiRecommendView.vue') },
   { path: '/mypage', name: 'mypage', component: () => import('../views/MyPageView.vue') },
 
   { path: '/:pathMatch(.*)*', redirect: '/home' },
