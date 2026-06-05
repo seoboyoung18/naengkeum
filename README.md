@@ -26,8 +26,9 @@
 
 ## 🚀 구현 현황
 
-> 백엔드 기준. 상세 명세: [API 명세](java_seoul_16_jaeyoung_boyoung/naengkeum/src/docs/api.md) · [ERD](java_seoul_16_jaeyoung_boyoung/naengkeum/src/docs/erd.md)
+> 상세 명세: [API 명세](java_seoul_16_jaeyoung_boyoung/naengkeum/src/docs/api.md) · [ERD](java_seoul_16_jaeyoung_boyoung/naengkeum/src/docs/erd.md)
 
+### 백엔드
 | 주차 | 범위 | 상태 |
 | --- | --- | --- |
 | **1주차** | DB 스키마(Flyway) · 식재료 사전 150종 · 공공 레시피 175건 적재 · 인증/예외/MyBatis 기반 | ✅ 완료 |
@@ -35,7 +36,19 @@
 | **3주차** | 레시피 4 · 리뷰 4 · 찜 5 · **AI 추천 1(SSE + 하이브리드)** (총 **14종**) | ✅ 완료 |
 | **4주차** | 팔로우 2 · 챌린지 6 · AI 코칭 1 (총 9종) | ⏳ 예정 |
 
-**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천): 약 **34개 엔드포인트**
+**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천): 약 **35개 엔드포인트**
+
+### 프론트엔드 (Vue 3)
+| 화면 | 내용 | 상태 |
+| --- | --- | --- |
+| 기반 셋업 | Vite·Pinia·Router·Axios + 공통 레이아웃 + **JWT 인터셉터** | ✅ |
+| 인증 | 로그인 / 회원가입(이메일 중복확인·자동로그인) | ✅ |
+| 냉장고 | 보관위치 탭·정렬·D-day 목록·CRUD + 식재료 자동완성·**보관기한 자동 제안** | ✅ |
+| 레시피 | 검색·자동완성·필터(조리시간/내 재료) · 상세(재료·단계·영양) | ✅ |
+| 리뷰·찜 | 평점 통계·작성/수정/삭제 · 찜 하트 토글 | ✅ |
+| **AI 추천** | **fetch SSE 실시간 스트리밍** · 출처 배지(DB/AI) · 찜 저장 | ✅ |
+| 마이페이지 | 내 정보·수정 · 찜 목록(AI 상세 모달) · 내 리뷰 | ✅ |
+| 마감 | 토스트 알림 · 라우트 전환 폴리싱 | ✅ |
 
 ---
 
@@ -109,7 +122,7 @@ Flyway 마이그레이션(`java_seoul_16_jaeyoung_boyoung/naengkeum/src/main/res
 | **인증** | JWT (Bearer) |
 | **JSON** | Jackson 3 (`tools.jackson`) |
 | **빌드/버전관리** | Maven (`mvnw`) · Git / GitLab |
-| **Frontend** | Vue.js (예정) |
+| **Frontend** | **Vue 3** (Vite) · Pinia · Vue Router · Axios |
 
 ### 시스템 아키텍처
 
@@ -124,8 +137,9 @@ Flyway 마이그레이션(`java_seoul_16_jaeyoung_boyoung/naengkeum/src/main/res
 
 ---
 
-## 📁 백엔드 구조 (실제)
+## 📁 프로젝트 구조 (실제)
 
+**백엔드** (`java_seoul_16_jaeyoung_boyoung/naengkeum`)
 ```text
 naengkeum/
 ├── src/main/java/com/fridgefamer/
@@ -141,6 +155,18 @@ naengkeum/
 │   ├── db/fixtures/   # dev 시드(D1)
 │   └── application*.yml
 └── src/docs/          # erd.md, api.md (설계/명세)
+```
+
+**프론트엔드** (`java_seoul_16_jaeyoung_boyoung/frontend`, Vue 3)
+```text
+frontend/src/
+├── api/          # http(Axios+JWT 인터셉터) / auth·member·fridge·ingredients·recipe·review·wishlist
+├── stores/       # auth (Pinia, localStorage 동기화)
+├── router/       # 라우트 + 인증 가드
+├── layouts/      # DefaultLayout (Header + 하단 네비)
+├── components/   # FridgeItemForm·ReviewSection·AiRecipeModal·ToastContainer ...
+├── composables/  # useToast
+└── views/        # Login·Register·Home·Fridge·Recipe(+Detail)·AiRecommend·MyPage
 ```
 
 ---
@@ -164,12 +190,20 @@ GRANT ALL PRIVILEGES ON naengkeum.* TO 'ssafy'@'localhost';
 | `OPENAI_BASE_URL` | `https://gms.ssafy.io/gmsapi/api.openai.com/v1` | SSAFY GMS(OpenAI 호환) |
 | `OPENAI_MODEL` | `gpt-4.1-mini` | 사용 모델 |
 
-### 실행
+### 백엔드 실행
 ```bash
 cd java_seoul_16_jaeyoung_boyoung/naengkeum
 OPENAI_API_KEY=<발급키> ./mvnw spring-boot:run   # dev 프로파일, 포트 8080
 # 최초 구동 시 Flyway가 스키마 + 식재료 150종 + 공공 레시피 175건 자동 적재
 ```
+
+### 프론트엔드 실행
+```bash
+cd java_seoul_16_jaeyoung_boyoung/frontend
+npm install
+npm run dev     # http://localhost:5173 (백엔드 CORS가 5173 허용)
+```
+> 백엔드 주소는 기본 `http://localhost:8080`. 바꾸려면 `VITE_API_BASE_URL` 환경변수 사용.
 
 ### 빠른 확인
 ```bash
