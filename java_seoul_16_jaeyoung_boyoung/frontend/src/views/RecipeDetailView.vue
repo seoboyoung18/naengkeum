@@ -4,6 +4,9 @@ import { useRouter } from 'vue-router'
 import { fetchRecipeDetail } from '../api/recipe'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import ReviewSection from '../components/ReviewSection.vue'
+import { useToast } from '../composables/useToast'
+
+const toast = useToast()
 
 const props = defineProps({ recipeId: { type: [String, Number], required: true } })
 const router = useRouter()
@@ -44,11 +47,11 @@ async function toggleWish() {
   const prev = recipe.value.isWishlisted
   recipe.value.isWishlisted = !prev
   try {
-    if (prev) await removeRecipeWish(recipe.value.recipeId)
-    else await addRecipeWish(recipe.value.recipeId)
+    if (prev) { await removeRecipeWish(recipe.value.recipeId); toast.info('찜을 해제했어요') }
+    else { await addRecipeWish(recipe.value.recipeId); toast.success('찜에 추가했어요') }
   } catch (e) {
     recipe.value.isWishlisted = prev
-    if (e.response?.status !== 409) alert(e.response?.data?.message || '찜 처리 실패')
+    if (e.response?.status !== 409) toast.error(e.response?.data?.message || '찜 처리에 실패했어요')
   }
 }
 

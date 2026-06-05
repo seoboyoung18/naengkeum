@@ -4,8 +4,10 @@ import { useRouter } from 'vue-router'
 import { API_BASE } from '../api/http'
 import { TOKEN_KEY } from '../stores/auth'
 import { addRecipeWish, saveAiRecipe } from '../api/wishlist'
+import { useToast } from '../composables/useToast'
 
 const router = useRouter()
+const toast = useToast()
 
 const options = reactive({ prioritizeExpiry: true, useAllFridge: false, applyAllergy: true })
 
@@ -125,9 +127,10 @@ async function save() {
       })
     }
     saved.value = true
+    toast.success('찜에 저장했어요')
   } catch (e) {
-    if (e.response?.status === 409) saved.value = true // 이미 찜됨
-    else alert(e.response?.data?.message || '저장 실패')
+    if (e.response?.status === 409) { saved.value = true; toast.info('이미 찜한 레시피예요') }
+    else toast.error(e.response?.data?.message || '저장에 실패했어요')
   } finally {
     saving.value = false
   }

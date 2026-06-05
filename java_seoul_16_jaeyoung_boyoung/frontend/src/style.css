@@ -21,3 +21,13 @@ h2.h {
   font-size: 18px;
   margin: 4px 0 14px;
 }
+
+/* 라우트 전환 페이드 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

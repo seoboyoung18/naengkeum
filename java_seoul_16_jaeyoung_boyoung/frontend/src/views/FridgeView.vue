@@ -2,6 +2,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { listFridge, deleteFridgeItem } from '../api/fridge'
 import FridgeItemForm from '../components/FridgeItemForm.vue'
+import { useToast } from '../composables/useToast'
+
+const toast = useToast()
 
 const STORAGES = [
   { key: 'ALL', label: '전체' },
@@ -46,15 +49,16 @@ function selectSort(k) { sort.value = k; load() }
 
 function openAdd() { editing.value = null; showForm.value = true }
 function openEdit(item) { editing.value = item; showForm.value = true }
-function onSaved() { showForm.value = false; load() }
+function onSaved() { showForm.value = false; load(); toast.success('냉장고에 저장했어요') }
 
 async function onDelete(item) {
   if (!confirm(`'${item.name}'을(를) 삭제할까요?`)) return
   try {
     await deleteFridgeItem(item.fridgeItemId)
     load()
+    toast.success('삭제했어요')
   } catch (e) {
-    alert(e.response?.data?.message || '삭제 실패')
+    toast.error(e.response?.data?.message || '삭제에 실패했어요')
   }
 }
 

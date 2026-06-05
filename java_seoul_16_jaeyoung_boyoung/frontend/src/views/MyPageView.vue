@@ -5,9 +5,11 @@ import { getMyPage, updateMe, listMyReviews } from '../api/member'
 import { listWishlist, removeRecipeWish, removeAiWish } from '../api/wishlist'
 import { useAuthStore } from '../stores/auth'
 import AiRecipeModal from '../components/AiRecipeModal.vue'
+import { useToast } from '../composables/useToast'
 
 const router = useRouter()
 const auth = useAuthStore()
+const toast = useToast()
 
 const me = ref(null)
 const wishes = ref([])
@@ -66,6 +68,7 @@ async function saveEdit() {
     auth.nickname = updated.nickname
     localStorage.setItem('naengkeum.nickname', updated.nickname ?? '')
     showEdit.value = false
+    toast.success('정보를 수정했어요')
   } catch (e) {
     editError.value = e.response?.data?.message || '수정 실패'
   } finally {
@@ -79,8 +82,9 @@ async function removeWish(item) {
     if (item.type === 'AI') await removeAiWish(item.aiRecipeId)
     else await removeRecipeWish(item.recipeId)
     wishes.value = wishes.value.filter((w) => w.wishlistId !== item.wishlistId)
+    toast.success('찜을 해제했어요')
   } catch (e) {
-    alert(e.response?.data?.message || '해제 실패')
+    toast.error(e.response?.data?.message || '해제에 실패했어요')
   }
 }
 

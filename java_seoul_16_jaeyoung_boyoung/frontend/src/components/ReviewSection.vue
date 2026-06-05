@@ -1,6 +1,9 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { listReviews, createReview, updateReview, deleteReview } from '../api/review'
+import { useToast } from '../composables/useToast'
+
+const toast = useToast()
 
 const props = defineProps({ recipeId: { type: [String, Number], required: true } })
 const emit = defineEmits(['changed'])
@@ -43,6 +46,7 @@ async function submit() {
     draft.rating = 5
     await load()
     emit('changed')
+    toast.success('리뷰를 등록했어요')
   } catch (e) {
     if (e.response?.status === 409) writeError.value = '이미 이 레시피에 리뷰를 작성하셨습니다'
     else writeError.value = e.response?.data?.message || '리뷰 작성 실패'
@@ -64,8 +68,9 @@ async function saveEdit(r) {
     editingId.value = null
     await load()
     emit('changed')
+    toast.success('리뷰를 수정했어요')
   } catch (e) {
-    alert(e.response?.data?.message || '수정 실패')
+    toast.error(e.response?.data?.message || '수정에 실패했어요')
   }
 }
 
@@ -75,8 +80,9 @@ async function remove(r) {
     await deleteReview(r.reviewId)
     await load()
     emit('changed')
+    toast.success('리뷰를 삭제했어요')
   } catch (e) {
-    alert(e.response?.data?.message || '삭제 실패')
+    toast.error(e.response?.data?.message || '삭제에 실패했어요')
   }
 }
 

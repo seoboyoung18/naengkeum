@@ -4,6 +4,9 @@ import { useRouter } from 'vue-router'
 import { searchRecipes, autocompleteRecipes } from '../api/recipe'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import { listFridge } from '../api/fridge'
+import { useToast } from '../composables/useToast'
+
+const toast = useToast()
 
 const router = useRouter()
 
@@ -104,7 +107,7 @@ async function toggleWish(item) {
     else await addRecipeWish(item.recipeId)
   } catch (e) {
     item.isWishlisted = prev // 롤백
-    if (e.response?.status !== 409) alert(e.response?.data?.message || '찜 처리 실패')
+    if (e.response?.status !== 409) toast.error(e.response?.data?.message || '찜 처리에 실패했어요')
   }
 }
 
