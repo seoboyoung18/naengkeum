@@ -1,8 +1,11 @@
 package com.fridgefamer.service;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import com.fridgefamer.dto.request.wishlist.SaveAiRecipeRequest;
 import com.fridgefamer.dto.response.common.PageResponse;
+import com.fridgefamer.dto.response.wishlist.AiRecipeDetail;
+import com.fridgefamer.dto.response.wishlist.AiRecipeRow;
 import com.fridgefamer.dto.response.wishlist.AiRecipeSaved;
 import com.fridgefamer.dto.response.wishlist.WishlistItem;
 import com.fridgefamer.exception.ApiException;
@@ -24,10 +27,39 @@ import java.util.stream.Collectors;
 @Service
 public class WishlistService {
 
+    private static final JsonMapper JSON = JsonMapper.builder().build();
+
     private final WishlistMapper wishlistMapper;
 
     public WishlistService(WishlistMapper wishlistMapper) {
         this.wishlistMapper = wishlistMapper;
+    }
+
+    // =====================================================================
+    //  GET /api/wishlist/ai/{aiRecipeId}  — 저장한 AI 레시피 단건 상세
+    // =====================================================================
+    public AiRecipeDetail getAiRecipe(Long memberId, Long aiRecipeId) {
+        AiRecipeRow row = wishlistMapper.selectAiRecipe(aiRecipeId);
+        if (row == null) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "AI 레시피를 찾을 수 없습니다");
+        }
+        if (!row.memberId().equals(memberId)) {
+            throw new ApiException(ErrorCode.FORBIDDEN, "본인의 AI 레시피만 조회할 수 있습니다");
+        }
+        return new AiRecipeDetail(
+                row.aiRecipeId(), row.title(), row.summary(),
+                parseJson(row.ingredientsJson()), parseJson(row.stepsJson()),
+                row.cookTime(), row.createdAt());
+    }
+
+    /** ai_recipe의 JSON 문자열 → JsonNode(파싱 실패 시 null). */
+    private JsonNode parseJson(String s) {
+        if (s == null) return null;
+        try {
+            return JSON.readTree(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // =====================================================================

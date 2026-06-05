@@ -1,5 +1,6 @@
 package com.fridgefamer.mapper.wishlist;
 
+import com.fridgefamer.dto.response.wishlist.AiRecipeRow;
 import com.fridgefamer.dto.response.wishlist.WishlistItem;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -46,6 +47,9 @@ public interface WishlistMapper {
 
     /** ai_recipe 소유자 member_id — 권한 검증용. 없으면 null. */
     Long findAiRecipeOwner(@Param("aiRecipeId") Long aiRecipeId);
+
+    /** ai_recipe 단건(JSON은 문자열로). 없으면 null. 소유자 검증은 서비스에서. */
+    AiRecipeRow selectAiRecipe(@Param("aiRecipeId") Long aiRecipeId);
 
     /** ai_recipe 삭제(FK CASCADE로 wishlist 행 동반 삭제). */
     int deleteAiRecipe(@Param("aiRecipeId") Long aiRecipeId);

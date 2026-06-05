@@ -90,6 +90,22 @@
         SELECT member_id FROM ai_recipe WHERE ai_recipe_id = #{aiRecipeId} LIMIT 1
     </select>
 
+    <!-- ai_recipe 단건. JSON 컬럼은 텍스트로 읽어 서비스에서 파싱. -->
+    <select id="selectAiRecipe"
+            resultType="com.fridgefamer.dto.response.wishlist.AiRecipeRow">
+        SELECT ai_recipe_id     AS aiRecipeId,
+               member_id        AS memberId,
+               title,
+               summary,
+               ingredients_json AS ingredientsJson,
+               steps_json       AS stepsJson,
+               cook_time        AS cookTime,
+               created_at       AS createdAt
+          FROM ai_recipe
+         WHERE ai_recipe_id = #{aiRecipeId}
+         LIMIT 1
+    </select>
+
     <delete id="deleteAiRecipe">
         DELETE FROM ai_recipe WHERE ai_recipe_id = #{aiRecipeId}
     </delete>

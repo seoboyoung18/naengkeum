@@ -2,6 +2,7 @@ package com.fridgefamer.controller;
 
 import com.fridgefamer.dto.request.wishlist.SaveAiRecipeRequest;
 import com.fridgefamer.dto.response.common.PageResponse;
+import com.fridgefamer.dto.response.wishlist.AiRecipeDetail;
 import com.fridgefamer.dto.response.wishlist.AiRecipeSaved;
 import com.fridgefamer.dto.response.wishlist.WishlistItem;
 import com.fridgefamer.service.WishlistService;
@@ -77,6 +78,13 @@ public class WishlistController {
     public ResponseEntity<AiRecipeSaved> saveAi(@Valid @RequestBody SaveAiRecipeRequest req) {
         AiRecipeSaved saved = wishlistService.saveAi(currentMemberId(), req);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @GetMapping("/ai/{aiRecipeId}")
+    public AiRecipeDetail getAi(
+            @PathVariable @Positive(message = "aiRecipeId는 양수여야 합니다") Long aiRecipeId
+    ) {
+        return wishlistService.getAiRecipe(currentMemberId(), aiRecipeId);
     }
 
     @DeleteMapping("/ai/{aiRecipeId}")
