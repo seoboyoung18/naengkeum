@@ -23,3 +23,21 @@ export async function listBadges() {
   const { data } = await http.get('/api/member/me/badges')
   return data
 }
+
+/** 타 유저 프로필(공개) — { memberId, nickname, reviewCount, followerCount, isFollowing } */
+export async function fetchProfile(userId) {
+  const { data } = await http.get(`/api/member/${userId}/profile`)
+  return data
+}
+
+/** 내가 팔로우하는 목록 — FollowUserItem[] */
+export async function listFollowing() {
+  const { data } = await http.get('/api/member/me/following')
+  return data
+}
+
+/** 나를 팔로우하는 목록 — FollowUserItem[] */
+export async function listFollowers() {
+  const { data } = await http.get('/api/member/me/followers')
+  return data
+}

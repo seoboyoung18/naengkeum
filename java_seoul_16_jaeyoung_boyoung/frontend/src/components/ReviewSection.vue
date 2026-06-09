@@ -1,9 +1,11 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { listReviews, createReview, updateReview, deleteReview } from '../api/review'
 import { useToast } from '../composables/useToast'
 
 const toast = useToast()
+const router = useRouter()
 
 const props = defineProps({ recipeId: { type: [String, Number], required: true } })
 const emit = defineEmits(['changed'])
@@ -130,7 +132,7 @@ onMounted(load)
     <ul v-else class="list">
       <li v-for="r in reviews" :key="r.reviewId" class="item" :class="{ owner: r.isOwner }">
         <div class="top">
-          <span class="nick">{{ r.nickname }}<span v-if="r.isOwner" class="me">나</span></span>
+          <span class="nick" :class="{ link: !r.isOwner }" @click="!r.isOwner && router.push({ name: 'user-profile', params: { userId: r.memberId } })">{{ r.nickname }}<span v-if="r.isOwner" class="me">나</span></span>
           <span class="date">{{ fmtDate(r.createdAt) }}</span>
         </div>
 
@@ -188,6 +190,7 @@ onMounted(load)
 .item.owner { border-color: #bbf7d0; background: #f6fef9; }
 .top { display: flex; justify-content: space-between; align-items: center; }
 .nick { font-size: 13px; font-weight: 600; }
+.nick.link { cursor: pointer; color: #16a34a; }
 .nick .me { font-size: 10px; background: #16a34a; color: #fff; border-radius: 4px; padding: 1px 5px; margin-left: 5px; }
 .date { font-size: 11px; color: #aaa; }
 .rstars { color: #f59e0b; font-size: 13px; margin: 4px 0; }

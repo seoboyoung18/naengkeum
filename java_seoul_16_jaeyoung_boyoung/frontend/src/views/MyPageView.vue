@@ -122,7 +122,8 @@ onMounted(loadAll)
           <li><span>{{ me.stats.fridgeCount }}</span>냉장고</li>
           <li><span>{{ me.stats.wishlistCount }}</span>찜</li>
           <li><span>{{ me.stats.reviewCount }}</span>리뷰</li>
-          <li><span>{{ me.stats.followerCount }}</span>팔로워</li>
+          <li class="clk" @click="router.push({ name: 'follow-list', query: { tab: 'followers' } })"><span>{{ me.stats.followerCount }}</span>팔로워</li>
+          <li class="clk" @click="router.push({ name: 'follow-list', query: { tab: 'following' } })"><span>{{ me.stats.followingCount }}</span>팔로잉</li>
         </ul>
       </div>
 
@@ -192,6 +193,7 @@ onMounted(loadAll)
 .stats { list-style: none; display: flex; gap: 8px; padding: 0; margin: 14px 0 0; }
 .stats li { flex: 1; background: #f5f7f9; border-radius: 10px; padding: 10px 4px; text-align: center; font-size: 11px; color: #666; }
 .stats li span { display: block; font-size: 17px; font-weight: 800; color: #16a34a; }
+.stats li.clk { cursor: pointer; }
 
 .sec { font-size: 16px; margin: 20px 0 10px; }
 .sec .cnt { color: #16a34a; font-size: 14px; }
