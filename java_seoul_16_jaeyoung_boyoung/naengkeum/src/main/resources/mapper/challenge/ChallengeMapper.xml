@@ -109,6 +109,33 @@
     </delete>
 
     <!-- =========================================================== -->
+    <!--  진행률 / 배지 자동지급                                      -->
+    <!-- =========================================================== -->
+
+    <!-- 진행률 갱신. 100 이상이면 달성 플래그/시각도 함께 세팅(이미 달성이면 시각 유지). -->
+    <update id="updateProgress">
+        UPDATE challenge_participant
+           SET progress = #{progress},
+               is_achieved = CASE WHEN #{progress} &gt;= 100 THEN 1 ELSE is_achieved END,
+               achieved_at = CASE
+                                WHEN #{progress} &gt;= 100 AND achieved_at IS NULL THEN NOW()
+                                ELSE achieved_at
+                             END
+         WHERE challenge_id = #{challengeId} AND member_id = #{memberId}
+    </update>
+
+    <!-- 챌린지의 달성 보상 배지 id -->
+    <select id="selectBadgeId" resultType="java.lang.Long">
+        SELECT badge_id FROM challenge WHERE challenge_id = #{challengeId}
+    </select>
+
+    <!-- 배지 지급. uq_member_badge로 중복은 무시(INSERT IGNORE). -->
+    <insert id="insertMemberBadge">
+        INSERT IGNORE INTO member_badge (member_id, badge_id)
+        VALUES (#{memberId}, #{badgeId})
+    </insert>
+
+    <!-- =========================================================== -->
     <!--  통계 — 진행 중 챌린지의 (중복 제거) 참여 회원 수            -->
     <!-- =========================================================== -->
     <select id="countActiveParticipants" resultType="long">
