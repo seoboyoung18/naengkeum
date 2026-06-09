@@ -17,3 +17,9 @@ export async function listMyReviews(params = {}) {
   const { data } = await http.get('/api/member/me/reviews', { params })
   return data
 }
+
+/** 내가 획득한 배지 목록 — BadgeItem[] { badgeId, name, iconUrl, earnedAt } */
+export async function listBadges() {
+  const { data } = await http.get('/api/member/me/badges')
+  return data
+}

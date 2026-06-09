@@ -3,6 +3,7 @@ const items = [
   { to: '/home', label: '홈', icon: '🏠' },
   { to: '/fridge', label: '냉장고', icon: '🧊' },
   { to: '/recipe', label: '레시피', icon: '🍳' },
+  { to: '/challenge', label: '챌린지', icon: '🏆' },
   { to: '/mypage', label: '마이', icon: '👤' },
 ]
 </script>
