@@ -3,6 +3,7 @@ package com.fridgefamer.service;
 import com.fridgefamer.dto.response.challenge.ChallengeBadge;
 import com.fridgefamer.dto.response.challenge.ChallengeItem;
 import com.fridgefamer.dto.response.challenge.ChallengeJoinResponse;
+import com.fridgefamer.dto.response.challenge.ChallengeProgressResponse;
 import com.fridgefamer.dto.response.challenge.ChallengeRow;
 import com.fridgefamer.dto.response.challenge.ChallengeStatsResponse;
 import com.fridgefamer.exception.ApiException;
@@ -86,6 +87,32 @@ public class ChallengeService {
         // 멱등 처리: 미참여 상태에서 취소해도 결과는 "미참여"로 동일
         challengeMapper.deleteParticipant(challengeId, memberId);
         return new ChallengeJoinResponse(false);
+    }
+
+    // =====================================================================
+    //  PATCH /api/challenge/{challengeId}/progress — 진행률 갱신 + 배지 자동지급 (인증)
+    // =====================================================================
+    @Transactional
+    public ChallengeProgressResponse updateProgress(Long memberId, Long challengeId, int progress) {
+        // 참여 중이어야 진행률 갱신 가능. 미참여면 updateProgress가 0행 → 404.
+        int updated = challengeMapper.updateProgress(challengeId, memberId, progress);
+        if (updated == 0) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "참여 중인 챌린지가 아닙니다");
+        }
+
+        boolean achieved = progress >= 100;
+        boolean badgeEarned = false;
+
+        // 100% 달성 시 챌린지 보상 배지를 지급(중복은 INSERT IGNORE로 무시).
+        if (achieved) {
+            Long badgeId = challengeMapper.selectBadgeId(challengeId);
+            if (badgeId != null) {
+                int inserted = challengeMapper.insertMemberBadge(memberId, badgeId);
+                badgeEarned = (inserted == 1); // 1=신규 지급, 0=이미 보유
+            }
+        }
+
+        return new ChallengeProgressResponse(progress, achieved, badgeEarned);
     }
 
     // =====================================================================

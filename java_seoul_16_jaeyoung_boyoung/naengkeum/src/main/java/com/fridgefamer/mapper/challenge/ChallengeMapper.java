@@ -51,6 +51,26 @@ public interface ChallengeMapper {
     int deleteParticipant(@Param("challengeId") Long challengeId,
                           @Param("memberId") Long memberId);
 
+    // ---- 진행률 / 배지 자동지급 ----
+
+    /**
+     * 참여자의 진행률 갱신. 100 이상이면 is_achieved=1, achieved_at=now도 함께 세팅한다.
+     * @return 갱신된 행 수(0이면 미참여 → 서비스에서 404).
+     */
+    int updateProgress(@Param("challengeId") Long challengeId,
+                       @Param("memberId") Long memberId,
+                       @Param("progress") int progress);
+
+    /** 챌린지의 달성 보상 배지 id 조회(없는 챌린지면 null). */
+    Long selectBadgeId(@Param("challengeId") Long challengeId);
+
+    /**
+     * 회원에게 배지 지급. uq_member_badge(member_id, badge_id)로 중복은 무시(INSERT IGNORE).
+     * @return 실제 삽입된 행 수(1=신규 지급, 0=이미 보유).
+     */
+    int insertMemberBadge(@Param("memberId") Long memberId,
+                          @Param("badgeId") Long badgeId);
+
     // ---- 통계 ----
 
     /** 진행 중 챌린지에 참여한 (중복 제거) 회원 수. */
