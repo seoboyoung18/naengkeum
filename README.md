@@ -34,9 +34,9 @@
 | **1주차** | DB 스키마(Flyway) · 식재료 사전 150종 · 공공 레시피 175건 적재 · 인증/예외/MyBatis 기반 | ✅ 완료 |
 | **2주차** | 인증 4 · 회원 8 · 냉장고 6 · 식재료 사전 2 (총 **20종**) | ✅ 완료 |
 | **3주차** | 레시피 4 · 리뷰 4 · 찜 5 · **AI 추천 1(SSE + 하이브리드)** (총 **14종**) | ✅ 완료 |
-| **4주차** | 팔로우 2 · 챌린지 6 · **AI 코칭 1(SSE)** (총 **9종**) | ✅ 완료 |
+| **4주차** | 팔로우 2 · 챌린지 6 · **AI 코칭 1(SSE)** · **챌린지 진행률/배지 자동지급 1** (총 **10종**) | ✅ 완료 |
 
-**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천/팔로우/챌린지/AI코칭): 약 **44개 엔드포인트**
+**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천/팔로우/챌린지/AI코칭): 약 **45개 엔드포인트**
 
 ### 프론트엔드 (Vue 3)
 | 화면 | 내용 | 상태 |
@@ -91,6 +91,7 @@
 
 - **팔로우** : 자취 요리를 잘하는 사용자를 팔로우/언팔로우(자기 팔로우 차단, 중복 방지). 팔로워 수 즉시 반영.
 - **냉파 챌린지** : "이번 주 식비 0원" 등 챌린지 목록/상세/참여/통계 조회. 참여 여부·진행률·달성 배지 표시.
+- **배지 자동지급** : `PATCH /api/challenge/{id}/progress`로 진행률 갱신 → 100% 달성 시 보상 배지를 자동 지급(중복 방지). 응답의 `badgeEarned`로 "🎉 배지 획득!" 알림 트리거.
 - **AI 식재료 코칭** : `POST /api/ai/coaching` — 애매하게 남은 재료의 보관법(storage)과 활용 조합(combo)을 LLM이 분석해 **SSE 스트리밍**으로 제공.
 
 ---
@@ -225,6 +226,13 @@ curl -N -X POST localhost:8080/api/ai/recommend \
 # 챌린지 목록 (공개)
 curl localhost:8080/api/challenge
 
+# 챌린지 참여 → 진행률 100% → 배지 자동 획득
+curl -X POST localhost:8080/api/challenge/1/join -H "Authorization: Bearer $TOKEN"
+curl -X PATCH localhost:8080/api/challenge/1/progress \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"progress":100}'
+# → {"progress":100,"achieved":true,"badgeEarned":true}
+
 # AI 식재료 코칭 (SSE) — storage/combo 스트리밍
 curl -N -X POST localhost:8080/api/ai/coaching \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
@@ -244,7 +252,7 @@ curl -N -X POST localhost:8080/api/ai/coaching \
 
 ## 📅 향후 확장 로드맵
 
-- **Phase 2** : 영수증 OCR 등록 · 동네 식재료 쉐어링 · 챌린지 배지 자동 지급(진행률 100% 달성 시) · 챌린지/배지 UI
+- **Phase 2** : 영수증 OCR 등록 · 동네 식재료 쉐어링 · 챌린지/배지 화면(UI) · 챌린지 조건별 진행률 자동 추적(현재는 진행률 직접 갱신 방식)
 
 ---
 
