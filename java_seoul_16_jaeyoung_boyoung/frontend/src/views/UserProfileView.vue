@@ -82,8 +82,8 @@ onMounted(load)
 </template>
 
 <style scoped>
-.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 8px; }
-.card { background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 26px 18px; text-align: center; }
+.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 14px; }
+.card { background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 32px 24px; text-align: center; max-width: 420px; }
 .avatar { width: 72px; height: 72px; border-radius: 50%; background: #ecfdf3; color: #16a34a; font-size: 30px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
 .nick { font-size: 20px; font-weight: 700; }
 .stats { list-style: none; display: flex; justify-content: center; gap: 28px; padding: 0; margin: 16px 0 18px; }
