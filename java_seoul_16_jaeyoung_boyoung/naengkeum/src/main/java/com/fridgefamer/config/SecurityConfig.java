@@ -75,7 +75,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
 
                         // 레시피 쓰기/내 것 조회는 인증 필요 — 아래 "/api/recipe/**" permitAll보다 먼저 선언해 우선 매칭
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/recipe/from-ai/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/recipe/from-ai", "/api/recipe/from-ai/**").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/recipe/*/publish").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/recipe/mine").authenticated()
 

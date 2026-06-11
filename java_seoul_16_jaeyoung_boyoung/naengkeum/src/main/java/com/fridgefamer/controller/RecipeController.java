@@ -1,5 +1,6 @@
 package com.fridgefamer.controller;
 
+import com.fridgefamer.dto.request.wishlist.SaveAiRecipeRequest;
 import com.fridgefamer.dto.response.common.PageResponse;
 import com.fridgefamer.dto.response.recipe.MyRecipeItem;
 import com.fridgefamer.dto.response.recipe.RecipeAutocompleteItem;
@@ -10,6 +11,7 @@ import com.fridgefamer.dto.response.recipe.RecipeSaved;
 import com.fridgefamer.exception.ApiException;
 import com.fridgefamer.exception.ErrorCode;
 import com.fridgefamer.service.RecipeService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -103,7 +106,16 @@ public class RecipeController {
     //  쓰기 — AI 레시피 "담기" / 공개 / 마이 레시피 (인증 필요)
     // =================================================================
 
-    /** "내 레시피로 담기" — AI 결과를 마이 레시피(비공개)로 복사. 이미 담았으면 409. */
+    /** "내 레시피로 담기"(콘텐츠) — D4 AI 결과를 마이 레시피(비공개)로 직접 등록. 찜과 무관. */
+    @PostMapping("/from-ai")
+    public ResponseEntity<RecipeSaved> registerFromAiContent(
+            @Valid @RequestBody SaveAiRecipeRequest req
+    ) {
+        RecipeSaved saved = recipeService.createFromAiContent(currentMemberId(), req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /** "내 레시피로 담기"(기존 ai_recipe id) — 이미 저장된 AI 레시피를 복사. 이미 담았으면 409. */
     @PostMapping("/from-ai/{aiRecipeId}")
     public ResponseEntity<RecipeSaved> registerFromAi(
             @PathVariable @Positive(message = "aiRecipeId는 양수여야 합니다") Long aiRecipeId

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { API_BASE } from '../api/http'
 import { TOKEN_KEY } from '../stores/auth'
 import { addRecipeWish, saveAiRecipe } from '../api/wishlist'
+import { registerFromAi } from '../api/recipe'
 import { useToast } from '../composables/useToast'
 
 const router = useRouter()
@@ -29,6 +30,8 @@ const rawLog = ref([])
 
 const saving = ref(false)
 const saved = ref(false)
+const registering = ref(false)
+const registered = ref(false)
 
 function resetResult() {
   result.source = null
@@ -41,6 +44,7 @@ function resetResult() {
   streamError.value = ''
   done.value = false
   saved.value = false
+  registered.value = false
 }
 
 async function run() {
@@ -136,6 +140,26 @@ async function save() {
   }
 }
 
+async function register() {
+  if (registering.value || registered.value) return
+  registering.value = true
+  try {
+    await registerFromAi({
+      title: result.title,
+      summary: result.summary || null,
+      ingredientsJson: result.ingredients,
+      stepsJson: result.steps,
+      cookTime: result.meta?.cookTime ?? null,
+    })
+    registered.value = true
+    toast.success('마이 레시피에 담았어요. 마이페이지에서 공개할 수 있어요')
+  } catch (e) {
+    toast.error(e.response?.data?.message || '담기에 실패했어요')
+  } finally {
+    registering.value = false
+  }
+}
+
 function goRecipe() {
   if (result.source?.origin === 'DB' && result.source.recipeId) {
     router.push({ name: 'recipe-detail', params: { recipeId: result.source.recipeId } })
@@ -203,9 +227,20 @@ function goRecipe() {
       <div v-if="done && result.title" class="actions">
         <button v-if="result.source?.origin === 'DB'" class="ghost" @click="goRecipe">레시피 상세 보기</button>
         <button class="save" :disabled="saving || saved" @click="save">
-          {{ saved ? '✓ 저장됨' : saving ? '저장 중…' : '찜 저장' }}
+          {{ saved ? '✓ 찜됨' : saving ? '저장 중…' : '♡ 찜 저장' }}
+        </button>
+        <button
+          v-if="result.source?.origin === 'AI'"
+          class="register"
+          :disabled="registering || registered"
+          @click="register"
+        >
+          {{ registered ? '✓ 담음' : registering ? '담는 중…' : '＋ 내 레시피로 담기' }}
         </button>
       </div>
+      <p v-if="result.source?.origin === 'AI' && done" class="reg-note">
+        ＊ "담기"는 마이 레시피에 보관돼요. 공개는 마이페이지에서 따로 합니다.
+      </p>
     </div>
   </section>
 </template>
@@ -240,6 +275,9 @@ function goRecipe() {
 .muted { color: #999; font-size: 13px; margin-top: 10px; }
 .actions { display: flex; gap: 8px; margin-top: 16px; }
 .ghost { flex: 1; border: 1px solid #16a34a; color: #16a34a; background: #fff; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; }
-.save { flex: 1; border: none; background: #16a34a; color: #fff; border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.save { flex: 1; border: 1px solid #16a34a; background: #fff; color: #16a34a; border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .save:disabled { opacity: .6; }
+.register { flex: 1; border: none; background: #16a34a; color: #fff; border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.register:disabled { opacity: .6; }
+.reg-note { font-size: 12px; color: #999; margin: 8px 0 0; }
 </style>

@@ -1,7 +1,9 @@
 package com.fridgefamer.service;
 
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import com.fridgefamer.dto.request.wishlist.SaveAiRecipeRequest;
 import com.fridgefamer.dto.response.common.PageResponse;
 import com.fridgefamer.dto.response.recipe.MyRecipeItem;
 import com.fridgefamer.dto.response.recipe.RecipeAutocompleteItem;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 레시피(Recipe) 도메인 서비스 — API 명세 §4.
@@ -128,6 +131,36 @@ public class RecipeService {
             recipeMapper.insertSteps(recipeId, steps);
         }
         return new RecipeSaved(recipeId);
+    }
+
+    // =====================================================================
+    //  POST /api/recipe/from-ai — AI 결과 콘텐츠를 바로 "담기"
+    //  (찜과 무관. D4 화면에서 갓 생성된 결과는 aiRecipeId가 없으므로 콘텐츠로 직접 등록)
+    // =====================================================================
+    @Transactional
+    public RecipeSaved createFromAiContent(Long memberId, SaveAiRecipeRequest req) {
+        // 콘텐츠는 ai_recipe를 거치지 않으므로 source_ai_recipe_id=null (중복 방지 미적용)
+        RecipeInsertCommand cmd = new RecipeInsertCommand(
+                memberId, null, req.title(), req.summary(), req.cookTime());
+        recipeMapper.insertRecipe(cmd);
+        Long recipeId = cmd.getRecipeId();
+
+        List<RecipeIngredient> ingredients = parseIngredients(toJsonArray(req.ingredientsJson()));
+        if (!ingredients.isEmpty()) {
+            recipeMapper.insertIngredients(recipeId, ingredients);
+        }
+        List<RecipeStep> steps = parseSteps(toJsonArray(req.stepsJson()));
+        if (!steps.isEmpty()) {
+            recipeMapper.insertSteps(recipeId, steps);
+        }
+        return new RecipeSaved(recipeId);
+    }
+
+    /** List&lt;JsonNode&gt; → JSON 배열 문자열(파싱 재사용용). WishlistService와 동일 방침(Jackson 빈 비의존). */
+    private String toJsonArray(List<JsonNode> nodes) {
+        return nodes.stream()
+                .map(JsonNode::toString)
+                .collect(Collectors.joining(",", "[", "]"));
     }
 
     // =====================================================================

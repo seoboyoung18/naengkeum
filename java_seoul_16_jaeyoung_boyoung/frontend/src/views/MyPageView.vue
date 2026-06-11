@@ -5,6 +5,7 @@ import { getMyPage, updateMe, listMyReviews } from '../api/member'
 import { listWishlist, removeRecipeWish, removeAiWish } from '../api/wishlist'
 import { useAuthStore } from '../stores/auth'
 import AiRecipeModal from '../components/AiRecipeModal.vue'
+import MyRecipeList from '../components/MyRecipeList.vue'
 import { useToast } from '../composables/useToast'
 
 const router = useRouter()
@@ -141,6 +142,11 @@ onMounted(loadAll)
         </li>
       </ul>
 
+      <!-- 마이 레시피 (담은 AI 레시피 → 공개하기) -->
+      <h3 class="sec">마이 레시피</h3>
+      <p class="sec-desc">AI로 만들어 담은 내 레시피예요. 공개하면 모두가 검색·찜할 수 있어요.</p>
+      <MyRecipeList />
+
       <!-- 내 리뷰 -->
       <h3 class="sec">내 리뷰 <span class="cnt">{{ reviews.length }}</span></h3>
       <p v-if="reviews.length === 0" class="muted">작성한 리뷰가 없어요.</p>
@@ -197,6 +203,7 @@ onMounted(loadAll)
 
 .sec { font-size: 16px; margin: 20px 0 10px; }
 .sec .cnt { color: #16a34a; font-size: 14px; }
+.sec-desc { font-size: 12px; color: #999; margin: -4px 0 10px; }
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .card { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 12px; cursor: pointer; }
 .type { font-size: 13px; flex: 0 0 auto; }

@@ -117,7 +117,10 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 
 <template>
   <section>
-    <h2 class="h">레시피 탐색</h2>
+    <div class="head">
+      <h2 class="h">레시피 탐색</h2>
+      <button class="register" @click="router.push({ name: 'recipe-publish' })">＋ 레시피 등록</button>
+    </div>
 
     <!-- 검색 -->
     <div class="search">
@@ -178,6 +181,9 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 </template>
 
 <style scoped>
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.register { flex: 0 0 auto; border: none; background: #16a34a; color: #fff; border-radius: 8px;
+  padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .search { position: relative; display: flex; gap: 8px; margin-bottom: 12px; }
 .search input { flex: 1; padding: 11px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
 .go { border: none; background: #16a34a; color: #fff; border-radius: 8px; padding: 0 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
