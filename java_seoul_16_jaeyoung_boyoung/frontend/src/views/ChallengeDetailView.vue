@@ -81,7 +81,7 @@ onMounted(load)
     <p v-if="loading" class="muted">불러오는 중…</p>
     <p v-else-if="error" class="err">{{ error }}</p>
 
-    <template v-else-if="c">
+    <div v-else-if="c" class="detail">
       <div class="dday" :class="{ ended: c.dDay < 0 }">{{ dDayText(c.dDay) }}</div>
       <h2 class="title">{{ c.title }}</h2>
       <p class="desc">{{ c.description }}</p>
@@ -115,12 +115,13 @@ onMounted(load)
           {{ c.dDay < 0 ? '종료된 챌린지' : '챌린지 참여하기' }}
         </button>
       </template>
-    </template>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 8px; }
+.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 14px; }
+.detail { max-width: 720px; }
 .dday { display: inline-block; font-size: 12px; font-weight: 800; color: #ef4444; background: #fef2f2; padding: 4px 10px; border-radius: 6px; }
 .dday.ended { color: #999; background: #f1f3f5; }
 .title { font-size: 22px; margin: 12px 0 6px; }
