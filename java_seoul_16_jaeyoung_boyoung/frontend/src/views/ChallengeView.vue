@@ -45,7 +45,10 @@ onMounted(async () => {
     <h2 class="h">냉파 챌린지</h2>
 
     <!-- 통계 배너 -->
-    <div class="banner">🔥 지금 <b>{{ activeParticipants }}</b>명이 챌린지에 도전 중!</div>
+    <div class="banner">
+      <span>🔥 지금 <b>{{ activeParticipants }}</b>명이 챌린지에 도전 중!</span>
+      <span class="banner-sub">나도 도전해 식비를 아껴봐요</span>
+    </div>
 
     <!-- 내 배지 -->
     <div class="badges">
@@ -86,8 +89,9 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.banner { background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; border-radius: 12px; padding: 14px 16px; font-size: 14px; margin-bottom: 14px; }
-.banner b { font-size: 17px; }
+.banner { background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; border-radius: 14px; padding: 18px 22px; font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.banner b { font-size: 18px; }
+.banner-sub { font-size: 13px; opacity: .92; }
 
 .badges { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
 .bsec { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
@@ -102,8 +106,9 @@ onMounted(async () => {
 .tabs button { padding: 7px 14px; border: 1px solid #ddd; background: #fff; border-radius: 999px; font-size: 13px; color: #666; cursor: pointer; }
 .tabs button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
 
-.list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.card { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 14px; cursor: pointer; }
+.list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.card { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 16px; cursor: pointer; }
+.card:hover { box-shadow: 0 6px 18px rgba(0,0,0,.06); }
 .top { display: flex; justify-content: space-between; align-items: center; }
 .dday { font-size: 12px; font-weight: 800; color: #ef4444; background: #fef2f2; padding: 3px 8px; border-radius: 6px; }
 .dday.ended { color: #999; background: #f1f3f5; }
@@ -117,5 +122,8 @@ onMounted(async () => {
 .bar .fill { height: 100%; background: #16a34a; }
 .muted { color: #999; }
 .small { font-size: 12px; }
-.empty { text-align: center; padding: 36px 0; }
+.empty { text-align: center; padding: 36px 0; grid-column: 1 / -1; }
+
+@media (max-width: 900px) { .list { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .list { grid-template-columns: 1fr; } .banner { flex-direction: column; align-items: flex-start; gap: 4px; } }
 </style>

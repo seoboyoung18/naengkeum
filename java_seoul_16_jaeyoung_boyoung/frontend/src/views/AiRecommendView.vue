@@ -172,22 +172,30 @@ function goRecipe() {
     <h2 class="h">🤖 AI 레시피 추천</h2>
     <p class="lead">냉장고 재료로 만들 수 있는 레시피를 추천해 드려요.</p>
 
-    <!-- 옵션 -->
-    <div class="opts">
-      <label><input type="checkbox" v-model="options.prioritizeExpiry" /> 유통기한 임박 우선</label>
-      <label><input type="checkbox" v-model="options.useAllFridge" /> 냉장고 재료 전부 사용</label>
-      <label><input type="checkbox" v-model="options.applyAllergy" /> 알레르기 반영</label>
-    </div>
+    <div class="layout">
+      <!-- 좌: 추천 옵션 + 버튼 -->
+      <div class="left">
+        <div class="opts">
+          <div class="opts-title">추천 옵션</div>
+          <label><input type="checkbox" v-model="options.prioritizeExpiry" /> 유통기한 임박 우선</label>
+          <label><input type="checkbox" v-model="options.useAllFridge" /> 냉장고 재료 전부 사용</label>
+          <label><input type="checkbox" v-model="options.applyAllergy" /> 알레르기 반영</label>
+        </div>
+        <button class="run" :disabled="streaming" @click="run">
+          {{ streaming ? '추천 받는 중…' : started ? '다시 추천 받기' : '🍳 추천 받기' }}
+        </button>
+        <p v-if="error" class="err">⚠️ {{ error }}</p>
+      </div>
 
-    <button class="run" :disabled="streaming" @click="run">
-      {{ streaming ? '추천 받는 중…' : started ? '다시 추천 받기' : '🍳 추천 받기' }}
-    </button>
+      <!-- 우: 결과 -->
+      <div class="right">
+        <div v-if="!started || error" class="placeholder">
+          <span class="ph-emoji">🍳</span>
+          <p>왼쪽에서 옵션을 고르고 <b>추천 받기</b>를 눌러보세요.</p>
+        </div>
 
-    <p v-if="error" class="err">⚠️ {{ error }}</p>
-
-    <!-- 결과 -->
-    <div v-if="started && !error" class="result">
-      <div v-if="result.source" class="badge" :class="result.source.origin === 'DB' ? 'db' : 'ai'">
+        <div v-else class="result">
+          <div v-if="result.source" class="badge" :class="result.source.origin === 'DB' ? 'db' : 'ai'">
         {{ result.source.origin === 'DB' ? `📚 보유 재료 기반 추천 레시피` : '🤖 AI 생성 레시피' }}
       </div>
 
@@ -241,19 +249,33 @@ function goRecipe() {
       <p v-if="result.source?.origin === 'AI' && done" class="reg-note">
         ＊ "담기"는 마이 레시피에 보관돼요. 공개는 마이페이지에서 따로 합니다.
       </p>
+        </div>
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.lead { color: #777; font-size: 13px; margin: 0 0 14px; }
-.opts { display: flex; flex-direction: column; gap: 10px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 14px; }
-.opts label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #444; }
+.lead { color: #777; font-size: 14px; margin: 0 0 18px; }
+
+.layout { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+.left { display: flex; flex-direction: column; }
+.right { min-width: 0; }
+
+.opts { display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 18px; }
+.opts-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 2px; }
+.opts label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #444; cursor: pointer; }
 .run { width: 100%; margin-top: 14px; padding: 14px; border: none; border-radius: 10px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
 .run:disabled { opacity: .6; }
 .err { color: #e11d48; font-size: 13px; margin: 12px 0 0; }
 
-.result { margin-top: 18px; background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 16px; }
+.placeholder { background: #fff; border: 1px dashed #dfe3e8; border-radius: 14px; padding: 72px 20px; text-align: center; color: #9aa0a6; }
+.placeholder .ph-emoji { font-size: 40px; display: block; margin-bottom: 12px; }
+.placeholder p { margin: 0; font-size: 14px; }
+
+.result { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 20px 22px; }
+
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
 .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; margin-bottom: 8px; }
 .badge.db { background: #eff6ff; color: #2563eb; }
 .badge.ai { background: #f5f3ff; color: #7c3aed; }
