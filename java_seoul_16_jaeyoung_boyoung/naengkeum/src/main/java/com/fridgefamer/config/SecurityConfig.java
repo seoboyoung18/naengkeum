@@ -74,6 +74,11 @@ public class SecurityConfig {
                         // (없으면 SSE 스트림이 끝에 Access Denied로 비정상 종료 → 브라우저 "network error")
                         .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
 
+                        // 레시피 쓰기/내 것 조회는 인증 필요 — 아래 "/api/recipe/**" permitAll보다 먼저 선언해 우선 매칭
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/recipe/from-ai/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/recipe/*/publish").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/recipe/mine").authenticated()
+
                         // 공개 경로
                         .requestMatchers(
                                 "/health", // 헬스체크

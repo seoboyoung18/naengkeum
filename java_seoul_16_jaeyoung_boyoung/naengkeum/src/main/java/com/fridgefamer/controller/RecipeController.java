@@ -1,19 +1,28 @@
 package com.fridgefamer.controller;
 
 import com.fridgefamer.dto.response.common.PageResponse;
+import com.fridgefamer.dto.response.recipe.MyRecipeItem;
 import com.fridgefamer.dto.response.recipe.RecipeAutocompleteItem;
 import com.fridgefamer.dto.response.recipe.RecipeDetail;
 import com.fridgefamer.dto.response.recipe.RecipeListItem;
+import com.fridgefamer.dto.response.recipe.RecipePublished;
+import com.fridgefamer.dto.response.recipe.RecipeSaved;
+import com.fridgefamer.exception.ApiException;
+import com.fridgefamer.exception.ErrorCode;
 import com.fridgefamer.service.RecipeService;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -91,6 +100,33 @@ public class RecipeController {
     }
 
     // =================================================================
+    //  쓰기 — AI 레시피 "담기" / 공개 / 마이 레시피 (인증 필요)
+    // =================================================================
+
+    /** "내 레시피로 담기" — AI 결과를 마이 레시피(비공개)로 복사. 이미 담았으면 409. */
+    @PostMapping("/from-ai/{aiRecipeId}")
+    public ResponseEntity<RecipeSaved> registerFromAi(
+            @PathVariable @Positive(message = "aiRecipeId는 양수여야 합니다") Long aiRecipeId
+    ) {
+        RecipeSaved saved = recipeService.createFromAi(currentMemberId(), aiRecipeId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /** "공개하기" — 마이 레시피를 공개 카탈로그에 게시. 본인 소유만(403). */
+    @PatchMapping("/{recipeId}/publish")
+    public RecipePublished publish(
+            @PathVariable @Positive(message = "recipeId는 양수여야 합니다") Long recipeId
+    ) {
+        return recipeService.publish(currentMemberId(), recipeId);
+    }
+
+    /** 마이 레시피 목록 — author_id=나 (공개/비공개 포함). */
+    @GetMapping("/mine")
+    public List<MyRecipeItem> mine() {
+        return recipeService.listMine(currentMemberId());
+    }
+
+    // =================================================================
     //  내부 헬퍼
     // =================================================================
 
@@ -117,5 +153,14 @@ public class RecipeController {
         if (auth == null || !auth.isAuthenticated()) return null;
         Object principal = auth.getPrincipal();
         return (principal instanceof Long id) ? id : null;
+    }
+
+    /** 인증 필수(담기/공개/마이). 미인증이면 401. (SecurityConfig에서도 막지만 이중 방어) */
+    private Long currentMemberId() {
+        Long id = currentMemberIdOrNull();
+        if (id == null) {
+            throw new ApiException(ErrorCode.UNAUTHORIZED, "인증이 필요합니다");
+        }
+        return id;
     }
 }

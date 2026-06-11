@@ -26,8 +26,10 @@
     </sql>
 
     <!-- 검색 필터 (select/count 공유). keyword/ingredients/maxCookTime 파라미터 사용. -->
+    <!-- 공개 카탈로그는 is_public=TRUE만 노출 (비공개 "마이 레시피" 제외). -->
     <sql id="searchWhere">
         <where>
+            AND r.is_public = TRUE
             <if test="keyword != null and keyword != ''">
                 AND (
                     r.title LIKE CONCAT('%', #{keyword}, '%')
@@ -79,6 +81,7 @@
             resultType="com.fridgefamer.dto.response.recipe.RecipeListRow">
         SELECT <include refid="listColumns"/>
           FROM recipe r
+         WHERE r.is_public = TRUE
          ORDER BY r.view_count DESC, r.created_at DESC
          LIMIT #{limit}
     </select>
@@ -91,7 +94,8 @@
         SELECT recipe_id AS recipeId,
                title
           FROM recipe
-         WHERE title LIKE CONCAT('%', #{keyword}, '%')
+         WHERE is_public = TRUE
+           AND title LIKE CONCAT('%', #{keyword}, '%')
          ORDER BY (title LIKE CONCAT(#{keyword}, '%')) DESC,
                   view_count DESC
          LIMIT #{limit}
@@ -165,7 +169,8 @@
                    THEN 1 ELSE 0 END) AS buyNeeded
           FROM recipe r
           JOIN recipe_ingredient ri ON ri.recipe_id = r.recipe_id
-         WHERE EXISTS (SELECT 1 FROM recipe_step s WHERE s.recipe_id = r.recipe_id)
+         WHERE r.is_public = TRUE
+           AND EXISTS (SELECT 1 FROM recipe_step s WHERE s.recipe_id = r.recipe_id)
          GROUP BY r.recipe_id, r.title, r.summary, r.cook_time
         HAVING matched >= #{minMatch} AND buyNeeded &lt;= #{maxBuy}
          ORDER BY buyNeeded ASC, matched DESC, (matched / total) DESC, r.view_count DESC
@@ -194,5 +199,85 @@
         UPDATE recipe SET view_count = view_count + 1
          WHERE recipe_id = #{recipeId}
     </update>
+
+    <!-- =========================================================== -->
+    <!--  쓰기 — AI 레시피 "담기" / 공개 / 마이 레시피 (V6)           -->
+    <!-- =========================================================== -->
+
+    <!-- "담기" 출처 ai_recipe 단건 (JSON은 문자열로 읽어 서비스에서 파싱) -->
+    <select id="selectSourceAiRecipe"
+            resultType="com.fridgefamer.dto.response.wishlist.AiRecipeRow">
+        SELECT ai_recipe_id     AS aiRecipeId,
+               member_id        AS memberId,
+               title,
+               summary,
+               ingredients_json AS ingredientsJson,
+               steps_json       AS stepsJson,
+               cook_time        AS cookTime,
+               created_at       AS createdAt
+          FROM ai_recipe
+         WHERE ai_recipe_id = #{aiRecipeId}
+         LIMIT 1
+    </select>
+
+    <!-- ai_recipe → recipe 복사(담기). 비공개·내 소유. 중복 담기는 UNIQUE로 409 -->
+    <insert id="insertRecipe"
+            useGeneratedKeys="true"
+            keyProperty="cmd.recipeId"
+            keyColumn="recipe_id">
+        INSERT INTO recipe (title, summary, cook_time, source,
+                            author_id, is_public, source_ai_recipe_id)
+        VALUES (#{cmd.title},
+                #{cmd.summary},
+                #{cmd.cookTime},
+                'AI_SAVED',
+                #{cmd.authorId},
+                FALSE,
+                #{cmd.sourceAiRecipeId})
+    </insert>
+
+    <insert id="insertIngredients">
+        INSERT INTO recipe_ingredient (recipe_id, name, qty) VALUES
+        <foreach collection="items" item="ing" separator=",">
+            (#{recipeId}, #{ing.name}, #{ing.qty})
+        </foreach>
+    </insert>
+
+    <insert id="insertSteps">
+        INSERT INTO recipe_step (recipe_id, step_number, description) VALUES
+        <foreach collection="steps" item="s" separator=",">
+            (#{recipeId}, #{s.stepNumber}, #{s.description})
+        </foreach>
+    </insert>
+
+    <!-- 공개하기 권한 검증용 — 없으면 null(404). author_id NULL=공공 -->
+    <select id="selectRecipeOwner"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeOwnerRow">
+        SELECT recipe_id  AS recipeId,
+               author_id  AS authorId,
+               is_public  AS isPublic
+          FROM recipe
+         WHERE recipe_id = #{recipeId}
+         LIMIT 1
+    </select>
+
+    <update id="markPublic">
+        UPDATE recipe SET is_public = TRUE
+         WHERE recipe_id = #{recipeId}
+    </update>
+
+    <!-- 마이 레시피 목록 (author_id=나, 공개/비공개 모두, 최신순) -->
+    <select id="selectMyRecipes"
+            resultType="com.fridgefamer.dto.response.recipe.MyRecipeItem">
+        SELECT recipe_id  AS recipeId,
+               title,
+               cook_time  AS cookTime,
+               is_public  AS isPublic,
+               source,
+               created_at AS createdAt
+          FROM recipe
+         WHERE author_id = #{memberId}
+         ORDER BY created_at DESC
+    </select>
 
 </mapper>
