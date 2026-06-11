@@ -145,8 +145,8 @@ onMounted(load)
 .meta { display: flex; gap: 14px; font-size: 14px; color: #888; margin-top: 10px; }
 .summary { font-size: 15px; color: #555; margin: 12px 0 0; line-height: 1.5; }
 
-.nutri { display: flex; gap: 8px; margin: 20px 0; }
-.nutri div { flex: 1; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 12px 4px; text-align: center; font-size: 11px; color: #888; }
+.nutri { display: flex; gap: 10px; margin: 20px 0; }
+.nutri div { flex: 1; background: #fff; border: 1px solid #f0f0f0; border-radius: 12px; padding: 14px 4px; text-align: center; font-size: 11px; color: #888; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
 .nutri div b { display: block; font-size: 17px; color: #333; margin-bottom: 2px; }
 
 .wish-btn { border: none; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700;
