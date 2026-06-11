@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { searchRecipes, autocompleteRecipes } from '../api/recipe'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import { listFridge } from '../api/fridge'
@@ -9,6 +9,7 @@ import { useToast } from '../composables/useToast'
 const toast = useToast()
 
 const router = useRouter()
+const route = useRoute()
 
 const SORTS = [
   { key: 'LATEST', label: '최신' },
@@ -16,15 +17,24 @@ const SORTS = [
   { key: 'RATING', label: '평점' },
   { key: 'COOK_TIME', label: '조리시간' },
 ]
+// 구간(band) — 서로 겹치지 않게: 10분=≤10, 20분=11~20, 30분=21~30
 const COOK_TIMES = [
-  { v: null, label: '시간 전체' },
-  { v: 10, label: '10분' },
-  { v: 20, label: '20분' },
-  { v: 30, label: '30분' },
+  { min: null, max: null, label: '시간 전체' },
+  { min: null, max: 10, label: '10분' },
+  { min: 11, max: 20, label: '20분' },
+  { min: 21, max: 30, label: '30분' },
 ]
 const SIZE = 12
 
-const filters = reactive({ keyword: '', sort: 'LATEST', maxCookTime: null, useMyFridge: false })
+const filters = reactive({ keyword: '', sort: 'LATEST', minCookTime: null, maxCookTime: null, useMyFridge: false, mine: false })
+
+// 출처 배지 (공공/✍️직접/🤖AI)
+const SOURCE_BADGE = {
+  PUBLIC: { label: '공공', cls: 'pub' },
+  USER: { label: '✍️ 직접', cls: 'user' },
+  AI_SAVED: { label: '🤖 AI', cls: 'ai' },
+}
+function badge(source) { return SOURCE_BADGE[source] || SOURCE_BADGE.PUBLIC }
 const content = ref([])
 const page = ref(0)
 const totalPages = ref(0)
@@ -75,7 +85,9 @@ async function load(reset = true) {
       size: SIZE,
     }
     if (filters.keyword.trim()) params.keyword = filters.keyword.trim()
+    if (filters.minCookTime) params.minCookTime = filters.minCookTime
     if (filters.maxCookTime) params.maxCookTime = filters.maxCookTime
+    if (filters.mine) params.mine = true
     if (filters.useMyFridge) {
       const names = await ensureFridgeNames()
       if (names) params.ingredients = names
@@ -92,8 +104,9 @@ async function load(reset = true) {
   }
 }
 
+function setTab(mine) { if (filters.mine === mine) return; filters.mine = mine; load(true) }
 function setSort(k) { filters.sort = k; load(true) }
-function setCookTime(v) { filters.maxCookTime = v; load(true) }
+function setCookTime(c) { filters.minCookTime = c.min; filters.maxCookTime = c.max; load(true) }
 function toggleMyFridge() { filters.useMyFridge = !filters.useMyFridge; load(true) }
 function loadMore() { page.value += 1; load(false) }
 
@@ -111,7 +124,10 @@ async function toggleWish(item) {
   }
 }
 
-onMounted(() => load(true))
+onMounted(() => {
+  if (route.query.keyword) filters.keyword = String(route.query.keyword)
+  load(true)
+})
 onBeforeUnmount(() => clearTimeout(debounceTimer))
 </script>
 
@@ -120,6 +136,12 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
     <div class="head">
       <h2 class="h">레시피 탐색</h2>
       <button class="register" @click="router.push({ name: 'recipe-publish' })">＋ 레시피 등록</button>
+    </div>
+
+    <!-- 탭: 전체 / 내가 등록한 -->
+    <div class="tabs">
+      <button :class="{ on: !filters.mine }" @click="setTab(false)">전체</button>
+      <button :class="{ on: filters.mine }" @click="setTab(true)">내가 등록한 레시피</button>
     </div>
 
     <!-- 검색 -->
@@ -145,7 +167,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 
     <!-- 조리시간 + 내 재료 -->
     <div class="chips">
-      <button v-for="c in COOK_TIMES" :key="String(c.v)" :class="{ on: filters.maxCookTime === c.v }" @click="setCookTime(c.v)">{{ c.label }}</button>
+      <button v-for="c in COOK_TIMES" :key="c.label" :class="{ on: filters.minCookTime === c.min && filters.maxCookTime === c.max }" @click="setCookTime(c)">{{ c.label }}</button>
       <button class="mine" :class="{ on: filters.useMyFridge }" @click="toggleMyFridge">🧊 내 재료</button>
     </div>
 
@@ -155,22 +177,25 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
     <p v-else-if="error" class="err">{{ error }}</p>
     <p v-else-if="content.length === 0" class="muted empty">검색 결과가 없습니다.</p>
 
-    <ul v-else class="list">
+    <ul v-else class="grid">
       <li v-for="r in content" :key="r.recipeId" class="card" @click="goDetail(r.recipeId)">
         <div class="thumb" :style="r.thumbnailUrl ? { backgroundImage: `url(${r.thumbnailUrl})` } : null">
           <span v-if="!r.thumbnailUrl">🍽️</span>
+          <button class="heart" :class="{ on: r.isWishlisted }" @click.stop="toggleWish(r)">
+            {{ r.isWishlisted ? '♥' : '♡' }}
+          </button>
         </div>
         <div class="info">
-          <div class="title">{{ r.title }}</div>
+          <div class="trow">
+            <div class="title">{{ r.title }}</div>
+            <span class="src" :class="badge(r.source).cls">{{ badge(r.source).label }}</span>
+          </div>
           <div class="meta">
             <span v-if="r.cookTime">⏱ {{ r.cookTime }}분</span>
-            <span>⭐ {{ Number(r.avgRating).toFixed(1) }} ({{ r.reviewCount }})</span>
+            <span>⭐ {{ Number(r.avgRating).toFixed(1) }}<template v-if="r.reviewCount"> ({{ r.reviewCount }})</template></span>
           </div>
           <div class="ings" v-if="r.mainIngredients?.length">{{ r.mainIngredients.join(' · ') }}</div>
         </div>
-        <button class="heart" :class="{ on: r.isWishlisted }" @click.stop="toggleWish(r)">
-          {{ r.isWishlisted ? '♥' : '♡' }}
-        </button>
       </li>
     </ul>
 
@@ -184,6 +209,12 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .register { flex: 0 0 auto; border: none; background: #16a34a; color: #fff; border-radius: 8px;
   padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tabs button { padding: 8px 16px; border: 1px solid #ddd; background: #fff; border-radius: 999px;
+  font-size: 14px; color: #666; cursor: pointer; }
+.tabs button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
+
 .search { position: relative; display: flex; gap: 8px; margin-bottom: 12px; }
 .search input { flex: 1; padding: 11px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
 .go { border: none; background: #16a34a; color: #fff; border-radius: 8px; padding: 0 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -198,15 +229,23 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 
 .count { font-size: 12px; color: #999; margin: 0 0 10px; }
 
-.list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.card { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 10px; cursor: pointer; }
-.thumb { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 10px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-.info { flex: 1; min-width: 0; }
-.title { font-size: 15px; font-weight: 600; }
-.meta { display: flex; gap: 10px; font-size: 12px; color: #888; margin-top: 3px; }
-.ings { font-size: 12px; color: #aaa; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.heart { border: none; background: none; font-size: 22px; color: #ccc; cursor: pointer; padding: 4px; }
+.grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.card { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; cursor: pointer; transition: box-shadow .15s; }
+.card:hover { box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+.thumb { position: relative; height: 150px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 34px; color: #c7ccd1; }
+.heart { position: absolute; top: 10px; right: 10px; border: none; background: rgba(255,255,255,.9); width: 32px; height: 32px; border-radius: 50%; font-size: 17px; color: #bbb; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .heart.on { color: #ef4444; }
+.info { padding: 14px 16px 16px; }
+.trow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.title { font-size: 15px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src { flex: 0 0 auto; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 8px; background: #eef2f7; color: #64748b; }
+.src.user { background: #fff7ed; color: #c2410c; }
+.src.ai { background: #f5f3ff; color: #7c3aed; }
+.meta { display: flex; gap: 10px; font-size: 12px; color: #888; margin-top: 8px; }
+.ings { font-size: 12px; color: #aaa; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
 
 .muted { color: #999; }
 .empty { text-align: center; padding: 40px 0; }

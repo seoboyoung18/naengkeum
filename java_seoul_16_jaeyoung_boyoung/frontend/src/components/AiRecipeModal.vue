@@ -57,8 +57,8 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: flex-end; justify-content: center; z-index: 60; }
-.sheet { width: 100%; max-width: 480px; background: #fff; border-radius: 16px 16px 0 0; padding: 18px; max-height: 88vh; overflow-y: auto; }
+.overlay { position: fixed; inset: 0; background: rgba(17,24,39,.5); display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; z-index: 60; }
+.sheet { width: 100%; max-width: 480px; background: #fff; border-radius: 16px; padding: 22px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 48px rgba(0,0,0,.18); }
 .hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .badge { font-size: 12px; font-weight: 700; background: #f5f3ff; color: #7c3aed; padding: 5px 10px; border-radius: 999px; }
 .x { border: none; background: none; font-size: 18px; cursor: pointer; color: #888; }

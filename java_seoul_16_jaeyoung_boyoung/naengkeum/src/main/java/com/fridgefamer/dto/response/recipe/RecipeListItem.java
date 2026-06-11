@@ -24,5 +24,6 @@ public record RecipeListItem(
         BigDecimal avgRating,
         int reviewCount,
         boolean isWishlisted,
+        String source,
         List<String> mainIngredients
 ) {}

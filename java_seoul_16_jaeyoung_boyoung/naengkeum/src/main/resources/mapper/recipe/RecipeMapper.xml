@@ -22,14 +22,20 @@
         (SELECT COUNT(*) FROM review WHERE recipe_id = r.recipe_id) AS reviewCount,
         EXISTS(SELECT 1 FROM wishlist w
                 WHERE w.recipe_id = r.recipe_id
-                  AND w.member_id = #{viewerId}) AS isWishlisted
+                  AND w.member_id = #{viewerId}) AS isWishlisted,
+        r.source
     </sql>
 
     <!-- 검색 필터 (select/count 공유). keyword/ingredients/maxCookTime 파라미터 사용. -->
     <!-- 공개 카탈로그는 is_public=TRUE만 노출 (비공개 "마이 레시피" 제외). -->
     <sql id="searchWhere">
         <where>
-            AND r.is_public = TRUE
+            <choose>
+                <!-- "내가 등록한": 공개/비공개 모두, 내 author_id 기준 -->
+                <when test="mine">AND r.author_id = #{viewerId}</when>
+                <!-- 전체(공개 카탈로그): is_public=TRUE만 -->
+                <otherwise>AND r.is_public = TRUE</otherwise>
+            </choose>
             <if test="keyword != null and keyword != ''">
                 AND (
                     r.title LIKE CONCAT('%', #{keyword}, '%')
@@ -44,6 +50,9 @@
                                AND ri2.name IN
                                <foreach item="ing" collection="ingredients"
                                         open="(" separator="," close=")">#{ing}</foreach>)
+            </if>
+            <if test="minCookTime != null">
+                AND r.cook_time IS NOT NULL AND r.cook_time &gt;= #{minCookTime}
             </if>
             <if test="maxCookTime != null">
                 AND r.cook_time IS NOT NULL AND r.cook_time &lt;= #{maxCookTime}

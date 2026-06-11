@@ -66,82 +66,116 @@ onMounted(load)
     <p v-else-if="error" class="err">{{ error }}</p>
 
     <template v-else-if="recipe">
-      <!-- 히어로 -->
-      <div class="hero" :style="recipe.thumbnailUrl ? { backgroundImage: `url(${recipe.thumbnailUrl})` } : null">
-        <span v-if="!recipe.thumbnailUrl" class="ph">🍽️</span>
+      <!-- 상단: 이미지(좌) + 정보(우) -->
+      <div class="top">
+        <div class="hero" :style="recipe.thumbnailUrl ? { backgroundImage: `url(${recipe.thumbnailUrl})` } : null">
+          <span v-if="!recipe.thumbnailUrl" class="ph">🍽️</span>
+        </div>
+
+        <div class="info">
+          <div class="title-row">
+            <h2 class="title">{{ recipe.title }}</h2>
+          </div>
+          <div class="meta">
+            <span v-if="recipe.cookTime">⏱ {{ recipe.cookTime }}분</span>
+            <span>⭐ {{ Number(recipe.avgRating).toFixed(1) }} (리뷰 {{ recipe.reviewCount }})</span>
+          </div>
+          <p v-if="recipe.summary" class="summary">{{ recipe.summary }}</p>
+
+          <!-- 영양정보 -->
+          <div v-if="hasNutrition" class="nutri">
+            <div v-if="recipe.nutrition.calories != null"><b>{{ recipe.nutrition.calories }}</b>kcal</div>
+            <div v-if="recipe.nutrition.carbs != null"><b>{{ recipe.nutrition.carbs }}</b>탄수</div>
+            <div v-if="recipe.nutrition.protein != null"><b>{{ recipe.nutrition.protein }}</b>단백</div>
+            <div v-if="recipe.nutrition.fat != null"><b>{{ recipe.nutrition.fat }}</b>지방</div>
+            <div v-if="recipe.nutrition.sodium != null"><b>{{ recipe.nutrition.sodium }}</b>나트륨</div>
+          </div>
+
+          <button class="wish-btn" :class="{ on: recipe.isWishlisted }" @click="toggleWish">
+            {{ recipe.isWishlisted ? '♥ 찜 해제' : '♡ 찜하기' }}
+          </button>
+        </div>
       </div>
 
-      <div class="head">
-        <h2 class="title">{{ recipe.title }}</h2>
-        <button class="heart" :class="{ on: recipe.isWishlisted }" @click="toggleWish">
-          {{ recipe.isWishlisted ? '♥' : '♡' }}
-        </button>
+      <!-- 하단: 재료·조리순서(좌) + 리뷰(우) -->
+      <div class="cols">
+        <div class="main-col">
+          <div class="card">
+            <h3 class="sec">재료</h3>
+            <ul v-if="recipe.ingredients?.length" class="ings">
+              <li v-for="(ing, i) in recipe.ingredients" :key="i">
+                <span>{{ ing.name }}</span><span class="qty">{{ ing.qty }}</span>
+              </li>
+            </ul>
+            <p v-else class="muted">등록된 재료 정보가 없습니다.</p>
+          </div>
+
+          <div class="card">
+            <h3 class="sec">조리 순서</h3>
+            <ol v-if="recipe.steps?.length" class="steps">
+              <li v-for="s in recipe.steps" :key="s.stepNumber">
+                <div class="n">{{ s.stepNumber }}</div>
+                <div class="desc">{{ s.description }}</div>
+              </li>
+            </ol>
+            <p v-else class="muted">등록된 조리 순서가 없습니다.</p>
+          </div>
+        </div>
+
+        <div class="side-col">
+          <div class="card">
+            <ReviewSection :recipe-id="recipe.recipeId" @changed="reloadStats" />
+          </div>
+        </div>
       </div>
-      <div class="meta">
-        <span v-if="recipe.cookTime">⏱ {{ recipe.cookTime }}분</span>
-        <span>⭐ {{ Number(recipe.avgRating).toFixed(1) }} ({{ recipe.reviewCount }})</span>
-      </div>
-      <p v-if="recipe.summary" class="summary">{{ recipe.summary }}</p>
-
-      <!-- 영양정보 -->
-      <div v-if="hasNutrition" class="nutri">
-        <div v-if="recipe.nutrition.calories != null"><b>{{ recipe.nutrition.calories }}</b>kcal</div>
-        <div v-if="recipe.nutrition.carbs != null"><b>{{ recipe.nutrition.carbs }}</b>탄수</div>
-        <div v-if="recipe.nutrition.protein != null"><b>{{ recipe.nutrition.protein }}</b>단백</div>
-        <div v-if="recipe.nutrition.fat != null"><b>{{ recipe.nutrition.fat }}</b>지방</div>
-        <div v-if="recipe.nutrition.sodium != null"><b>{{ recipe.nutrition.sodium }}</b>나트륨</div>
-      </div>
-
-      <!-- 재료 -->
-      <h3 class="sec">재료</h3>
-      <ul v-if="recipe.ingredients?.length" class="ings">
-        <li v-for="(ing, i) in recipe.ingredients" :key="i">
-          <span>{{ ing.name }}</span><span class="qty">{{ ing.qty }}</span>
-        </li>
-      </ul>
-      <p v-else class="muted">등록된 재료 정보가 없습니다.</p>
-
-      <!-- 조리 단계 -->
-      <h3 class="sec">조리 순서</h3>
-      <ol v-if="recipe.steps?.length" class="steps">
-        <li v-for="s in recipe.steps" :key="s.stepNumber">
-          <div class="n">{{ s.stepNumber }}</div>
-          <div class="desc">{{ s.description }}</div>
-        </li>
-      </ol>
-      <p v-else class="muted">등록된 조리 순서가 없습니다.</p>
-
-      <!-- 리뷰 -->
-      <ReviewSection :recipe-id="recipe.recipeId" @changed="reloadStats" />
     </template>
   </section>
 </template>
 
 <style scoped>
-.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 8px; }
-.hero { width: 100%; height: 180px; border-radius: 14px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; }
-.hero .ph { font-size: 48px; }
-.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-top: 14px; }
-.title { font-size: 20px; margin: 0; }
-.heart { border: none; background: none; font-size: 26px; color: #ccc; cursor: pointer; }
-.heart.on { color: #ef4444; }
-.meta { display: flex; gap: 12px; font-size: 13px; color: #888; margin-top: 6px; }
-.summary { font-size: 14px; color: #555; margin: 10px 0 0; }
+.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 14px; }
 
-.nutri { display: flex; gap: 8px; margin: 16px 0; }
-.nutri div { flex: 1; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px 4px; text-align: center; font-size: 11px; color: #888; }
-.nutri div b { display: block; font-size: 15px; color: #333; }
+/* 상단 2단 */
+.top { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+.hero { width: 100%; height: 340px; border-radius: 16px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; }
+.hero .ph { font-size: 56px; color: #c7ccd1; }
+.info { min-width: 0; }
+.title-row { display: flex; align-items: flex-start; gap: 10px; }
+.title { font-size: 26px; margin: 0; }
+.meta { display: flex; gap: 14px; font-size: 14px; color: #888; margin-top: 10px; }
+.summary { font-size: 15px; color: #555; margin: 12px 0 0; line-height: 1.5; }
 
-.sec { font-size: 16px; margin: 22px 0 10px; }
+.nutri { display: flex; gap: 8px; margin: 20px 0; }
+.nutri div { flex: 1; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 12px 4px; text-align: center; font-size: 11px; color: #888; }
+.nutri div b { display: block; font-size: 17px; color: #333; margin-bottom: 2px; }
+
+.wish-btn { border: none; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700;
+  border-radius: 10px; padding: 13px 28px; cursor: pointer; }
+.wish-btn.on { background: #fff; color: #16a34a; border: 1px solid #16a34a; }
+
+/* 하단 2단 */
+.cols { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; margin-top: 24px; }
+.main-col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.card { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 20px 22px; }
+
+.sec { font-size: 16px; margin: 0 0 14px; }
 .ings { list-style: none; padding: 0; margin: 0; }
-.ings li { display: flex; justify-content: space-between; padding: 9px 12px; background: #fff; border: 1px solid #eee; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+.ings li { display: flex; justify-content: space-between; padding: 11px 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; font-size: 14px; }
+.ings li:last-child { margin-bottom: 0; }
 .ings .qty { color: #888; }
 
-.steps { list-style: none; padding: 0; margin: 0; counter-reset: step; }
-.steps li { display: flex; gap: 12px; margin-bottom: 12px; }
+.steps { list-style: none; padding: 0; margin: 0; }
+.steps li { display: flex; gap: 12px; margin-bottom: 14px; }
+.steps li:last-child { margin-bottom: 0; }
 .steps .n { flex: 0 0 26px; height: 26px; border-radius: 50%; background: #ecfdf3; color: #16a34a; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 13px; }
-.steps .desc { flex: 1; font-size: 14px; padding-top: 2px; }
+.steps .desc { flex: 1; font-size: 14px; padding-top: 2px; line-height: 1.5; }
 
 .muted { color: #999; }
 .err { color: #e11d48; }
+
+@media (max-width: 920px) {
+  .top { grid-template-columns: 1fr; }
+  .hero { height: 240px; }
+  .cols { grid-template-columns: 1fr; }
+}
 </style>

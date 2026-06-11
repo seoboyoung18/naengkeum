@@ -34,16 +34,21 @@ public interface RecipeMapper {
      */
     List<RecipeListRow> selectRecipePage(@Param("keyword") String keyword,
                                          @Param("ingredients") List<String> ingredients,
+                                         @Param("minCookTime") Integer minCookTime,
                                          @Param("maxCookTime") Integer maxCookTime,
                                          @Param("sort") String sort,
+                                         @Param("mine") boolean mine,
                                          @Param("viewerId") Long viewerId,
                                          @Param("offset") int offset,
                                          @Param("size") int size);
 
-    /** 검색 필터와 동일 조건의 전체 건수(페이징 totalElements용). */
+    /** 검색 필터와 동일 조건의 전체 건수(페이징 totalElements용). mine=true면 author_id=viewerId 기준. */
     long countRecipes(@Param("keyword") String keyword,
                       @Param("ingredients") List<String> ingredients,
-                      @Param("maxCookTime") Integer maxCookTime);
+                      @Param("minCookTime") Integer minCookTime,
+                      @Param("maxCookTime") Integer maxCookTime,
+                      @Param("mine") boolean mine,
+                      @Param("viewerId") Long viewerId);
 
     /** 인기순(view_count) Top N. */
     List<RecipeListRow> selectPopular(@Param("viewerId") Long viewerId,

@@ -70,7 +70,12 @@ public class RecipeController {
             @RequestParam(required = false) String ingredients,   // 콤마 구분 재료명
 
             @RequestParam(required = false)
+            @Positive(message = "minCookTime은 양수여야 합니다") Integer minCookTime,
+
+            @RequestParam(required = false)
             @Positive(message = "maxCookTime은 양수여야 합니다") Integer maxCookTime,
+
+            @RequestParam(defaultValue = "false") boolean mine,
 
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "page는 0 이상이어야 합니다") int page,
 
@@ -78,7 +83,7 @@ public class RecipeController {
     ) {
         return recipeService.search(
                 currentMemberIdOrNull(), trimToNull(keyword), parseCsv(ingredients),
-                maxCookTime, sort, page, size);
+                minCookTime, maxCookTime, sort, mine, page, size);
     }
 
     @GetMapping("/autocomplete")

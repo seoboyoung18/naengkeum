@@ -58,11 +58,16 @@ public class RecipeService {
     //  GET /api/recipe — 검색/필터/정렬 + 페이징
     // =====================================================================
     public PageResponse<RecipeListItem> search(Long viewerId, String keyword, List<String> ingredients,
-                                               Integer maxCookTime, String sort, int page, int size) {
+                                               Integer minCookTime, Integer maxCookTime, String sort,
+                                               boolean mine, int page, int size) {
+        // "내가 등록한"은 인증 필요 — 미인증이면 빈 결과(공공 레시피 author_id=null 노출 방지)
+        if (mine && viewerId == null) {
+            return PageResponse.of(List.of(), page, size, 0);
+        }
         int offset = page * size;
-        List<RecipeListRow> rows =
-                recipeMapper.selectRecipePage(keyword, ingredients, maxCookTime, sort, viewerId, offset, size);
-        long total = recipeMapper.countRecipes(keyword, ingredients, maxCookTime);
+        List<RecipeListRow> rows = recipeMapper.selectRecipePage(
+                keyword, ingredients, minCookTime, maxCookTime, sort, mine, viewerId, offset, size);
+        long total = recipeMapper.countRecipes(keyword, ingredients, minCookTime, maxCookTime, mine, viewerId);
         return PageResponse.of(enrich(rows), page, size, total);
     }
 
@@ -263,7 +268,7 @@ public class RecipeService {
         return rows.stream()
                 .map(r -> new RecipeListItem(
                         r.recipeId(), r.title(), r.thumbnailUrl(), r.cookTime(),
-                        r.avgRating(), r.reviewCount(), r.isWishlisted(),
+                        r.avgRating(), r.reviewCount(), r.isWishlisted(), r.source(),
                         ingredientsByRecipe.getOrDefault(r.recipeId(), List.of())))
                 .toList();
     }

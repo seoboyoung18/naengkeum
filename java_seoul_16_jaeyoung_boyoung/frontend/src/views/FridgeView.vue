@@ -80,7 +80,10 @@ onMounted(load)
 
 <template>
   <section>
-    <h2 class="h">내 냉장고</h2>
+    <div class="head">
+      <h2 class="h">내 냉장고</h2>
+      <button class="add-btn" @click="openAdd">＋ 재료 추가</button>
+    </div>
 
     <!-- 요약 -->
     <ul class="summary">
@@ -107,26 +110,30 @@ onMounted(load)
     <!-- 목록 -->
     <p v-if="loading" class="muted">불러오는 중…</p>
     <p v-else-if="error" class="err">{{ error }}</p>
-    <p v-else-if="items.length === 0" class="muted empty">재료가 없습니다. 아래 + 버튼으로 추가해 보세요.</p>
+    <p v-else-if="items.length === 0" class="muted empty">재료가 없습니다. 우측 상단 ＋ 재료 추가 버튼으로 추가해 보세요.</p>
 
-    <ul v-else class="list">
-      <li v-for="it in items" :key="it.fridgeItemId" class="card">
-        <div class="left">
-          <span class="dday" :class="dDayClass(it.dDay)">{{ dDayText(it.dDay) }}</span>
-        </div>
-        <div class="mid">
-          <div class="name">{{ it.name }} <span class="qty">{{ it.qty }}{{ it.unit }}</span></div>
-          <div class="sub">{{ STORAGE_LABEL[it.storageType] }} · {{ it.expiryDate }}<template v-if="it.memo"> · {{ it.memo }}</template></div>
-        </div>
-        <div class="right">
-          <button class="ic" @click="openEdit(it)">✏️</button>
-          <button class="ic" @click="onDelete(it)">🗑️</button>
-        </div>
-      </li>
-    </ul>
-
-    <!-- 추가 FAB -->
-    <button class="fab" @click="openAdd">＋</button>
+    <div v-else class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>재료명</th><th>수량</th><th>보관</th><th>유통기한</th><th>D-day</th><th class="man">관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="it in items" :key="it.fridgeItemId">
+            <td class="name">{{ it.name }}<span v-if="it.memo" class="memo">· {{ it.memo }}</span></td>
+            <td>{{ it.qty }}{{ it.unit }}</td>
+            <td>{{ STORAGE_LABEL[it.storageType] }}</td>
+            <td>{{ it.expiryDate }}</td>
+            <td><span class="dday" :class="dDayClass(it.dDay)">{{ dDayText(it.dDay) }}</span></td>
+            <td class="man">
+              <button class="ic" @click="openEdit(it)">✏️</button>
+              <button class="ic" @click="onDelete(it)">🗑️</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- 추가/수정 폼 -->
     <FridgeItemForm
@@ -139,6 +146,10 @@ onMounted(load)
 </template>
 
 <style scoped>
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.h { margin: 0; }
+.add-btn { flex: 0 0 auto; border: none; background: #16a34a; color: #fff; border-radius: 8px;
+  padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .summary { list-style: none; display: flex; gap: 8px; padding: 0; margin: 0 0 14px; }
 .summary li { flex: 1; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px; text-align: center; font-size: 12px; color: #666; }
 .summary li span { display: block; font-size: 18px; font-weight: 800; color: #16a34a; }
@@ -150,24 +161,22 @@ onMounted(load)
 .tabs button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
 .sort { padding: 7px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fff; }
 
-.list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-.card { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 12px; }
-.left { flex: 0 0 auto; }
-.dday { display: inline-block; min-width: 48px; text-align: center; font-size: 12px; font-weight: 800; padding: 6px 8px; border-radius: 8px; }
+.table-wrap { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; }
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; font-size: 12px; color: #999; font-weight: 600; padding: 14px 18px; background: #fafbfc; border-bottom: 1px solid #eee; }
+.table td { padding: 14px 18px; border-bottom: 1px solid #f1f3f5; font-size: 14px; color: #333; vertical-align: middle; }
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: #fafbfc; }
+.table .name { font-weight: 600; }
+.table .memo { color: #aaa; font-weight: 400; font-size: 12px; margin-left: 6px; }
+.table .man { text-align: center; white-space: nowrap; }
+.dday { display: inline-block; min-width: 48px; text-align: center; font-size: 12px; font-weight: 800; padding: 5px 8px; border-radius: 8px; }
 .dday.ok { background: #ecfdf3; color: #16a34a; }
 .dday.soon { background: #fff7ed; color: #f59e0b; }
 .dday.expired { background: #fef2f2; color: #ef4444; }
-.mid { flex: 1; min-width: 0; }
-.name { font-size: 15px; font-weight: 600; }
-.name .qty { font-size: 13px; color: #888; font-weight: 400; margin-left: 4px; }
-.sub { font-size: 12px; color: #999; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.right { display: flex; gap: 2px; }
 .ic { border: none; background: none; font-size: 16px; cursor: pointer; padding: 4px; }
 
 .muted { color: #999; }
 .empty { text-align: center; padding: 40px 0; }
 .err { color: #e11d48; }
-
-.fab { position: fixed; bottom: 80px; right: calc(50% - 240px + 16px); width: 52px; height: 52px; border-radius: 50%; border: none; background: #16a34a; color: #fff; font-size: 26px; cursor: pointer; box-shadow: 0 6px 16px rgba(22,163,74,.4); }
-@media (max-width: 520px) { .fab { right: 16px; } }
 </style>

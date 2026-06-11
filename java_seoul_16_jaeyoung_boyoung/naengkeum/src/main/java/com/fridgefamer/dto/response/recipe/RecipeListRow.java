@@ -16,5 +16,6 @@ public record RecipeListRow(
         Integer cookTime,
         BigDecimal avgRating,
         int reviewCount,
-        boolean isWishlisted
+        boolean isWishlisted,
+        String source
 ) {}
