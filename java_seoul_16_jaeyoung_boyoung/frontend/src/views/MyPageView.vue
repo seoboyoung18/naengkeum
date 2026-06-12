@@ -123,7 +123,7 @@ onMounted(loadAll)
         </div>
         <ul class="stats">
           <li class="clk" @click="router.push('/fridge')"><span>{{ me.stats.fridgeCount }}</span>냉장고</li>
-          <li class="clk" @click="router.push('/recipe')"><span>{{ me.stats.wishlistCount }}</span>찜</li>
+          <li class="clk" @click="router.push('/mypage')"><span>{{ me.stats.wishlistCount }}</span>찜</li>
           <li><span>{{ me.stats.reviewCount }}</span>리뷰</li>
           <li class="clk" @click="router.push({ name: 'follow-list', query: { tab: 'followers' } })"><span>{{ me.stats.followerCount }}</span>팔로워</li>
           <li class="clk" @click="router.push({ name: 'follow-list', query: { tab: 'following' } })"><span>{{ me.stats.followingCount }}</span>팔로잉</li>
