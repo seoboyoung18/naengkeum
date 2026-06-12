@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchRecipeDetail } from '../api/recipe'
+import { fetchRecipeDetail, uploadRecipeImage } from '../api/recipe'
+import { API_BASE } from '../api/http'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import ReviewSection from '../components/ReviewSection.vue'
 import { useToast } from '../composables/useToast'
@@ -15,9 +16,21 @@ const recipe = ref(null)
 const loading = ref(false)
 const error = ref('')
 
+// 사진 업로드용
+const fileInput = ref(null)
+const uploading = ref(false)
+
 const hasNutrition = computed(() => {
   const n = recipe.value?.nutrition
   return n && (n.calories != null || n.carbs != null || n.protein != null || n.fat != null || n.sodium != null)
+})
+
+// 이미지가 백엔드 업로드 경로(/images/...)면 백엔드 호스트를 붙여 절대경로로.
+// 외부 URL(http로 시작)이면 그대로 사용.
+const heroUrl = computed(() => {
+  const u = recipe.value?.thumbnailUrl
+  if (!u) return null
+  return u.startsWith('/') ? API_BASE + u : u
 })
 
 async function load() {
@@ -55,6 +68,40 @@ async function toggleWish() {
   }
 }
 
+// 파일 선택창 열기
+function pickImage() {
+  fileInput.value?.click()
+}
+
+// 사진 선택 → 업로드 → hero 이미지 즉시 갱신
+async function onImagePicked(e) {
+  const file = e.target.files?.[0]
+  e.target.value = '' // 같은 파일 다시 선택 가능하게 초기화
+  if (!file) return
+
+  // 가벼운 클라이언트 검증 (서버도 검증하지만 UX용)
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+    toast.error('jpg, png, webp 이미지만 올릴 수 있어요')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('이미지는 5MB 이하만 올릴 수 있어요')
+    return
+  }
+
+  uploading.value = true
+  try {
+    const { imageUrl } = await uploadRecipeImage(recipe.value.recipeId, file)
+    // 백엔드가 준 경로는 /images/... → 절대경로로 만들어 hero에 반영
+    recipe.value.thumbnailUrl = imageUrl
+    toast.success('사진을 올렸어요')
+  } catch (err) {
+    toast.error(err.response?.data?.message || '사진 업로드에 실패했어요')
+  } finally {
+    uploading.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -68,8 +115,25 @@ onMounted(load)
     <template v-else-if="recipe">
       <!-- 상단: 이미지(좌) + 정보(우) -->
       <div class="top">
-        <div class="hero" :style="recipe.thumbnailUrl ? { backgroundImage: `url(${recipe.thumbnailUrl})` } : null">
-          <span v-if="!recipe.thumbnailUrl" class="ph">🍽️</span>
+        <div class="hero" :style="heroUrl ? { backgroundImage: `url(${heroUrl})` } : null">
+          <span v-if="!heroUrl" class="ph">🍽️</span>
+
+          <!-- 본인이 등록한 레시피에만 사진 올리기 버튼 -->
+          <button
+            v-if="recipe.isOwner"
+            class="upload-btn"
+            :disabled="uploading"
+            @click="pickImage"
+          >
+            {{ uploading ? '올리는 중…' : (heroUrl ? '📷 사진 변경' : '📷 사진 올리기') }}
+          </button>
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            class="file-hidden"
+            @change="onImagePicked"
+          />
         </div>
 
         <div class="info">
@@ -137,8 +201,14 @@ onMounted(load)
 
 /* 상단 2단 */
 .top { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
-.hero { width: 100%; height: 340px; border-radius: 16px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; }
+.hero { position: relative; width: 100%; height: 340px; border-radius: 16px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; }
 .hero .ph { font-size: 56px; color: #c7ccd1; }
+.upload-btn { position: absolute; right: 12px; bottom: 12px; border: none; background: rgba(0,0,0,.6);
+  color: #fff; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 9px 16px; cursor: pointer;
+  backdrop-filter: blur(2px); }
+.upload-btn:hover { background: rgba(0,0,0,.75); }
+.upload-btn:disabled { opacity: .6; cursor: default; }
+.file-hidden { display: none; }
 .info { min-width: 0; }
 .title-row { display: flex; align-items: flex-start; gap: 10px; }
 .title { font-size: 26px; margin: 0; }
