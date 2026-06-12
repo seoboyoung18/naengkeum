@@ -275,6 +275,12 @@
          WHERE recipe_id = #{recipeId}
     </update>
 
+    <!-- 대표 이미지 경로 갱신 (사용자가 직접 찍은 음식 사진) -->
+    <update id="updateImageUrl">
+        UPDATE recipe SET image_url = #{imageUrl}
+         WHERE recipe_id = #{recipeId}
+    </update>
+
     <!-- 마이 레시피 목록 (author_id=나, 공개/비공개 모두, 최신순) -->
     <select id="selectMyRecipes"
             resultType="com.fridgefamer.dto.response.recipe.MyRecipeItem">

@@ -117,6 +117,10 @@ public interface RecipeMapper {
     /** 공개로 전환(is_public=TRUE). 멱등. */
     int markPublic(@Param("recipeId") Long recipeId);
 
+    /** 레시피 대표 이미지 경로 갱신. 본인 레시피 검증은 서비스에서 선행. */
+    int updateImageUrl(@Param("recipeId") Long recipeId,
+                       @Param("imageUrl") String imageUrl);
+
     /** 마이 레시피 목록(author_id=나, 공개/비공개 포함, 최신순). */
     List<MyRecipeItem> selectMyRecipes(@Param("memberId") Long memberId);
 
