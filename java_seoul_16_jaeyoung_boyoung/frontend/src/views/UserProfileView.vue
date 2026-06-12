@@ -82,17 +82,17 @@ onMounted(load)
 </template>
 
 <style scoped>
-.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 14px; }
-.card { background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 32px 24px; text-align: center; max-width: 420px; }
-.avatar { width: 72px; height: 72px; border-radius: 50%; background: #ecfdf3; color: #16a34a; font-size: 30px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.back { border: none; background: none; color: var(--primary-deep); font-size: 14px; cursor: pointer; padding: 0 0 14px; }
+.card { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 16px; padding: 32px 24px; text-align: center; max-width: 420px; }
+.avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-size: 30px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
 .nick { font-size: 20px; font-weight: 700; }
 .stats { list-style: none; display: flex; justify-content: center; gap: 28px; padding: 0; margin: 16px 0 18px; }
 .stats li { font-size: 12px; color: #888; }
 .stats li span { display: block; font-size: 18px; font-weight: 800; color: #333; }
-.follow { padding: 11px 28px; border: none; border-radius: 999px; background: #16a34a; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
-.follow.on { background: #fff; color: #16a34a; border: 1px solid #16a34a; }
+.follow { padding: 11px 28px; border: none; border-radius: 999px; background: var(--primary); color: var(--on-primary); font-size: 14px; font-weight: 700; cursor: pointer; }
+.follow.on { background: #fff; color: var(--primary-deep); border: 1px solid var(--primary-deep); }
 .follow:disabled { opacity: .6; }
-.me { padding: 11px 28px; border: 1px solid #ddd; border-radius: 999px; background: #f5f7f9; color: #999; font-size: 14px; }
+.me { padding: 11px 28px; border: 1px solid var(--line); border-radius: 999px; background: #f5f7f9; color: #999; font-size: 14px; }
 .muted { color: #999; }
 .err { color: #e11d48; }
 </style>

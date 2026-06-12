@@ -169,19 +169,19 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 .x { border: none; background: none; font-size: 18px; cursor: pointer; color: #888; }
 form { display: flex; flex-direction: column; }
 label { font-size: 13px; color: #555; margin: 12px 0 4px; }
-input { padding: 11px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; }
+input { padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; width: 100%; }
 .ac { position: relative; }
-.ac-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #eee; border-radius: 8px; margin: 4px 0 0; padding: 4px 0; list-style: none; max-height: 200px; overflow-y: auto; z-index: 5; box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+.ac-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; margin: 4px 0 0; padding: 4px 0; list-style: none; max-height: 200px; overflow-y: auto; z-index: 5; box-shadow: 0 6px 18px rgba(0,0,0,.08); }
 .ac-list li { padding: 9px 12px; cursor: pointer; font-size: 14px; }
 .ac-list li:hover { background: #f5f7f9; }
 .ac-list .cat { color: #999; font-size: 12px; margin-left: 6px; }
-.tip { font-size: 12px; color: #16a34a; margin: 6px 0 0; }
+.tip { font-size: 12px; color: var(--primary-deep); margin: 6px 0 0; }
 .grid2 { display: flex; gap: 10px; }
 .grid2 > div { flex: 1; }
 .seg { display: flex; gap: 6px; }
-.seg button { flex: 1; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 8px; font-size: 14px; cursor: pointer; color: #555; }
-.seg button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
+.seg button { flex: 1; padding: 10px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 14px; cursor: pointer; color: #555; }
+.seg button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
 .err { color: #e11d48; font-size: 13px; margin: 12px 0 0; }
-.submit { margin-top: 18px; padding: 13px; border: none; border-radius: 8px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+.submit { margin-top: 18px; padding: 13px; border: none; border-radius: 8px; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700; cursor: pointer; }
 .submit:disabled { opacity: .6; }
 </style>

@@ -123,23 +123,23 @@ async function onSubmit() {
 
 <style scoped>
 .auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f7f8fa; padding: 24px; }
-.card { width: 100%; max-width: 360px; background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 26px 22px; }
+.card { width: 100%; max-width: 360px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 16px; padding: 26px 22px; }
 .title { font-size: 22px; margin: 0 0 18px; text-align: center; }
 form { display: flex; flex-direction: column; }
 label { font-size: 13px; color: #555; margin: 12px 0 4px; }
 input[type='email'], input[type='password'], input[type='text'] {
-  padding: 11px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%;
+  padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; width: 100%;
 }
 .row { display: flex; gap: 8px; }
 .row input { flex: 1; }
-.ghost { white-space: nowrap; border: 1px solid #16a34a; color: #16a34a; background: #fff; border-radius: 8px; padding: 0 12px; font-size: 13px; cursor: pointer; }
+.ghost { white-space: nowrap; border: 1px solid var(--primary-deep); color: var(--primary-deep); background: #fff; border-radius: 8px; padding: 0 12px; font-size: 13px; cursor: pointer; }
 .ghost:disabled { opacity: 0.5; }
 .hint { font-size: 12px; margin: 6px 0 0; }
-.hint.ok { color: #16a34a; }
+.hint.ok { color: var(--primary-deep); }
 .hint.bad { color: #e11d48; }
 .check { display: flex; flex-direction: row; align-items: center; gap: 6px; margin-top: 14px; color: #444; font-size: 13px; }
 .err { color: #e11d48; font-size: 13px; margin: 12px 0 0; }
-.submit { margin-top: 18px; padding: 12px; border: none; border-radius: 8px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+.submit { margin-top: 18px; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700; cursor: pointer; }
 .submit:disabled { opacity: 0.6; cursor: not-allowed; }
-.link { display: block; text-align: center; margin-top: 16px; color: #16a34a; font-size: 13px; }
+.link { display: block; text-align: center; margin-top: 16px; color: var(--primary-deep); font-size: 13px; }
 </style>

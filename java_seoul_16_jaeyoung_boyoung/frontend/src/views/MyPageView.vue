@@ -197,34 +197,34 @@ onMounted(loadAll)
 </template>
 
 <style scoped>
-.profile { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+.profile { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
 .prow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .pleft { display: flex; gap: 14px; align-items: center; min-width: 0; }
-.avatar { flex: 0 0 auto; width: 56px; height: 56px; border-radius: 50%; background: #ecfdf3; color: #16a34a; font-size: 22px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.avatar { flex: 0 0 auto; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-size: 22px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 .pinfo { min-width: 0; }
 .nick { font-size: 18px; font-weight: 700; }
 .email { font-size: 13px; color: #999; margin-top: 2px; }
-.edit { flex: 0 0 auto; border: 1px solid #ddd; background: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+.edit { flex: 0 0 auto; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
 .allergy { margin-top: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .allergy .lbl { font-size: 12px; color: #999; }
 .chip { font-size: 12px; background: #fef2f2; color: #ef4444; border-radius: 999px; padding: 3px 10px; }
 .stats { list-style: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 0; margin: 18px 0 0; }
 .stats li { background: #f5f7f9; border-radius: 12px; padding: 16px 4px; text-align: center; font-size: 12px; color: #666; }
-.stats li span { display: block; font-size: 22px; font-weight: 800; color: #16a34a; margin-bottom: 2px; }
+.stats li span { display: block; font-size: 22px; font-weight: 800; color: var(--primary-deep); margin-bottom: 2px; }
 .stats li.clk { cursor: pointer; }
 
 /* 2단 + 섹션 패널 */
 .cols { display: grid; grid-template-columns: 1fr 380px; gap: 16px; align-items: start; margin-bottom: 16px; }
-.panel { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 18px 20px; }
+.panel { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; padding: 18px 20px; }
 .myhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
 .sec { font-size: 16px; margin: 0 0 12px; }
-.sec .cnt { color: #16a34a; font-size: 14px; }
+.sec .cnt { color: var(--primary-deep); font-size: 14px; }
 .sec-desc { font-size: 12px; color: #999; }
 
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
 .row { display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 10px; cursor: pointer; }
-.row + .row { border-top: 1px solid #f1f3f5; }
+.row + .row { border-top: 1px solid var(--line); }
 .row:hover { background: #fafbfc; }
 .type { font-size: 13px; flex: 0 0 auto; }
 .type.ai { color: #7c3aed; font-weight: 700; }
@@ -234,7 +234,7 @@ onMounted(loadAll)
 .rm { border: none; background: none; color: #ef4444; font-size: 20px; cursor: pointer; }
 
 .rlist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.rcard { border: 1px solid #eee; border-radius: 12px; padding: 12px; cursor: pointer; }
+.rcard { border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 12px; padding: 12px; cursor: pointer; }
 .rtop { display: flex; justify-content: space-between; align-items: center; }
 .rtitle { font-size: 14px; font-weight: 600; }
 .date { font-size: 11px; color: #aaa; }
@@ -254,10 +254,10 @@ onMounted(loadAll)
 .shd h3 { margin: 0; font-size: 17px; }
 .x { border: none; background: none; font-size: 18px; cursor: pointer; color: #888; }
 .sheet label { display: block; font-size: 13px; color: #555; margin: 12px 0 4px; }
-.sheet input { width: 100%; padding: 11px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+.sheet input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; box-sizing: border-box; }
 .pw { margin-top: 6px; }
 .pw input { margin-bottom: 8px; }
 .err { color: #e11d48; font-size: 13px; margin: 10px 0 0; }
-.save { width: 100%; margin-top: 16px; padding: 13px; border: none; border-radius: 8px; background: #16a34a; color: #fff; font-weight: 700; cursor: pointer; }
+.save { width: 100%; margin-top: 16px; padding: 13px; border: none; border-radius: 8px; background: var(--primary); color: var(--on-primary); font-weight: 700; cursor: pointer; }
 .save:disabled { opacity: .6; }
 </style>

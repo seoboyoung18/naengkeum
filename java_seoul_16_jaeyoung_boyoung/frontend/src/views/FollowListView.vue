@@ -74,16 +74,16 @@ onMounted(load)
 
 <style scoped>
 .tabs { display: flex; gap: 8px; margin-bottom: 14px; max-width: 720px; }
-.tabs button { flex: 1; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 8px; font-size: 14px; color: #666; cursor: pointer; }
-.tabs button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
+.tabs button { flex: 1; padding: 10px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 14px; color: #666; cursor: pointer; }
+.tabs button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; max-width: 720px; }
-.row { display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 10px 12px; }
+.row { display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 12px; padding: 10px 12px; }
 .who { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.avatar { width: 40px; height: 40px; border-radius: 50%; background: #ecfdf3; color: #16a34a; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-weight: 800; display: flex; align-items: center; justify-content: center; }
 .nick { font-size: 14px; font-weight: 600; }
 .sub { font-size: 12px; color: #999; }
-.follow { padding: 7px 14px; border: none; border-radius: 999px; background: #16a34a; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
-.follow.on { background: #fff; color: #16a34a; border: 1px solid #16a34a; }
+.follow { padding: 7px 14px; border: none; border-radius: 999px; background: var(--primary); color: var(--on-primary); font-size: 12px; font-weight: 700; cursor: pointer; }
+.follow.on { background: #fff; color: var(--primary-deep); border: 1px solid var(--primary-deep); }
 .muted { color: #999; }
 .empty { text-align: center; padding: 36px 0; }
 </style>

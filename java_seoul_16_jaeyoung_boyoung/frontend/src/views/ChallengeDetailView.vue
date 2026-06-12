@@ -120,7 +120,7 @@ onMounted(load)
 </template>
 
 <style scoped>
-.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 14px; }
+.back { border: none; background: none; color: var(--primary-deep); font-size: 14px; cursor: pointer; padding: 0 0 14px; }
 .detail { max-width: 720px; }
 .dday { display: inline-block; font-size: 12px; font-weight: 800; color: #ef4444; background: #fef2f2; padding: 4px 10px; border-radius: 6px; }
 .dday.ended { color: #999; background: #f1f3f5; }
@@ -134,19 +134,19 @@ onMounted(load)
 .rname { font-size: 16px; font-weight: 700; color: #92400e; }
 
 .prog-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; margin-top: 8px; }
-.prog-head .pct { font-size: 20px; font-weight: 800; color: #16a34a; }
+.prog-head .pct { font-size: 20px; font-weight: 800; color: var(--primary-deep); }
 .bar { height: 10px; background: #f0f0f0; border-radius: 5px; overflow: hidden; margin: 8px 0; }
-.bar .fill { height: 100%; background: #16a34a; transition: width .3s ease; }
+.bar .fill { height: 100%; background: var(--primary-deep); transition: width .3s ease; }
 
 .sec { font-size: 13px; color: #999; margin: 18px 0 8px; }
 .presets { display: flex; gap: 8px; }
-.presets button { flex: 1; padding: 11px; border: 1px solid #ddd; background: #fff; border-radius: 8px; font-size: 14px; cursor: pointer; color: #555; }
-.presets button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
+.presets button { flex: 1; padding: 11px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 14px; cursor: pointer; color: #555; }
+.presets button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
 .presets button:disabled { opacity: .6; }
 
-.join { width: 100%; margin-top: 20px; padding: 14px; border: none; border-radius: 10px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+.join { width: 100%; margin-top: 20px; padding: 14px; border: none; border-radius: 10px; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700; cursor: pointer; }
 .join:disabled { opacity: .5; background: #9ca3af; }
-.unjoin { width: 100%; margin-top: 18px; padding: 12px; border: 1px solid #eee; background: #fff; border-radius: 8px; color: #888; font-size: 13px; cursor: pointer; }
+.unjoin { width: 100%; margin-top: 18px; padding: 12px; border: 1px solid var(--line); background: #fff; border-radius: 8px; color: #888; font-size: 13px; cursor: pointer; }
 .muted { color: #999; }
 .err { color: #e11d48; }
 </style>

@@ -39,7 +39,7 @@ const { items, remove } = useToast()
   display: inline-flex; align-items: center; justify-content: center;
   width: 18px; height: 18px; border-radius: 50%; font-size: 12px; font-weight: 700;
 }
-.toast.success { background: #16a34a; }
+.toast.success { background: var(--primary-deep); }
 .toast.success .ic { background: rgba(255,255,255,.25); }
 .toast.error { background: #dc2626; }
 .toast.error .ic { background: rgba(255,255,255,.25); }

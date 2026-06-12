@@ -163,11 +163,11 @@ onMounted(load)
 <style scoped>
 .reviews { margin-top: 8px; }
 .sec { font-size: 16px; margin: 0 0 12px; }
-.sec .cnt { color: #16a34a; font-size: 14px; }
+.sec .cnt { color: var(--primary-deep); font-size: 14px; font-family: var(--font-mono); }
 
-.stats { display: flex; gap: 16px; align-items: center; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.stats { display: flex; gap: 16px; align-items: center; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
 .avg { text-align: center; flex: 0 0 80px; }
-.avg .big { font-size: 30px; font-weight: 800; color: #16a34a; }
+.avg .big { font-size: 30px; font-weight: 800; color: var(--primary-deep); font-family: var(--font-mono); }
 .avg .stars { color: #f59e0b; font-size: 13px; }
 .dist { flex: 1; }
 .bar-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
@@ -175,29 +175,29 @@ onMounted(load)
 .bar { flex: 1; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
 .bar .fill { height: 100%; background: #fbbf24; }
 
-.write { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 12px; margin-bottom: 14px; }
+.write { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 12px; padding: 12px; margin-bottom: 14px; }
 .star-input { font-size: 24px; color: #ddd; cursor: pointer; user-select: none; }
 .star-input span.on { color: #f59e0b; }
-.write textarea, .item textarea { width: 100%; margin-top: 8px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; box-sizing: border-box; }
+.write textarea, .item textarea { width: 100%; margin-top: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; box-sizing: border-box; }
 .err { color: #e11d48; font-size: 13px; margin: 8px 0 0; }
-.submit { margin-top: 10px; padding: 10px 16px; border: none; border-radius: 8px; background: #16a34a; color: #fff; font-weight: 700; cursor: pointer; }
+.submit { margin-top: 10px; padding: 10px 16px; border: none; border-radius: var(--r-sm); background: var(--primary); color: var(--on-primary); font-weight: 700; cursor: pointer; }
 .submit.sm { margin-top: 0; padding: 8px 14px; font-size: 13px; }
 .submit:disabled { opacity: .6; }
-.mine-note { font-size: 13px; color: #16a34a; margin: 0 0 12px; }
+.mine-note { font-size: 13px; color: var(--primary-deep); margin: 0 0 12px; }
 
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.item { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 12px; }
+.item { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 12px; padding: 12px; }
 .item.owner { border-color: #bbf7d0; background: #f6fef9; }
 .top { display: flex; justify-content: space-between; align-items: center; }
 .nick { font-size: 13px; font-weight: 600; }
-.nick.link { cursor: pointer; color: #16a34a; }
-.nick .me { font-size: 10px; background: #16a34a; color: #fff; border-radius: 4px; padding: 1px 5px; margin-left: 5px; }
+.nick.link { cursor: pointer; color: var(--primary-deep); }
+.nick .me { font-size: 10px; background: var(--primary); color: var(--on-primary); border-radius: 4px; padding: 1px 5px; margin-left: 5px; }
 .date { font-size: 11px; color: #aaa; }
 .rstars { color: #f59e0b; font-size: 13px; margin: 4px 0; }
 .content { font-size: 14px; margin: 4px 0 0; white-space: pre-wrap; }
 .actions { display: flex; gap: 12px; margin-top: 8px; }
 .actions button { border: none; background: none; color: #888; font-size: 12px; cursor: pointer; }
 .edit-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
-.ghost { border: 1px solid #ddd; background: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+.ghost { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
 .muted { color: #999; }
 </style>

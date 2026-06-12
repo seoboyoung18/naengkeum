@@ -148,30 +148,30 @@ onMounted(load)
 <style scoped>
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .h { margin: 0; }
-.add-btn { flex: 0 0 auto; border: none; background: #16a34a; color: #fff; border-radius: 8px;
+.add-btn { flex: 0 0 auto; border: none; background: var(--primary); color: var(--on-primary); border-radius: 8px;
   padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .summary { list-style: none; display: flex; gap: 8px; padding: 0; margin: 0 0 14px; }
-.summary li { flex: 1; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px; text-align: center; font-size: 12px; color: #666; }
-.summary li span { display: block; font-size: 18px; font-weight: 800; color: #16a34a; }
+.summary li { flex: 1; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 10px; padding: 10px; text-align: center; font-size: 12px; color: #666; }
+.summary li span { display: block; font-size: 18px; font-weight: 800; color: var(--primary-deep); }
 .summary li.warn span { color: #f59e0b; }
 
 .filters { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .tabs { display: flex; gap: 6px; }
-.tabs button { padding: 7px 12px; border: 1px solid #ddd; background: #fff; border-radius: 999px; font-size: 13px; color: #666; cursor: pointer; }
-.tabs button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
-.sort { padding: 7px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fff; }
+.tabs button { padding: 7px 12px; border: 1px solid var(--line); background: #fff; border-radius: 999px; font-size: 13px; color: #666; cursor: pointer; }
+.tabs button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
+.sort { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; background: #fff; }
 
-.table-wrap { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; }
+.table-wrap { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; overflow: hidden; }
 .table { width: 100%; border-collapse: collapse; }
-.table th { text-align: left; font-size: 12px; color: #999; font-weight: 600; padding: 14px 18px; background: #fafbfc; border-bottom: 1px solid #eee; }
-.table td { padding: 14px 18px; border-bottom: 1px solid #f1f3f5; font-size: 14px; color: #333; vertical-align: middle; }
+.table th { text-align: left; font-size: 12px; color: #999; font-weight: 600; padding: 14px 18px; background: #fafbfc; border-bottom: 1px solid var(--line); }
+.table td { padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 14px; color: #333; vertical-align: middle; }
 .table tbody tr:last-child td { border-bottom: none; }
 .table tbody tr:hover { background: #fafbfc; }
 .table .name { font-weight: 600; }
 .table .memo { color: #aaa; font-weight: 400; font-size: 12px; margin-left: 6px; }
 .table .man { text-align: center; white-space: nowrap; }
 .dday { display: inline-block; min-width: 48px; text-align: center; font-size: 12px; font-weight: 800; padding: 5px 8px; border-radius: 8px; }
-.dday.ok { background: #ecfdf3; color: #16a34a; }
+.dday.ok { background: var(--primary-tint); color: var(--primary-deep); }
 .dday.soon { background: #fff7ed; color: #f59e0b; }
 .dday.expired { background: #fef2f2; color: #ef4444; }
 .ic { border: none; background: none; font-size: 16px; cursor: pointer; padding: 4px; }

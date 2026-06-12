@@ -262,10 +262,10 @@ function goRecipe() {
 .left { display: flex; flex-direction: column; }
 .right { min-width: 0; }
 
-.opts { display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 18px; }
+.opts { display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; padding: 18px; }
 .opts-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 2px; }
 .opts label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #444; cursor: pointer; }
-.run { width: 100%; margin-top: 14px; padding: 14px; border: none; border-radius: 10px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+.run { width: 100%; margin-top: 14px; padding: 14px; border: none; border-radius: 10px; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700; cursor: pointer; }
 .run:disabled { opacity: .6; }
 .err { color: #e11d48; font-size: 13px; margin: 12px 0 0; }
 
@@ -273,7 +273,7 @@ function goRecipe() {
 .placeholder .ph-emoji { font-size: 40px; display: block; margin-bottom: 12px; }
 .placeholder p { margin: 0; font-size: 14px; }
 
-.result { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 20px 22px; }
+.result { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; padding: 20px 22px; }
 
 @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
 .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; margin-bottom: 8px; }
@@ -283,23 +283,23 @@ function goRecipe() {
 .summary { color: #666; font-size: 14px; margin: 0 0 6px; }
 .sec { font-size: 13px; color: #999; margin: 16px 0 6px; }
 .ings { list-style: none; padding: 0; margin: 0; }
-.ings li { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+.ings li { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
 .ings li.owned { border-color: #bbf7d0; }
 .ings .q { color: #999; font-size: 13px; }
 .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
-.tag.y { background: #ecfdf3; color: #16a34a; }
+.tag.y { background: var(--primary-tint); color: var(--primary-deep); }
 .tag.n { background: #fff7ed; color: #f59e0b; }
 .steps { list-style: none; padding: 0; margin: 0; }
 .steps li { display: flex; gap: 10px; margin-bottom: 10px; }
-.steps .n { flex: 0 0 24px; height: 24px; border-radius: 50%; background: #ecfdf3; color: #16a34a; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.steps .n { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 .steps .d { flex: 1; font-size: 14px; }
 .meta { display: flex; gap: 14px; color: #888; font-size: 13px; margin-top: 12px; }
 .muted { color: #999; font-size: 13px; margin-top: 10px; }
 .actions { display: flex; gap: 8px; margin-top: 16px; }
-.ghost { flex: 1; border: 1px solid #16a34a; color: #16a34a; background: #fff; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; }
-.save { flex: 1; border: 1px solid #16a34a; background: #fff; color: #16a34a; border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.ghost { flex: 1; border: 1px solid var(--primary-deep); color: var(--primary-deep); background: #fff; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; }
+.save { flex: 1; border: 1px solid var(--primary-deep); background: #fff; color: var(--primary-deep); border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .save:disabled { opacity: .6; }
-.register { flex: 1; border: none; background: #16a34a; color: #fff; border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.register { flex: 1; border: none; background: var(--primary); color: var(--on-primary); border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .register:disabled { opacity: .6; }
 .reg-note { font-size: 12px; color: #999; margin: 8px 0 0; }
 </style>

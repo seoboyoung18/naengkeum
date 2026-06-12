@@ -19,7 +19,7 @@ const router = useRouter()
 </template>
 
 <style scoped>
-.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 10px; }
+.back { border: none; background: none; color: var(--primary-deep); font-size: 14px; cursor: pointer; padding: 0 0 10px; }
 .h { font-size: 22px; margin: 0 0 6px; }
 .lead { color: #777; font-size: 14px; margin: 0 0 18px; }
 </style>

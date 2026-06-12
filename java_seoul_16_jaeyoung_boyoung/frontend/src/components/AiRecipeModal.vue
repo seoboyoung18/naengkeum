@@ -67,15 +67,15 @@ onMounted(async () => {
 .meta { font-size: 13px; color: #888; margin-top: 6px; }
 .sec { font-size: 13px; color: #999; margin: 16px 0 6px; }
 .ings { list-style: none; padding: 0; margin: 0; }
-.ings li { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+.ings li { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
 .ings li.owned { border-color: #bbf7d0; }
 .ings .q { color: #999; font-size: 13px; }
 .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
-.tag.y { background: #ecfdf3; color: #16a34a; }
+.tag.y { background: var(--primary-tint); color: var(--primary-deep); }
 .tag.n { background: #fff7ed; color: #f59e0b; }
 .steps { list-style: none; padding: 0; margin: 0; }
 .steps li { display: flex; gap: 10px; margin-bottom: 10px; }
-.steps .n { flex: 0 0 24px; height: 24px; border-radius: 50%; background: #ecfdf3; color: #16a34a; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.steps .n { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 .steps .d { flex: 1; font-size: 14px; }
 .muted { color: #999; }
 .err { color: #e11d48; }

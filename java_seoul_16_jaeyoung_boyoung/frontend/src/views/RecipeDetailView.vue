@@ -133,41 +133,43 @@ onMounted(load)
 </template>
 
 <style scoped>
-.back { border: none; background: none; color: #16a34a; font-size: 14px; cursor: pointer; padding: 0 0 14px; }
+.back { border: none; background: none; color: var(--primary-deep); font-size: 14px; cursor: pointer; padding: 0 0 14px; font-weight: 600; }
 
 /* 상단 2단 */
 .top { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
-.hero { width: 100%; height: 340px; border-radius: 16px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; }
+.hero { width: 100%; height: 340px; border-radius: var(--r-md); background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
 .hero .ph { font-size: 56px; color: #c7ccd1; }
 .info { min-width: 0; }
 .title-row { display: flex; align-items: flex-start; gap: 10px; }
-.title { font-size: 26px; margin: 0; }
-.meta { display: flex; gap: 14px; font-size: 14px; color: #888; margin-top: 10px; }
-.summary { font-size: 15px; color: #555; margin: 12px 0 0; line-height: 1.5; }
+.title { font-size: 26px; margin: 0; letter-spacing: -0.5px; }
+.meta { display: flex; gap: 14px; font-size: 14px; color: var(--text-soft); margin-top: 10px; font-family: var(--font-mono); }
+.summary { font-size: 15px; color: #555; margin: 12px 0 0; line-height: 1.6; }
 
+/* 영양 5칸 — 하어라인 카드 + 모노 수치 (Voltagent 톤) */
 .nutri { display: flex; gap: 10px; margin: 20px 0; }
-.nutri div { flex: 1; background: #fff; border: 1px solid #f0f0f0; border-radius: 12px; padding: 14px 4px; text-align: center; font-size: 11px; color: #888; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
-.nutri div b { display: block; font-size: 17px; color: #333; margin-bottom: 2px; }
+.nutri div { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 4px; text-align: center; font-size: 11px; color: var(--text-soft); box-shadow: var(--shadow-card); }
+.nutri div b { display: block; font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
 
-.wish-btn { border: none; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700;
-  border-radius: 10px; padding: 13px 28px; cursor: pointer; }
-.wish-btn.on { background: #fff; color: #16a34a; border: 1px solid #16a34a; }
+/* CTA — 일렉트릭 그린 + near-black 글자, 6px */
+.wish-btn { border: none; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700;
+  border-radius: var(--r-sm); padding: 13px 28px; cursor: pointer; }
+.wish-btn.on { background: var(--surface); color: var(--primary-deep); border: 1px solid var(--primary); }
 
 /* 하단 2단 */
 .cols { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; margin-top: 24px; }
 .main-col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
-.card { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 20px 22px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 20px 22px; box-shadow: var(--shadow-card); }
 
 .sec { font-size: 16px; margin: 0 0 14px; }
 .ings { list-style: none; padding: 0; margin: 0; }
-.ings li { display: flex; justify-content: space-between; padding: 11px 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; font-size: 14px; }
+.ings li { display: flex; justify-content: space-between; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); margin-bottom: 8px; font-size: 14px; }
 .ings li:last-child { margin-bottom: 0; }
-.ings .qty { color: #888; }
+.ings .qty { color: var(--text-soft); font-family: var(--font-mono); }
 
 .steps { list-style: none; padding: 0; margin: 0; }
 .steps li { display: flex; gap: 12px; margin-bottom: 14px; }
 .steps li:last-child { margin-bottom: 0; }
-.steps .n { flex: 0 0 26px; height: 26px; border-radius: 50%; background: #ecfdf3; color: #16a34a; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.steps .n { flex: 0 0 26px; height: 26px; border-radius: 50%; background: rgba(0,217,146,.14); color: var(--primary-deep); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 13px; font-family: var(--font-mono); }
 .steps .desc { flex: 1; font-size: 14px; padding-top: 2px; line-height: 1.5; }
 
 .muted { color: #999; }

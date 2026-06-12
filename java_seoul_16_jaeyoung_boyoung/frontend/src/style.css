@@ -1,8 +1,48 @@
+/* ── Paperlogy 미리보기 (로컬 설치 폰트 매핑 — 배포엔 셀프호스팅 필요) ── */
+@font-face { font-family: 'Paperlogy'; font-weight: 400; font-style: normal; src: local('Paperlogy 4 Regular'), local('Paperlogy-4Regular'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 500; font-style: normal; src: local('Paperlogy 5 Medium'), local('Paperlogy-5Medium'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 600; font-style: normal; src: local('Paperlogy 6 SemiBold'), local('Paperlogy-6SemiBold'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 700; font-style: normal; src: local('Paperlogy 7 Bold'), local('Paperlogy-7Bold'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 800; font-style: normal; src: local('Paperlogy 8 ExtraBold'), local('Paperlogy-8ExtraBold'); }
+
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI',
-    system-ui, Roboto, sans-serif;
+  /* ───────── Voltagent-derived design tokens (pilot: 다크 셸 + 밝은 콘텐츠) ───────── */
+  /* brand accent — CTA·활성·상태 전용 */
+  --primary: #00d992;
+  --primary-soft: #2fd6a1;
+  --primary-deep: #10b981;
+  --on-primary: #101010;
+
+  /* dark shell (사이드바 등) */
+  --canvas: #23272e;
+  --canvas-soft: #2e333b;
+  --hairline-dark: #3c414a;
+  --ink: #f2f2f2;
+  --ink-strong: #ffffff;
+  --body-dark: #bdbdbd;
+  --mute: #8b949e;
+
+  /* light content (음식 카드는 밝게) */
+  --surface: #ffffff;
+  --surface-bg: #f7f8fa;
+  --line: #b4bac2;
+  --primary-tint: rgba(0, 217, 146, 0.12);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --text: #1a1a1a;
+  --text-soft: #6b7280;
+
+  /* radius — 버튼6 / 카드8 / 태그pill */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-pill: 9999px;
+
+  /* fonts — Inter(본문) + 모노(수치) */
+  --font-sans: 'Paperlogy', 'Inter', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', system-ui, Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  font-family: var(--font-sans);
   line-height: 1.5;
-  color: #222;
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -10,12 +50,16 @@
 
 body {
   margin: 0;
-  background: #f7f8fa;
+  background: var(--surface-bg);
+  font-family: var(--font-sans);
 }
 
 a { color: inherit; }
 
 button { font-family: inherit; }
+
+/* 수치(영양·시간·카운트)는 모노로 — 테크니컬 보이스 */
+.num { font-family: var(--font-mono); font-feature-settings: 'tnum' 1; }
 
 h2.h {
   font-size: 18px;

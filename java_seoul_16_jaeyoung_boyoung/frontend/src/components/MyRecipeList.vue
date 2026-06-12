@@ -85,7 +85,7 @@ defineExpose({ load })
 <style scoped>
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 12px 14px; }
+  background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 12px; padding: 12px 14px; }
 .left { display: flex; align-items: center; gap: 12px; min-width: 0; cursor: pointer; flex: 1; }
 .badge { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #7c3aed; background: #f5f3ff;
   border-radius: 999px; padding: 4px 10px; }
@@ -94,9 +94,9 @@ defineExpose({ load })
 .sub { font-size: 12px; color: #999; margin-top: 2px; }
 .right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
 .state { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 4px 10px; }
-.state.public { color: #16a34a; background: #ecfdf3; }
+.state.public { color: var(--primary-deep); background: var(--primary-tint); }
 .state.private { color: #6b7280; background: #f3f4f6; }
-.pub { border: none; background: #16a34a; color: #fff; font-size: 13px; font-weight: 700;
+.pub { border: none; background: var(--primary); color: var(--on-primary); font-size: 13px; font-weight: 700;
   border-radius: 999px; padding: 8px 16px; cursor: pointer; }
 .pub:disabled { opacity: .6; }
 .muted { color: #999; }

@@ -207,30 +207,30 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 
 <style scoped>
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-.register { flex: 0 0 auto; border: none; background: #16a34a; color: #fff; border-radius: 8px;
+.register { flex: 0 0 auto; border: none; background: var(--primary); color: var(--on-primary); border-radius: 8px;
   padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
 
 .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-.tabs button { padding: 8px 16px; border: 1px solid #ddd; background: #fff; border-radius: 999px;
+.tabs button { padding: 8px 16px; border: 1px solid var(--line); background: #fff; border-radius: 999px;
   font-size: 14px; color: #666; cursor: pointer; }
-.tabs button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
+.tabs button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
 
 .search { position: relative; display: flex; gap: 8px; margin-bottom: 12px; }
-.search input { flex: 1; padding: 11px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-.go { border: none; background: #16a34a; color: #fff; border-radius: 8px; padding: 0 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
-.ac-list { position: absolute; top: 46px; left: 0; right: 70px; background: #fff; border: 1px solid #eee; border-radius: 8px; list-style: none; margin: 0; padding: 4px 0; z-index: 5; box-shadow: 0 6px 18px rgba(0,0,0,.08); max-height: 220px; overflow-y: auto; }
+.search input { flex: 1; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+.go { border: none; background: var(--primary); color: var(--on-primary); border-radius: 8px; padding: 0 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.ac-list { position: absolute; top: 46px; left: 0; right: 70px; background: #fff; border: 1px solid var(--line); border-radius: 8px; list-style: none; margin: 0; padding: 4px 0; z-index: 5; box-shadow: 0 6px 18px rgba(0,0,0,.08); max-height: 220px; overflow-y: auto; }
 .ac-list li { padding: 9px 12px; font-size: 14px; cursor: pointer; }
 .ac-list li:hover { background: #f5f7f9; }
 
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-.chips button { padding: 6px 12px; border: 1px solid #ddd; background: #fff; border-radius: 999px; font-size: 13px; color: #666; cursor: pointer; }
-.chips button.on { border-color: #16a34a; background: #ecfdf3; color: #16a34a; font-weight: 700; }
+.chips button { padding: 6px 12px; border: 1px solid var(--line); background: #fff; border-radius: 999px; font-size: 13px; color: #666; cursor: pointer; }
+.chips button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
 .chips .mine.on { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
 
 .count { font-size: 12px; color: #999; margin: 0 0 10px; }
 
 .grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.card { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; cursor: pointer; transition: box-shadow .15s; }
+.card { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; overflow: hidden; cursor: pointer; transition: box-shadow .15s; }
 .card:hover { box-shadow: 0 6px 18px rgba(0,0,0,.06); }
 .thumb { position: relative; height: 150px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 34px; color: #c7ccd1; }
 .heart { position: absolute; top: 10px; right: 10px; border: none; background: rgba(255,255,255,.9); width: 32px; height: 32px; border-radius: 50%; font-size: 17px; color: #bbb; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -250,5 +250,5 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 .muted { color: #999; }
 .empty { text-align: center; padding: 40px 0; }
 .err { color: #e11d48; }
-.more { width: 100%; margin-top: 14px; padding: 12px; border: 1px solid #ddd; background: #fff; border-radius: 8px; font-size: 14px; cursor: pointer; }
+.more { width: 100%; margin-top: 14px; padding: 12px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 14px; cursor: pointer; }
 </style>

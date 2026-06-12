@@ -65,7 +65,7 @@ async function onSubmit() {
 }
 .card {
   width: 100%; max-width: 360px;
-  background: #fff; border: 1px solid #eee; border-radius: 16px;
+  background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 16px;
   padding: 28px 22px;
 }
 .title { font-size: 26px; margin: 0; text-align: center; }
@@ -73,14 +73,14 @@ async function onSubmit() {
 form { display: flex; flex-direction: column; }
 label { font-size: 13px; color: #555; margin: 10px 0 4px; }
 input[type='email'], input[type='password'] {
-  padding: 11px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
+  padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px;
 }
 .remember { display: flex; align-items: center; gap: 6px; flex-direction: row; margin-top: 14px; color: #444; }
 .err { color: #e11d48; font-size: 13px; margin: 12px 0 0; }
 .submit {
   margin-top: 18px; padding: 12px; border: none; border-radius: 8px;
-  background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+  background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700; cursor: pointer;
 }
 .submit:disabled { opacity: 0.6; cursor: not-allowed; }
-.link { display: block; text-align: center; margin-top: 16px; color: #16a34a; font-size: 13px; }
+.link { display: block; text-align: center; margin-top: 16px; color: var(--primary-deep); font-size: 13px; }
 </style>
