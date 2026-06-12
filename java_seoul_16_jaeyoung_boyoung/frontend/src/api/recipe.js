@@ -48,3 +48,18 @@ export async function publishRecipe(recipeId) {
   const { data } = await http.patch(`/api/recipe/${recipeId}/publish`)
   return data
 }
+
+/**
+ * 레시피 대표 사진 업로드 — 본인이 등록한 레시피만 가능.
+ * @param {number} recipeId
+ * @param {File} file  jpg/png/webp, 5MB 이하
+ * @returns {Promise<{imageUrl: string}>}
+ */
+export async function uploadRecipeImage(recipeId, file) {
+  const form = new FormData()
+  form.append('image', file)
+  const { data } = await http.post(`/api/recipe/${recipeId}/image`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
