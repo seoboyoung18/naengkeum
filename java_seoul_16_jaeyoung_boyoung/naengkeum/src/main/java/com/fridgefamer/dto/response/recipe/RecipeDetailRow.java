@@ -14,6 +14,7 @@ public record RecipeDetailRow(
         String summary,
         String thumbnailUrl,
         Integer cookTime,
+        Long authorId,
         Integer calories,
         BigDecimal carbs,
         BigDecimal protein,
