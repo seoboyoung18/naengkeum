@@ -11,5 +11,6 @@ public record MemberAuthRow(
         String email,
         String password,
         String nickname,
-        boolean isActive
+        boolean isActive,
+        String role
 ) {}

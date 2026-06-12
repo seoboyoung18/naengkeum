@@ -1,0 +1,13 @@
+package com.fridgefamer.dto.response.recipe;
+
+/**
+ * 레시피 소유/공개 상태 내부 행 — 공개하기 권한 검증용.
+ *
+ * <p>authorId가 NULL이면 공공(시드) 레시피 → 누구도 공개 토글 권한 없음.
+ * 없으면(null row) 404.</p>
+ */
+public record RecipeOwnerRow(
+        Long recipeId,
+        Long authorId,
+        Boolean isPublic
+) {}

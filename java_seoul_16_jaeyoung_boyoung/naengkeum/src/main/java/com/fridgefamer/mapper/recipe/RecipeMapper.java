@@ -1,12 +1,15 @@
 package com.fridgefamer.mapper.recipe;
 
+import com.fridgefamer.dto.response.recipe.MyRecipeItem;
 import com.fridgefamer.dto.response.recipe.RecipeAutocompleteItem;
 import com.fridgefamer.dto.response.recipe.RecipeDetailRow;
 import com.fridgefamer.dto.response.recipe.RecipeIngredient;
 import com.fridgefamer.dto.response.recipe.RecipeListRow;
 import com.fridgefamer.dto.response.recipe.RecipeMainIngredient;
 import com.fridgefamer.dto.response.recipe.RecipeMatchCandidate;
+import com.fridgefamer.dto.response.recipe.RecipeOwnerRow;
 import com.fridgefamer.dto.response.recipe.RecipeStep;
+import com.fridgefamer.dto.response.wishlist.AiRecipeRow;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -31,16 +34,21 @@ public interface RecipeMapper {
      */
     List<RecipeListRow> selectRecipePage(@Param("keyword") String keyword,
                                          @Param("ingredients") List<String> ingredients,
+                                         @Param("minCookTime") Integer minCookTime,
                                          @Param("maxCookTime") Integer maxCookTime,
                                          @Param("sort") String sort,
+                                         @Param("mine") boolean mine,
                                          @Param("viewerId") Long viewerId,
                                          @Param("offset") int offset,
                                          @Param("size") int size);
 
-    /** 검색 필터와 동일 조건의 전체 건수(페이징 totalElements용). */
+    /** 검색 필터와 동일 조건의 전체 건수(페이징 totalElements용). mine=true면 author_id=viewerId 기준. */
     long countRecipes(@Param("keyword") String keyword,
                       @Param("ingredients") List<String> ingredients,
-                      @Param("maxCookTime") Integer maxCookTime);
+                      @Param("minCookTime") Integer minCookTime,
+                      @Param("maxCookTime") Integer maxCookTime,
+                      @Param("mine") boolean mine,
+                      @Param("viewerId") Long viewerId);
 
     /** 인기순(view_count) Top N. */
     List<RecipeListRow> selectPopular(@Param("viewerId") Long viewerId,
@@ -81,4 +89,63 @@ public interface RecipeMapper {
 
     /** 상세 조회 시 조회수 +1. */
     int increaseViewCount(@Param("recipeId") Long recipeId);
+
+    // =================================================================
+    //  쓰기 — AI 레시피 "담기" / 공개 / 마이 레시피 (V6 author_id·is_public)
+    // =================================================================
+
+    /** "담기" 출처 ai_recipe 단건(JSON은 문자열로). 없으면 null. 소유자 검증은 서비스에서. */
+    AiRecipeRow selectSourceAiRecipe(@Param("aiRecipeId") Long aiRecipeId);
+
+    /**
+     * ai_recipe를 recipe로 복사(담기). source='AI_SAVED', is_public=FALSE.
+     * UNIQUE(author_id, source_ai_recipe_id) 위반 시 DuplicateKey → 409(이미 담음).
+     */
+    int insertRecipe(@Param("cmd") RecipeInsertCommand cmd);
+
+    /** 담은 레시피의 재료 일괄 삽입. */
+    int insertIngredients(@Param("recipeId") Long recipeId,
+                          @Param("items") List<RecipeIngredient> items);
+
+    /** 담은 레시피의 조리 단계 일괄 삽입. */
+    int insertSteps(@Param("recipeId") Long recipeId,
+                    @Param("steps") List<RecipeStep> steps);
+
+    /** 공개하기 권한 검증용 소유/공개 상태. 없으면 null(404). */
+    RecipeOwnerRow selectRecipeOwner(@Param("recipeId") Long recipeId);
+
+    /** 공개로 전환(is_public=TRUE). 멱등. */
+    int markPublic(@Param("recipeId") Long recipeId);
+
+    /** 마이 레시피 목록(author_id=나, 공개/비공개 포함, 최신순). */
+    List<MyRecipeItem> selectMyRecipes(@Param("memberId") Long memberId);
+
+    // =================================================================
+    //  recipe insert 후 생성 키 회수용 (ai_recipe → recipe 복사)
+    // =================================================================
+    class RecipeInsertCommand {
+        private Long recipeId;
+        private final Long authorId;
+        private final Long sourceAiRecipeId;
+        private final String title;
+        private final String summary;
+        private final Integer cookTime;
+
+        public RecipeInsertCommand(Long authorId, Long sourceAiRecipeId,
+                                   String title, String summary, Integer cookTime) {
+            this.authorId = authorId;
+            this.sourceAiRecipeId = sourceAiRecipeId;
+            this.title = title;
+            this.summary = summary;
+            this.cookTime = cookTime;
+        }
+
+        public Long getRecipeId()          { return recipeId; }
+        public void setRecipeId(Long id)   { this.recipeId = id; }
+        public Long getAuthorId()          { return authorId; }
+        public Long getSourceAiRecipeId()  { return sourceAiRecipeId; }
+        public String getTitle()           { return title; }
+        public String getSummary()         { return summary; }
+        public Integer getCookTime()       { return cookTime; }
+    }
 }

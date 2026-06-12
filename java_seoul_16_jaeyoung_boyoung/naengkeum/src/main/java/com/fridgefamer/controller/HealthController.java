@@ -122,9 +122,10 @@ public class HealthController {
     public Map<String, Object> issueTestToken(
             @RequestParam(defaultValue = "1") Long memberId,
             @RequestParam(defaultValue = "자취왕민지") String nickname,
+            @RequestParam(defaultValue = "USER") String role,
             @RequestParam(defaultValue = "false") boolean rememberMe) {
 
-        String token = jwtProvider.createToken(memberId, nickname, rememberMe);
+        String token = jwtProvider.createToken(memberId, nickname, role, rememberMe);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("token", token);

@@ -96,7 +96,7 @@ public class AuthService {
         }
 
         boolean rememberMe = Boolean.TRUE.equals(req.rememberMe());
-        String token = jwtProvider.createToken(row.memberId(), row.nickname(), rememberMe);
+        String token = jwtProvider.createToken(row.memberId(), row.nickname(), row.role(), rememberMe);
 
         return new LoginResponse(token, row.nickname(), row.memberId());
     }

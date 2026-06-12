@@ -1,31 +1,32 @@
 <script setup>
-import AppHeader from '../components/AppHeader.vue'
-import BottomNav from '../components/BottomNav.vue'
+import SideNav from '../components/SideNav.vue'
 </script>
 
 <template>
-  <div class="app-shell">
-    <AppHeader />
-    <main class="app-main">
-      <slot />
+  <div class="shell">
+    <SideNav />
+    <main class="main">
+      <div class="content">
+        <slot />
+      </div>
     </main>
-    <BottomNav />
   </div>
 </template>
 
 <style scoped>
-.app-shell {
-  min-height: 100vh;
+.shell {
   display: flex;
-  flex-direction: column;
+  min-height: 100vh;
   background: #f7f8fa;
 }
-.app-main {
+.main {
   flex: 1;
-  width: 100%;
-  max-width: 480px;
+  min-width: 0;
+}
+.content {
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 16px 16px 84px;
+  padding: 28px 32px 48px;
   box-sizing: border-box;
 }
 </style>
