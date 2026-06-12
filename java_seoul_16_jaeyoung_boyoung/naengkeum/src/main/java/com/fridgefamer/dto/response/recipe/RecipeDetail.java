@@ -19,6 +19,7 @@ public record RecipeDetail(
         BigDecimal avgRating,
         int reviewCount,
         boolean isWishlisted,
+        boolean isOwner,
         RecipeNutrition nutrition,
         List<RecipeIngredient> ingredients,
         List<RecipeStep> steps

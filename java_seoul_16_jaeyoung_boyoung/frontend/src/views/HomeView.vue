@@ -85,7 +85,7 @@ onMounted(load)
       <ul class="stats">
         <li @click="router.push('/fridge')"><span>{{ totalFridge }}</span>냉장고 재료</li>
         <li @click="router.push('/fridge')"><span :class="{ warn: expiring.length }">{{ expiring.length }}</span>임박</li>
-        <li @click="router.push('/recipe')"><span>{{ me?.stats?.wishlistCount ?? 0 }}</span>찜한 레시피</li>
+        <li @click="router.push('/mypage')"><span>{{ me?.stats?.wishlistCount ?? 0 }}</span>찜한 레시피</li>
         <li @click="router.push('/mypage')"><span>{{ me?.stats?.reviewCount ?? 0 }}</span>내 리뷰</li>
       </ul>
 

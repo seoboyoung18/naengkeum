@@ -101,9 +101,14 @@ public class RecipeService {
         RecipeNutrition nutrition = new RecipeNutrition(
                 row.calories(), row.carbs(), row.protein(), row.fat(), row.sodium());
 
+        // 본인이 등록한 레시피인지 — 사진 업로드 버튼 노출 판단용 (비로그인/공공 레시피는 false)
+        boolean isOwner = viewerId != null
+                && row.authorId() != null
+                && row.authorId().equals(viewerId);
+
         return new RecipeDetail(
                 row.recipeId(), row.title(), row.summary(), row.thumbnailUrl(), row.cookTime(),
-                row.avgRating(), row.reviewCount(), row.isWishlisted(),
+                row.avgRating(), row.reviewCount(), row.isWishlisted(), isOwner,
                 nutrition, ingredients, steps);
     }
 

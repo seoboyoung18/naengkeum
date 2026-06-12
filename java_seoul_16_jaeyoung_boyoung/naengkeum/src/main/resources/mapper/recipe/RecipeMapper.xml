@@ -120,6 +120,7 @@
                r.summary,
                r.image_url AS thumbnailUrl,
                r.cook_time AS cookTime,
+               r.author_id AS authorId,
                r.calories,
                r.carbs,
                r.protein,
@@ -272,6 +273,12 @@
 
     <update id="markPublic">
         UPDATE recipe SET is_public = TRUE
+         WHERE recipe_id = #{recipeId}
+    </update>
+
+    <!-- 대표 이미지 경로 갱신 (사용자가 직접 찍은 음식 사진) -->
+    <update id="updateImageUrl">
+        UPDATE recipe SET image_url = #{imageUrl}
          WHERE recipe_id = #{recipeId}
     </update>
 
