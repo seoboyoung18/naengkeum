@@ -46,7 +46,8 @@
             email       AS email,
             password    AS password,
             nickname    AS nickname,
-            is_active   AS isActive
+            is_active   AS isActive,
+            role        AS role
           FROM member
          WHERE email = #{email}
          LIMIT 1

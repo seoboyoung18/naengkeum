@@ -57,7 +57,7 @@ public class JwtProvider {
      * @param nickname   화면 표시용 닉네임
      * @param rememberMe true면 30일, false면 24시간
      */
-    public String createToken(Long memberId, String nickname, boolean rememberMe) {
+    public String createToken(Long memberId, String nickname, String role, boolean rememberMe) {
         long ttl = rememberMe ? longExpiration : expiration;
         Date now = new Date();
         Date exp = new Date(now.getTime() + ttl);
@@ -65,6 +65,7 @@ public class JwtProvider {
         return Jwts.builder()
                 .subject(String.valueOf(memberId))      // sub
                 .claim("nickname", nickname)
+                .claim("role", role)                    // USER / ADMIN
                 .issuedAt(now)
                 .expiration(exp)
                 .signWith(secretKey)                    // HS256 자동 선택
@@ -85,6 +86,12 @@ public class JwtProvider {
 
     public String getNickname(String token) {
         return parseClaims(token).get("nickname", String.class);
+    }
+
+    /** 토큰에서 역할(role)을 추출한다. 옛 토큰(role claim 없음)은 USER로 간주. */
+    public String getRole(String token) {
+        String role = parseClaims(token).get("role", String.class);
+        return role != null ? role : "USER";
     }
 
     /**

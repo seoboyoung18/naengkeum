@@ -11,12 +11,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 /**
  * 모든 HTTP 요청에서 JWT를 추출하여 SecurityContext에 인증 정보를 설정한다.
@@ -60,13 +61,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 Long memberId = jwtProvider.getMemberId(token);
+                String role = jwtProvider.getRole(token);   // USER / ADMIN
 
-                // Spring Security 인증 객체 생성 (권한은 ROLE_USER 단일)
+                // Spring Security 인증 객체 생성 (role → ROLE_ 권한)
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
                                 memberId,                    // principal: memberId
                                 null,                        // credentials: 불필요
-                                Collections.emptyList()      // authorities: 단일 권한이라 비움
+                                List.of(new SimpleGrantedAuthority("ROLE_" + role))  // ROLE_USER / ROLE_ADMIN
                         );
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
