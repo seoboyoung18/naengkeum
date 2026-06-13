@@ -74,15 +74,20 @@ public class SecurityConfig {
                         // (없으면 SSE 스트림이 끝에 Access Denied로 비정상 종료 → 브라우저 "network error")
                         .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
 
+                        // 관리자 전용 — 모든 다른 규칙보다 먼저, ROLE_ADMIN만 허용
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                         // 레시피 쓰기/내 것 조회는 인증 필요 — 아래 "/api/recipe/**" permitAll보다 먼저 선언해 우선 매칭
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/recipe/from-ai", "/api/recipe/from-ai/**").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/recipe/*/publish").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/recipe/mine").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/recipe/*/image").authenticated()
 
                         // 공개 경로
                         .requestMatchers(
                                 "/health", // 헬스체크
                                 "/error",    
+                                "/images/**", // 업로드된 레시피 이미지 (정적 서빙)
                                 "/api/test/token", // 임시 JWT 발급
                                 "/api/test/error/**", // (②-3 테스트용)
                                 "/api/auth/login", // 로그인

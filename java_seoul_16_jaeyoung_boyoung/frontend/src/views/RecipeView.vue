@@ -2,11 +2,18 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { searchRecipes, autocompleteRecipes } from '../api/recipe'
+import { API_BASE } from '../api/http'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import { listFridge } from '../api/fridge'
 import { useToast } from '../composables/useToast'
 
 const toast = useToast()
+
+// 업로드 이미지(/images/...)는 백엔드 호스트를 붙여 절대경로로. 외부 URL은 그대로.
+function imageUrl(u) {
+  if (!u) return null
+  return u.startsWith('/') ? API_BASE + u : u
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -179,7 +186,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 
     <ul v-else class="grid">
       <li v-for="r in content" :key="r.recipeId" class="card" @click="goDetail(r.recipeId)">
-        <div class="thumb" :style="r.thumbnailUrl ? { backgroundImage: `url(${r.thumbnailUrl})` } : null">
+        <div class="thumb" :style="imageUrl(r.thumbnailUrl) ? { backgroundImage: `url(${imageUrl(r.thumbnailUrl)})` } : null">
           <span v-if="!r.thumbnailUrl">🍽️</span>
           <button class="heart" :class="{ on: r.isWishlisted }" @click.stop="toggleWish(r)">
             {{ r.isWishlisted ? '♥' : '♡' }}

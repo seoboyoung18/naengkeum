@@ -35,8 +35,9 @@
 | **2주차** | 인증 4 · 회원 8 · 냉장고 6 · 식재료 사전 2 (총 **20종**) | ✅ 완료 |
 | **3주차** | 레시피 4 · 리뷰 4 · 찜 5 · **AI 추천 1(SSE + 하이브리드)** (총 **14종**) | ✅ 완료 |
 | **4주차** | 팔로우 2 · 챌린지 6 · **AI 코칭 1(SSE)** · **챌린지 진행률/배지 자동지급 1** (총 **10종**) | ✅ 완료 |
+| **5주차** | **관리자 3(통계·사용자 목록·차단/해제)** · **레시피 사진 업로드 1(본인 검증)** · 레시피 담기/공개(from-ai·publish) | ✅ 완료 |
 
-**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천/팔로우/챌린지/AI코칭): 약 **45개 엔드포인트**
+**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천/팔로우/챌린지/AI코칭/**관리자**): 약 **50개 엔드포인트**
 
 ### 프론트엔드 (Vue 3)
 | 화면 | 내용 | 상태 |
@@ -44,10 +45,11 @@
 | 기반 셋업 | Vite·Pinia·Router·Axios + 공통 레이아웃 + **JWT 인터셉터** | ✅ |
 | 인증 | 로그인 / 회원가입(이메일 중복확인·자동로그인) | ✅ |
 | 냉장고 | 보관위치 탭·정렬·D-day 목록·CRUD + 식재료 자동완성·**보관기한 자동 제안** | ✅ |
-| 레시피 | 검색·자동완성·필터(조리시간/내 재료) · 상세(재료·단계·영양) | ✅ |
+| 레시피 | 검색·자동완성·필터(조리시간/내 재료) · 상세(재료·단계·영양) · **본인 레시피 사진 업로드** | ✅ |
 | 리뷰·찜 | 평점 통계·작성/수정/삭제 · 찜 하트 토글 | ✅ |
-| **AI 추천** | **fetch SSE 실시간 스트리밍** · 출처 배지(DB/AI) · 찜 저장 | ✅ |
-| 마이페이지 | 내 정보·수정 · 찜 목록(AI 상세 모달) · 내 리뷰 | ✅ |
+| **AI 추천** | **fetch SSE 실시간 스트리밍** · 출처 배지(DB/AI) · 찜 저장 · **내 레시피로 담기 → 공개** | ✅ |
+| 마이페이지 | 내 정보·수정 · 찜 목록(AI 상세 모달) · 내 리뷰 · 내 레시피(공개 관리) | ✅ |
+| **관리자** | 대시보드 통계 · 사용자 목록/차단·해제 (백엔드 완료, 화면 진행 예정) | 🚧 |
 | 마감 | 토스트 알림 · 라우트 전환 폴리싱 | ✅ |
 
 ---
@@ -94,6 +96,19 @@
 - **배지 자동지급** : `PATCH /api/challenge/{id}/progress`로 진행률 갱신 → 100% 달성 시 보상 배지를 자동 지급(중복 방지). 응답의 `badgeEarned`로 "🎉 배지 획득!" 알림 트리거.
 - **AI 식재료 코칭** : `POST /api/ai/coaching` — 애매하게 남은 재료의 보관법(storage)과 활용 조합(combo)을 LLM이 분석해 **SSE 스트리밍**으로 제공.
 
+### ⑤ AI 레시피 담기 · 공개 · 사진 업로드
+
+- **내 레시피로 담기** : AI 추천 결과를 개인 보관함에 담기(`POST /api/recipe/from-ai`). 처음엔 비공개.
+- **공개하기** : 담은 레시피를 공개 카탈로그에 게시(`PATCH /api/recipe/{id}/publish`, 본인만). 공개하면 모두가 검색·찜 가능.
+- **사진 업로드** : 본인이 등록한 레시피에 직접 만든 음식 사진 첨부(`POST /api/recipe/{id}/image`). 소유 검증(공공/타인 403), jpg/png/webp + 5MB 제한, 업로드 후 상세·목록에 즉시 반영.
+
+### ⑥ 관리자 (ADMIN)
+
+- **권한 분리** : 회원 역할(role)을 JWT에 실어 `ROLE_ADMIN`/`ROLE_USER`로 매핑. `/api/admin/**`는 관리자만 접근.
+- **대시보드 통계** : `GET /api/admin/stats` — 회원/레시피/리뷰/챌린지 참여 수 집계.
+- **사용자 관리** : `GET /api/admin/users` 목록, `PATCH /api/admin/users/{id}/active` 차단/해제(관리자 계정은 차단 불가).
+- **콘텐츠 관리** : 별도 신고 기능 없이, 관리자는 기존 삭제 API를 재사용해 부적절 콘텐츠를 직접 삭제(verifyOwner를 "본인 OR 관리자"로 확장).
+
 ---
 
 ## 🗄️ 데이터베이스 (실제 스키마)
@@ -102,10 +117,10 @@ Flyway 마이그레이션(`java_seoul_16_jaeyoung_boyoung/naengkeum/src/main/res
 
 | 테이블 | 설명 |
 | --- | --- |
-| `member` | 회원 (이메일·비밀번호·닉네임·알레르기 CSV) |
+| `member` | 회원 (이메일·비밀번호·닉네임·알레르기 CSV·**역할 role USER/ADMIN**) |
 | `fridge_item` | 내 냉장고 재료 (보관위치·유통기한) |
 | `ingredient_dictionary` | 식재료 사전 150종 (보관법·권장기한) |
-| `recipe` / `recipe_ingredient` / `recipe_step` | 공공 레시피 본문·재료·조리단계 |
+| `recipe` / `recipe_ingredient` / `recipe_step` | 공공/AI 담은 레시피 본문·재료·조리단계 (**author_id·is_public·image_url**) |
 | `review` | 레시피 리뷰 (별점 1~5, UNIQUE(member,recipe)) |
 | `wishlist` / `ai_recipe` | 찜 (일반·AI 레시피 XOR) / AI 생성 레시피(JSON) |
 | `follow` / `challenge` / `challenge_participant` / `badge` | 팔로우 · 챌린지 · 챌린지 참여 · 뱃지 (4주차 구현 완료) |
@@ -116,6 +131,10 @@ Flyway 마이그레이션(`java_seoul_16_jaeyoung_boyoung/naengkeum/src/main/res
 | `V2__indexes.sql` | 인덱스 |
 | `V3__master_data.sql` · `V4__public_recipes.sql` | 마스터/공공 레시피 |
 | `V5__ingredient_dictionary.sql` | 식재료 사전 150종 |
+| `V6__recipe_authorship.sql` | 레시피 소유권(author_id·is_public·source_ai_recipe_id) — AI 담기/공개 기반 |
+| `V7__recipe_nutrition_backfill.sql` | 영양정보 백필 |
+| `V8__add_member_role.sql` | 회원 역할(role USER/ADMIN) 추가 — 관리자 권한 |
+| `V9__set_admin_by_email.sql` | 관리자 계정을 이메일 기준으로 확정 |
 
 ---
 
@@ -158,7 +177,7 @@ naengkeum/
 │   └── exception/     # GlobalExceptionHandler, ApiException, ErrorCode(9종)
 ├── src/main/resources/
 │   ├── mapper/        # MyBatis XML (도메인별)
-│   ├── db/migration/  # Flyway V1~V5
+│   ├── db/migration/  # Flyway V1~V9
 │   ├── db/fixtures/   # dev 시드(D1)
 │   └── application*.yml
 └── src/docs/          # erd.md, api.md (설계/명세)
@@ -173,7 +192,7 @@ frontend/src/
 ├── layouts/      # DefaultLayout (Header + 하단 네비)
 ├── components/   # FridgeItemForm·ReviewSection·AiRecipeModal·ToastContainer ...
 ├── composables/  # useToast
-└── views/        # Login·Register·Home·Fridge·Recipe(+Detail)·AiRecommend·MyPage
+└── views/        # Login·Register·Home·Fridge·Recipe(+Detail·Publish)·AiRecommend·Challenge·Follow·UserProfile·MyPage
 ```
 
 ---
@@ -203,6 +222,8 @@ cd java_seoul_16_jaeyoung_boyoung/naengkeum
 OPENAI_API_KEY=<발급키> ./mvnw spring-boot:run   # dev 프로파일, 포트 8080
 # 최초 구동 시 Flyway가 스키마 + 식재료 150종 + 공공 레시피 175건 자동 적재
 ```
+> ⚠️ **그냥 `./mvnw spring-boot:run`만 실행하면 `.env`를 읽지 않아 AI가 503/500**이 납니다.
+> 키를 위처럼 직접 주입하거나, VSCode F5(launch.json envFile=.env), 또는 `./run.sh`(`.env`의 키를 export 후 실행)를 사용하세요.
 
 ### 프론트엔드 실행
 ```bash
@@ -252,7 +273,7 @@ curl -N -X POST localhost:8080/api/ai/coaching \
 
 ## 📅 향후 확장 로드맵
 
-- **Phase 2** : 영수증 OCR 등록 · 동네 식재료 쉐어링 · 챌린지/배지 화면(UI) · 챌린지 조건별 진행률 자동 추적(현재는 진행률 직접 갱신 방식)
+- **Phase 2** : 영수증 OCR 등록 · 동네 식재료 쉐어링 · 관리자 대시보드 화면(UI, 백엔드 완료) · AI 레시피 공유 게시판(댓글·좋아요) · 챌린지/배지 화면(UI) · 챌린지 조건별 진행률 자동 추적(현재는 진행률 직접 갱신 방식) · 팔로우 레시피 알림
 
 ---
 

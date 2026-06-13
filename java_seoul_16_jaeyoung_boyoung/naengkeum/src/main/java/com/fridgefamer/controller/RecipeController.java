@@ -10,6 +10,7 @@ import com.fridgefamer.dto.response.recipe.RecipePublished;
 import com.fridgefamer.dto.response.recipe.RecipeSaved;
 import com.fridgefamer.exception.ApiException;
 import com.fridgefamer.exception.ErrorCode;
+import com.fridgefamer.service.RecipeImageService;
 import com.fridgefamer.service.RecipeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -32,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 레시피(Recipe) API — API 명세 §4.
@@ -53,9 +56,12 @@ import java.util.List;
 public class RecipeController {
 
     private final RecipeService recipeService;
+    private final RecipeImageService recipeImageService;
 
-    public RecipeController(RecipeService recipeService) {
+    public RecipeController(RecipeService recipeService,
+                            RecipeImageService recipeImageService) {
         this.recipeService = recipeService;
+        this.recipeImageService = recipeImageService;
     }
 
     @GetMapping
@@ -135,6 +141,19 @@ public class RecipeController {
             @PathVariable @Positive(message = "recipeId는 양수여야 합니다") Long recipeId
     ) {
         return recipeService.publish(currentMemberId(), recipeId);
+    }
+
+    /**
+     * 레시피 대표 사진 업로드 — 본인이 등록한 레시피에만.
+     * multipart/form-data, 파트명 "image". 반환: 저장된 이미지 공개 URL.
+     */
+    @PostMapping("/{recipeId}/image")
+    public Map<String, String> uploadImage(
+            @PathVariable @Positive(message = "recipeId는 양수여야 합니다") Long recipeId,
+            @RequestParam("image") MultipartFile image
+    ) {
+        String url = recipeImageService.upload(currentMemberId(), recipeId, image);
+        return Map.of("imageUrl", url);
     }
 
     /** 마이 레시피 목록 — author_id=나 (공개/비공개 포함). */

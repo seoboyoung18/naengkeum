@@ -6,6 +6,7 @@ import com.fridgefamer.dto.response.review.RatingCount;
 import com.fridgefamer.dto.response.review.RatingStats;
 import com.fridgefamer.dto.response.review.ReviewItem;
 import com.fridgefamer.dto.response.review.ReviewListResponse;
+import com.fridgefamer.config.SecurityUtils;
 import com.fridgefamer.exception.ApiException;
 import com.fridgefamer.exception.ErrorCode;
 import com.fridgefamer.mapper.review.ReviewMapper;
@@ -79,13 +80,14 @@ public class ReviewService {
     //  내부 헬퍼
     // =====================================================================
 
-    /** 리뷰가 존재하고 호출자 소유인지 검증. 없으면 404, 타인 것이면 403. */
+    /** 리뷰가 존재하고 호출자 소유(또는 관리자)인지 검증. 없으면 404, 권한 없으면 403. */
     private void verifyOwner(Long memberId, Long reviewId) {
         Long ownerId = reviewMapper.findOwnerId(reviewId);
         if (ownerId == null) {
             throw new ApiException(ErrorCode.NOT_FOUND, "리뷰를 찾을 수 없습니다");
         }
-        if (!ownerId.equals(memberId)) {
+        // 작성자 본인 또는 관리자만 허용 (관리자는 부적절한 리뷰를 직접 삭제)
+        if (!ownerId.equals(memberId) && !SecurityUtils.isAdmin()) {
             throw new ApiException(ErrorCode.FORBIDDEN, "본인의 리뷰만 수정/삭제할 수 있습니다");
         }
     }

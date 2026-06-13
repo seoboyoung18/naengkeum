@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fridgefamer.mapper.admin.AdminMapper">
+
+    <!-- 전체 사용자 목록 (활성/차단 모두, 최신 가입 순) -->
+    <select id="selectAllUsers"
+            resultType="com.fridgefamer.dto.response.admin.AdminUserRow">
+        SELECT
+            member_id AS memberId,
+            email     AS email,
+            nickname  AS nickname,
+            role      AS role,
+            is_active AS active
+          FROM member
+         ORDER BY member_id DESC
+    </select>
+
+    <!-- 사용자 활성/차단 토글 -->
+    <update id="updateActive">
+        UPDATE member
+           SET is_active = <choose><when test="active">1</when><otherwise>0</otherwise></choose>
+         WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 역할 조회 (관리자 계정 보호용) -->
+    <select id="selectRole" resultType="java.lang.String">
+        SELECT role FROM member WHERE member_id = #{memberId}
+    </select>
+
+    <!-- ===== 대시보드 통계 ===== -->
+    <select id="countMembers" resultType="long">
+        SELECT COUNT(*) FROM member WHERE is_active = 1
+    </select>
+
+    <select id="countRecipes" resultType="long">
+        SELECT COUNT(*) FROM recipe
+    </select>
+
+    <select id="countReviews" resultType="long">
+        SELECT COUNT(*) FROM review
+    </select>
+
+    <select id="countActiveChallengeParticipants" resultType="long">
+        SELECT COUNT(DISTINCT cp.member_id)
+          FROM challenge_participant cp
+          JOIN challenge c ON c.challenge_id = cp.challenge_id
+         WHERE CURDATE() BETWEEN c.start_date AND c.end_date
+    </select>
+
+</mapper>
