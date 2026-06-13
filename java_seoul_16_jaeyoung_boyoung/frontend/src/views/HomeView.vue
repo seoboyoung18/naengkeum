@@ -4,6 +4,10 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { fetchDashboard } from '../api/fridge'
 import { myChallenges } from '../api/challenge'
+import LottieIcon from '../components/LottieIcon.vue'
+import winkAnim from '../assets/wink.json'
+import botAnim from '../assets/bot.json'
+import hourglassAnim from '../assets/hourglass.json'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -60,7 +64,7 @@ onMounted(load)
   <section>
     <!-- 상단: 인사 + 검색 -->
     <div class="top">
-      <p class="hi" v-if="me">안녕하세요, <b>{{ me.nickname }}</b>님 👋</p>
+      <p class="hi" v-if="me">안녕하세요, <b>{{ me.nickname }}</b>님 <LottieIcon :data="winkAnim" :size="28" /></p>
       <p class="hi" v-else>&nbsp;</p>
       <div class="search">
         <span class="ic">🔍</span>
@@ -71,7 +75,7 @@ onMounted(load)
     <!-- AI 추천 배너 -->
     <RouterLink to="/ai-recommend" class="ai-banner">
       <div class="ai-txt">
-        <strong>🤖 냉장고 재료로 AI 추천 받기</strong>
+        <strong><LottieIcon :data="botAnim" :size="30" :zoom="1.5" style="margin-right: 12px; transform: translateY(-2px);" />냉장고 재료로 AI 추천 받기</strong>
         <span>남은 재료로 만들 수 있는 레시피를 실시간으로 추천해 드려요</span>
       </div>
       <span class="ai-btn">추천 받기</span>
@@ -94,7 +98,7 @@ onMounted(load)
         <!-- 좌: 유통기한 임박 -->
         <div class="card imminent" :class="{ none: expiring.length === 0 }" @click="router.push('/fridge')">
           <div class="chead">
-            <span class="ititle">⏰ 유통기한 임박</span>
+            <span class="ititle"><LottieIcon :data="hourglassAnim" :size="24" :zoom="2.2" style="margin-right: 4px;" />유통기한 임박</span>
             <span class="ibadge">{{ expiring.length }}</span>
           </div>
           <p v-if="expiring.length === 0" class="iok">임박한 재료가 없어요. 잘 관리하고 있어요! 👍</p>

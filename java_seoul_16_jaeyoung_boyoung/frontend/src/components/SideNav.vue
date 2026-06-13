@@ -2,16 +2,22 @@
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import LottieIcon from './LottieIcon.vue'
+import fridgeAnim from '../assets/fridge.json'
+import homeIcon from '../assets/icons/home-alt.svg?raw'
+import fridgeIcon from '../assets/icons/fridge.svg?raw'
+import recipeIcon from '../assets/icons/pizza-slice.svg?raw'
+import challengeIcon from '../assets/icons/trophy.svg?raw'
+import userIcon from '../assets/icons/user.svg?raw'
 
 const auth = useAuthStore()
 const router = useRouter()
 
 const items = [
-  { to: '/home', label: '홈', icon: '🏠' },
-  { to: '/fridge', label: '냉장고', icon: '🧊' },
-  { to: '/recipe', label: '레시피', icon: '🍳' },
-  { to: '/challenge', label: '챌린지', icon: '🏆' },
-  { to: '/mypage', label: '마이', icon: '👤' },
+  { to: '/home', label: '홈', icon: homeIcon },
+  { to: '/fridge', label: '냉장고', icon: fridgeIcon },
+  { to: '/recipe', label: '레시피', icon: recipeIcon },
+  { to: '/challenge', label: '챌린지', icon: challengeIcon },
+  { to: '/mypage', label: '마이', icon: userIcon },
 ]
 
 function logout() {
@@ -22,7 +28,7 @@ function logout() {
 
 <template>
   <aside class="side">
-    <RouterLink to="/home" class="logo"><LottieIcon :size="38" /> 냉큼</RouterLink>
+    <RouterLink to="/home" class="logo"><LottieIcon :data="fridgeAnim" :size="38" /> 냉큼</RouterLink>
 
     <nav class="nav">
       <RouterLink
@@ -32,7 +38,7 @@ function logout() {
         class="item"
         active-class="on"
       >
-        <span class="ic">{{ it.icon }}</span>
+        <span class="ic" v-html="it.icon"></span>
         <span class="lb">{{ it.label }}</span>
       </RouterLink>
     </nav>
@@ -81,7 +87,7 @@ function logout() {
 }
 .item:hover { background: var(--canvas-soft); color: var(--ink); }
 .item.on { background: rgba(0, 217, 146, 0.12); color: var(--primary); font-weight: 700; }
-.ic { font-size: 18px; width: 20px; text-align: center; }
+.ic { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
 
 .bottom { margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
 .nick { font-size: 13px; color: var(--mute); padding: 0 12px 4px; }
