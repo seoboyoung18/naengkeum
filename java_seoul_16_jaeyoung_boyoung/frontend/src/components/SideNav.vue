@@ -8,6 +8,7 @@ import fridgeIcon from '../assets/icons/fridge.svg?raw'
 import recipeIcon from '../assets/icons/pizza-slice.svg?raw'
 import challengeIcon from '../assets/icons/trophy.svg?raw'
 import userIcon from '../assets/icons/user.svg?raw'
+import logoutIcon from '../assets/icons/log-out.svg?raw'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -46,7 +47,7 @@ function logout() {
     <div class="bottom">
       <span v-if="auth.nickname" class="nick">{{ auth.nickname }}</span>
       <button class="logout" @click="logout">
-        <span class="ic">↩️</span><span>로그아웃</span>
+        <span class="ic" v-html="logoutIcon"></span><span>로그아웃</span>
       </button>
     </div>
   </aside>

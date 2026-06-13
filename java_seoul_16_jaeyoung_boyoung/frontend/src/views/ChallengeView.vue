@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { listChallenges, myChallenges, fetchChallengeStats } from '../api/challenge'
 import { listBadges } from '../api/member'
+import userIcon from '../assets/icons/user.svg?raw'
+import LottieIcon from '../components/LottieIcon.vue'
+import fireAnim from '../assets/fire.json'
 
 const router = useRouter()
 
@@ -46,7 +49,7 @@ onMounted(async () => {
 
     <!-- 통계 배너 -->
     <div class="banner">
-      <span>🔥 지금 <b>{{ activeParticipants }}</b>명이 챌린지에 도전 중!</span>
+      <span><LottieIcon :data="fireAnim" :size="26" style="vertical-align: -5px; margin-right: 2px;" /> 지금 <b>{{ activeParticipants }}</b>명이 챌린지에 도전 중!</span>
       <span class="banner-sub">나도 도전해 식비를 아껴봐요</span>
     </div>
 
@@ -74,7 +77,7 @@ onMounted(async () => {
       <li v-for="c in items" :key="c.challengeId" class="card" @click="router.push({ name: 'challenge-detail', params: { challengeId: c.challengeId } })">
         <div class="top">
           <span class="dday" :class="{ ended: c.dDay < 0 }">{{ dDayText(c.dDay) }}</span>
-          <span class="part">👥 {{ c.participantCount }}</span>
+          <span class="part"><span class="uic" v-html="userIcon"></span> {{ c.participantCount }}</span>
         </div>
         <div class="title">{{ c.title }}</div>
         <div class="desc">{{ c.description }}</div>
@@ -112,7 +115,9 @@ onMounted(async () => {
 .top { display: flex; justify-content: space-between; align-items: center; }
 .dday { font-size: 12px; font-weight: 800; color: #ef4444; background: #fef2f2; padding: 3px 8px; border-radius: 6px; }
 .dday.ended { color: #999; background: #f1f3f5; }
-.part { font-size: 12px; color: #888; }
+.part { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #888; }
+.uic { display: inline-flex; align-items: center; }
+.uic :deep(svg) { width: 14px; height: 14px; }
 .title { font-size: 16px; font-weight: 700; margin-top: 8px; }
 .desc { font-size: 13px; color: #888; margin-top: 3px; }
 .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; }

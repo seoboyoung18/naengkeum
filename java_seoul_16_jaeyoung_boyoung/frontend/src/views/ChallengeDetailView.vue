@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchChallengeDetail, joinChallenge, unjoinChallenge, updateProgress } from '../api/challenge'
 import { useToast } from '../composables/useToast'
+import userIcon from '../assets/icons/user.svg?raw'
 
 const props = defineProps({ challengeId: { type: [String, Number], required: true } })
 const router = useRouter()
@@ -85,7 +86,7 @@ onMounted(load)
       <div class="dday" :class="{ ended: c.dDay < 0 }">{{ dDayText(c.dDay) }}</div>
       <h2 class="title">{{ c.title }}</h2>
       <p class="desc">{{ c.description }}</p>
-      <div class="meta">👥 {{ c.participantCount }}명 참여 · {{ c.startDate }} ~ {{ c.endDate }}</div>
+      <div class="meta"><span class="uic" v-html="userIcon"></span> {{ c.participantCount }}명 참여 · {{ c.startDate }} ~ {{ c.endDate }}</div>
 
       <!-- 보상 배지 -->
       <div class="reward">
@@ -127,6 +128,8 @@ onMounted(load)
 .title { font-size: 22px; margin: 12px 0 6px; }
 .desc { font-size: 14px; color: #555; margin: 0; }
 .meta { font-size: 12px; color: #999; margin-top: 8px; }
+.uic { display: inline-flex; align-items: center; vertical-align: -2px; }
+.uic :deep(svg) { width: 14px; height: 14px; }
 
 .reward { display: flex; align-items: center; gap: 12px; background: #fff7ed; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; margin: 18px 0; }
 .ric { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; }

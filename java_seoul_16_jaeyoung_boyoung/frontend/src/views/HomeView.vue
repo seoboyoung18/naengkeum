@@ -8,6 +8,9 @@ import LottieIcon from '../components/LottieIcon.vue'
 import winkAnim from '../assets/wink.json'
 import botAnim from '../assets/bot.json'
 import hourglassAnim from '../assets/hourglass.json'
+import fridgeIcon from '../assets/icons/fridge.svg?raw'
+import medalIcon from '../assets/icons/1st-medal.svg?raw'
+import searchIcon from '../assets/icons/search.svg?raw'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -64,10 +67,10 @@ onMounted(load)
   <section>
     <!-- 상단: 인사 + 검색 -->
     <div class="top">
-      <p class="hi" v-if="me">안녕하세요, <b>{{ me.nickname }}</b>님 <LottieIcon :data="winkAnim" :size="28" /></p>
+      <p class="hi" v-if="me">안녕하세요, <b>{{ me.nickname }}</b>님 <LottieIcon :data="winkAnim" :size="28" style="transform: translateY(-2px);" /></p>
       <p class="hi" v-else>&nbsp;</p>
       <div class="search">
-        <span class="ic">🔍</span>
+        <span class="ic" v-html="searchIcon"></span>
         <input v-model="keyword" placeholder="레시피·재료 검색" @keyup.enter="search" />
       </div>
     </div>
@@ -114,7 +117,7 @@ onMounted(load)
         <!-- 우: 내 냉장고 + 진행 중 챌린지 -->
         <div class="side">
           <div class="card" @click="router.push('/fridge')">
-            <div class="chead"><span>🧊 내 냉장고</span><span class="total">{{ totalFridge }}개</span></div>
+            <div class="chead"><span class="chl"><span class="hicon" v-html="fridgeIcon"></span> 내 냉장고</span><span class="total">{{ totalFridge }}개</span></div>
             <ul class="storage">
               <li><span>{{ summary.fridgeCount }}</span>{{ STORAGE.FRIDGE }}</li>
               <li><span>{{ summary.freezerCount }}</span>{{ STORAGE.FREEZER }}</li>
@@ -123,7 +126,7 @@ onMounted(load)
           </div>
 
           <div class="card chal" @click="router.push('/challenge')">
-            <div class="chead"><span>🏆 진행 중 챌린지</span></div>
+            <div class="chead"><span class="chl"><span class="hicon" v-html="medalIcon"></span> 진행 중 챌린지</span></div>
             <template v-if="activeChallenge">
               <div class="ctitle">{{ activeChallenge.title }}</div>
               <div class="cbar"><div class="cfill" :style="{ width: activeChallenge.myProgress + '%' }"></div></div>
@@ -141,7 +144,8 @@ onMounted(load)
 .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .hi { font-size: 20px; margin: 0; }
 .search { position: relative; width: 320px; max-width: 40%; }
-.search .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; }
+.search .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; color: #9aa0a6; }
+.search .ic :deep(svg) { width: 18px; height: 18px; }
 .search input { width: 100%; box-sizing: border-box; padding: 10px 12px 10px 34px; border: 1px solid var(--line);
   border-radius: 10px; font-size: 14px; background: #fff; }
 
@@ -164,6 +168,9 @@ onMounted(load)
 .side { display: flex; flex-direction: column; gap: 16px; }
 .card { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; padding: 18px 20px; cursor: pointer; }
 .chead { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 700; }
+.chl { display: inline-flex; align-items: center; gap: 7px; }
+.hicon { display: inline-flex; align-items: center; }
+.hicon :deep(svg) { width: 18px; height: 18px; }
 .chead .total { color: var(--primary-deep); font-weight: 700; }
 
 .imminent { border-color: #fed7aa; }
