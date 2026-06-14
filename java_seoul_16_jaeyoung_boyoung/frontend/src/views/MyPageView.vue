@@ -7,6 +7,9 @@ import { useAuthStore } from '../stores/auth'
 import AiRecipeModal from '../components/AiRecipeModal.vue'
 import MyRecipeList from '../components/MyRecipeList.vue'
 import { useToast } from '../composables/useToast'
+import InlineIcon from '../components/InlineIcon.vue'
+import clockSvg from '../assets/icons/clock-outline.svg?raw'
+import botUrl from '../assets/icons/message-bot.svg'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -137,10 +140,10 @@ onMounted(loadAll)
           <p v-if="wishes.length === 0" class="muted">아직 찜한 레시피가 없어요.</p>
           <ul v-else class="list">
             <li v-for="w in wishes" :key="w.wishlistId" class="row" @click="openWish(w)">
-              <span class="type" :class="w.type === 'AI' ? 'ai' : 'db'">{{ w.type === 'AI' ? '🤖 AI' : '📖' }}</span>
+              <span class="type" :class="w.type === 'AI' ? 'ai' : 'db'"><template v-if="w.type === 'AI'"><img :src="botUrl" class="bi" alt="" /> AI</template><template v-else>📖</template></span>
               <div class="info">
                 <div class="title">{{ w.title }}</div>
-                <div class="sub"><span v-if="w.cookTime">⏱ {{ w.cookTime }}분</span></div>
+                <div class="sub"><span v-if="w.cookTime"><InlineIcon :svg="clockSvg" :size="12" /> {{ w.cookTime }}분</span></div>
               </div>
               <button class="rm" @click.stop="removeWish(w)">♥</button>
             </li>
@@ -226,7 +229,8 @@ onMounted(loadAll)
 .row { display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 10px; cursor: pointer; }
 .row + .row { border-top: 1px solid var(--line); }
 .row:hover { background: #fafbfc; }
-.type { font-size: 13px; flex: 0 0 auto; }
+.type { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; flex: 0 0 auto; }
+.bi { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
 .type.ai { color: #7c3aed; font-weight: 700; }
 .info { flex: 1; min-width: 0; }
 .title { font-size: 15px; font-weight: 600; }

@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { listMyRecipes, publishRecipe } from '../api/recipe'
 import { useToast } from '../composables/useToast'
+import InlineIcon from './InlineIcon.vue'
+import clockSvg from '../assets/icons/clock-outline.svg?raw'
+import botUrl from '../assets/icons/message-bot.svg'
 
 const props = defineProps({
   // 공개 후보(비공개)만 보여줄지 여부 — 공개 등록 화면(P4)에서 true
@@ -63,10 +66,10 @@ defineExpose({ load })
   <ul v-else class="list">
     <li v-for="r in items" :key="r.recipeId" class="row">
       <div class="left" @click="openDetail(r)">
-        <span class="badge">🤖 AI</span>
+        <span class="badge"><img :src="botUrl" class="bi" alt="" /> AI</span>
         <div class="info">
           <div class="title">{{ r.title }}</div>
-          <div class="sub"><span v-if="r.cookTime">⏱ {{ r.cookTime }}분</span></div>
+          <div class="sub"><span v-if="r.cookTime"><InlineIcon :svg="clockSvg" :size="12" /> {{ r.cookTime }}분</span></div>
         </div>
       </div>
       <div class="right">
@@ -87,8 +90,9 @@ defineExpose({ load })
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 12px; padding: 12px 14px; }
 .left { display: flex; align-items: center; gap: 12px; min-width: 0; cursor: pointer; flex: 1; }
-.badge { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #7c3aed; background: #f5f3ff;
+.badge { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: #7c3aed; background: #f5f3ff;
   border-radius: 999px; padding: 4px 10px; }
+.bi { width: 14px; height: 14px; object-fit: contain; }
 .info { min-width: 0; }
 .title { font-size: 15px; font-weight: 600; }
 .sub { font-size: 12px; color: #999; margin-top: 2px; }

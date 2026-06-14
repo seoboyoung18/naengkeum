@@ -6,6 +6,9 @@ import { TOKEN_KEY } from '../stores/auth'
 import { addRecipeWish, saveAiRecipe } from '../api/wishlist'
 import { registerFromAi } from '../api/recipe'
 import { useToast } from '../composables/useToast'
+import InlineIcon from '../components/InlineIcon.vue'
+import clockSvg from '../assets/icons/clock-outline.svg?raw'
+import botUrl from '../assets/icons/message-bot.svg'
 
 const router = useRouter()
 const toast = useToast()
@@ -169,7 +172,7 @@ function goRecipe() {
 
 <template>
   <section>
-    <h2 class="h">🤖 AI 레시피 추천</h2>
+    <h2 class="h"><img :src="botUrl" class="bi" alt="" /> AI 레시피 추천</h2>
     <p class="lead">냉장고 재료로 만들 수 있는 레시피를 추천해 드려요.</p>
 
     <div class="layout">
@@ -182,7 +185,7 @@ function goRecipe() {
           <label><input type="checkbox" v-model="options.applyAllergy" /> 알레르기 반영</label>
         </div>
         <button class="run" :disabled="streaming" @click="run">
-          {{ streaming ? '추천 받는 중…' : started ? '다시 추천 받기' : '🍳 추천 받기' }}
+          {{ streaming ? '추천 받는 중…' : started ? '다시 추천 받기' : '추천 받기' }}
         </button>
         <p v-if="error" class="err">⚠️ {{ error }}</p>
       </div>
@@ -190,13 +193,12 @@ function goRecipe() {
       <!-- 우: 결과 -->
       <div class="right">
         <div v-if="!started || error" class="placeholder">
-          <span class="ph-emoji">🍳</span>
           <p>왼쪽에서 옵션을 고르고 <b>추천 받기</b>를 눌러보세요.</p>
         </div>
 
         <div v-else class="result">
           <div v-if="result.source" class="badge" :class="result.source.origin === 'DB' ? 'db' : 'ai'">
-        {{ result.source.origin === 'DB' ? `📚 보유 재료 기반 추천 레시피` : '🤖 AI 생성 레시피' }}
+        <template v-if="result.source.origin === 'DB'">보유 재료 기반 추천 레시피</template><template v-else><img :src="botUrl" class="bi" alt="" /> AI 생성 레시피</template>
       </div>
 
       <h3 v-if="result.title" class="title">{{ result.title }}</h3>
@@ -223,7 +225,7 @@ function goRecipe() {
       </template>
 
       <div v-if="result.meta" class="meta">
-        <span v-if="result.meta.cookTime">⏱ {{ result.meta.cookTime }}분</span>
+        <span v-if="result.meta.cookTime"><InlineIcon :svg="clockSvg" :size="12" /> {{ result.meta.cookTime }}분</span>
         <span v-if="result.meta.difficulty">📊 {{ result.meta.difficulty }}</span>
         <span v-if="result.meta.servings">🍽 {{ result.meta.servings }}인분</span>
       </div>
@@ -302,4 +304,5 @@ function goRecipe() {
 .register { flex: 1; border: none; background: var(--primary); color: var(--on-primary); border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .register:disabled { opacity: .6; }
 .reg-note { font-size: 12px; color: #999; margin: 8px 0 0; }
+.bi { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
 </style>

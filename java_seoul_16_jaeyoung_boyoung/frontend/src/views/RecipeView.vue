@@ -6,6 +6,10 @@ import { API_BASE } from '../api/http'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import { listFridge } from '../api/fridge'
 import { useToast } from '../composables/useToast'
+import InlineIcon from '../components/InlineIcon.vue'
+import clockSvg from '../assets/icons/clock-outline.svg?raw'
+import starSvg from '../assets/icons/star.svg?raw'
+import botUrl from '../assets/icons/message-bot.svg'
 
 const toast = useToast()
 
@@ -39,7 +43,7 @@ const filters = reactive({ keyword: '', sort: 'LATEST', minCookTime: null, maxCo
 const SOURCE_BADGE = {
   PUBLIC: { label: '공공', cls: 'pub' },
   USER: { label: '✍️ 직접', cls: 'user' },
-  AI_SAVED: { label: '🤖 AI', cls: 'ai' },
+  AI_SAVED: { label: 'AI', cls: 'ai' },
 }
 function badge(source) { return SOURCE_BADGE[source] || SOURCE_BADGE.PUBLIC }
 const content = ref([])
@@ -175,7 +179,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
     <!-- 조리시간 + 내 재료 -->
     <div class="chips">
       <button v-for="c in COOK_TIMES" :key="c.label" :class="{ on: filters.minCookTime === c.min && filters.maxCookTime === c.max }" @click="setCookTime(c)">{{ c.label }}</button>
-      <button class="mine" :class="{ on: filters.useMyFridge }" @click="toggleMyFridge">🧊 내 재료</button>
+      <button class="mine" :class="{ on: filters.useMyFridge }" @click="toggleMyFridge">내 재료</button>
     </div>
 
     <p class="count" v-if="!loading">{{ totalElements }}개</p>
@@ -195,11 +199,11 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
         <div class="info">
           <div class="trow">
             <div class="title">{{ r.title }}</div>
-            <span class="src" :class="badge(r.source).cls">{{ badge(r.source).label }}</span>
+            <span class="src" :class="badge(r.source).cls"><img v-if="r.source === 'AI_SAVED'" :src="botUrl" class="bi" alt="" />{{ badge(r.source).label }}</span>
           </div>
           <div class="meta">
-            <span v-if="r.cookTime">⏱ {{ r.cookTime }}분</span>
-            <span>⭐ {{ Number(r.avgRating).toFixed(1) }}<template v-if="r.reviewCount"> ({{ r.reviewCount }})</template></span>
+            <span v-if="r.cookTime"><InlineIcon :svg="clockSvg" :size="12" /> {{ r.cookTime }}분</span>
+            <span><InlineIcon :svg="starSvg" :size="13" style="transform: translateY(-2px)" /> {{ Number(r.avgRating).toFixed(1) }}<template v-if="r.reviewCount"> ({{ r.reviewCount }})</template></span>
           </div>
           <div class="ings" v-if="r.mainIngredients?.length">{{ r.mainIngredients.join(' · ') }}</div>
         </div>
@@ -248,6 +252,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 .src { flex: 0 0 auto; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 8px; background: #eef2f7; color: #64748b; }
 .src.user { background: #fff7ed; color: #c2410c; }
 .src.ai { background: #f5f3ff; color: #7c3aed; }
+.bi { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
 .meta { display: flex; gap: 10px; font-size: 12px; color: #888; margin-top: 8px; }
 .ings { font-size: 12px; color: #aaa; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

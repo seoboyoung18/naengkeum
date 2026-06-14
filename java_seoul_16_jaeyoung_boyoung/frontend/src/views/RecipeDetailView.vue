@@ -6,6 +6,9 @@ import { API_BASE } from '../api/http'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import ReviewSection from '../components/ReviewSection.vue'
 import { useToast } from '../composables/useToast'
+import InlineIcon from '../components/InlineIcon.vue'
+import clockSvg from '../assets/icons/clock-outline.svg?raw'
+import starSvg from '../assets/icons/star.svg?raw'
 
 const toast = useToast()
 
@@ -141,8 +144,8 @@ onMounted(load)
             <h2 class="title">{{ recipe.title }}</h2>
           </div>
           <div class="meta">
-            <span v-if="recipe.cookTime">⏱ {{ recipe.cookTime }}분</span>
-            <span>⭐ {{ Number(recipe.avgRating).toFixed(1) }} (리뷰 {{ recipe.reviewCount }})</span>
+            <span v-if="recipe.cookTime"><InlineIcon :svg="clockSvg" :size="12" /> {{ recipe.cookTime }}분</span>
+            <span><InlineIcon :svg="starSvg" :size="13" style="transform: translateY(-2px)" /> {{ Number(recipe.avgRating).toFixed(1) }} (리뷰 {{ recipe.reviewCount }})</span>
           </div>
           <p v-if="recipe.summary" class="summary">{{ recipe.summary }}</p>
 

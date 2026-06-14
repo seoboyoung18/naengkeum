@@ -1,6 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { fetchAiRecipe } from '../api/wishlist'
+import InlineIcon from './InlineIcon.vue'
+import clockSvg from '../assets/icons/clock-outline.svg?raw'
+import botUrl from '../assets/icons/message-bot.svg'
 
 const props = defineProps({ aiRecipeId: { type: [String, Number], required: true } })
 const emit = defineEmits(['close'])
@@ -24,7 +27,7 @@ onMounted(async () => {
   <div class="overlay" @click.self="emit('close')">
     <div class="sheet">
       <div class="hd">
-        <span class="badge">🤖 AI 레시피</span>
+        <span class="badge"><img :src="botUrl" class="bi" alt="" /> AI 레시피</span>
         <button class="x" @click="emit('close')">✕</button>
       </div>
 
@@ -34,7 +37,7 @@ onMounted(async () => {
       <template v-else-if="data">
         <h3 class="title">{{ data.title }}</h3>
         <p v-if="data.summary" class="summary">{{ data.summary }}</p>
-        <div v-if="data.cookTime" class="meta">⏱ {{ data.cookTime }}분</div>
+        <div v-if="data.cookTime" class="meta"><InlineIcon :svg="clockSvg" :size="12" /> {{ data.cookTime }}분</div>
 
         <div class="sec">재료</div>
         <ul class="ings">
@@ -60,7 +63,8 @@ onMounted(async () => {
 .overlay { position: fixed; inset: 0; background: rgba(17,24,39,.5); display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; z-index: 60; }
 .sheet { width: 100%; max-width: 480px; background: #fff; border-radius: 16px; padding: 22px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 48px rgba(0,0,0,.18); }
 .hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.badge { font-size: 12px; font-weight: 700; background: #f5f3ff; color: #7c3aed; padding: 5px 10px; border-radius: 999px; }
+.badge { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; background: #f5f3ff; color: #7c3aed; padding: 5px 10px; border-radius: 999px; }
+.bi { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
 .x { border: none; background: none; font-size: 18px; cursor: pointer; color: #888; }
 .title { font-size: 19px; margin: 4px 0; }
 .summary { color: #666; font-size: 14px; margin: 0; }
