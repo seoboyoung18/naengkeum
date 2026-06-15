@@ -73,10 +73,10 @@ onMounted(load)
 </template>
 
 <style scoped>
-.tabs { display: flex; gap: 8px; margin-bottom: 14px; max-width: 720px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 14px; }
 .tabs button { flex: 1; padding: 10px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 14px; color: #666; cursor: pointer; }
 .tabs button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
-.list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; max-width: 720px; }
+.list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .row { display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 12px; padding: 10px 12px; }
 .who { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-weight: 800; display: flex; align-items: center; justify-content: center; }
