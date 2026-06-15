@@ -221,6 +221,7 @@
             m.member_id    AS memberId,
             m.nickname     AS nickname,
             (SELECT COUNT(*) FROM review WHERE member_id = m.member_id) AS reviewCount,
+            (SELECT COUNT(*) FROM recipe WHERE author_id = m.member_id AND is_public = TRUE) AS recipeCount,
             (SELECT COUNT(*) FROM follow WHERE followee_id = m.member_id) AS followerCount,
             <choose>
                 <when test="viewerId != null">

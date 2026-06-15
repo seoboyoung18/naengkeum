@@ -296,4 +296,17 @@
          ORDER BY created_at DESC
     </select>
 
+    <!-- =========================================================== -->
+    <!--  GET /api/member/{userId}/recipes — 특정 작성자의 공개 레시피  -->
+    <!--  is_public=TRUE만 노출(타인 비공개 제외). viewerId로 찜 여부.  -->
+    <!-- =========================================================== -->
+    <select id="selectByAuthor"
+            resultType="com.fridgefamer.dto.response.recipe.RecipeListRow">
+        SELECT <include refid="listColumns"/>
+          FROM recipe r
+         WHERE r.author_id = #{authorId}
+           AND r.is_public = TRUE
+         ORDER BY r.created_at DESC
+    </select>
+
 </mapper>

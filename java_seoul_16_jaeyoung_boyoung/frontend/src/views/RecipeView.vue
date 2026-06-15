@@ -2,22 +2,12 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { searchRecipes, autocompleteRecipes } from '../api/recipe'
-import { API_BASE } from '../api/http'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import { listFridge } from '../api/fridge'
 import { useToast } from '../composables/useToast'
-import InlineIcon from '../components/InlineIcon.vue'
-import clockSvg from '../assets/icons/clock-outline.svg?raw'
-import starSvg from '../assets/icons/star.svg?raw'
-import botUrl from '../assets/icons/message-bot.svg'
+import RecipeCard from '../components/RecipeCard.vue'
 
 const toast = useToast()
-
-// 업로드 이미지(/images/...)는 백엔드 호스트를 붙여 절대경로로. 외부 URL은 그대로.
-function imageUrl(u) {
-  if (!u) return null
-  return u.startsWith('/') ? API_BASE + u : u
-}
 
 const router = useRouter()
 const route = useRoute()
@@ -39,13 +29,6 @@ const SIZE = 12
 
 const filters = reactive({ keyword: '', sort: 'LATEST', minCookTime: null, maxCookTime: null, useMyFridge: false, mine: false })
 
-// 출처 배지 (공공/✍️직접/🤖AI)
-const SOURCE_BADGE = {
-  PUBLIC: { label: '공공', cls: 'pub' },
-  USER: { label: '✍️ 직접', cls: 'user' },
-  AI_SAVED: { label: 'AI', cls: 'ai' },
-}
-function badge(source) { return SOURCE_BADGE[source] || SOURCE_BADGE.PUBLIC }
 const content = ref([])
 const page = ref(0)
 const totalPages = ref(0)
@@ -189,25 +172,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
     <p v-else-if="content.length === 0" class="muted empty">검색 결과가 없습니다.</p>
 
     <ul v-else class="grid">
-      <li v-for="r in content" :key="r.recipeId" class="card" @click="goDetail(r.recipeId)">
-        <div class="thumb" :style="imageUrl(r.thumbnailUrl) ? { backgroundImage: `url(${imageUrl(r.thumbnailUrl)})` } : null">
-          <span v-if="!r.thumbnailUrl">🍽️</span>
-          <button class="heart" :class="{ on: r.isWishlisted }" @click.stop="toggleWish(r)">
-            {{ r.isWishlisted ? '♥' : '♡' }}
-          </button>
-        </div>
-        <div class="info">
-          <div class="trow">
-            <div class="title">{{ r.title }}</div>
-            <span class="src" :class="badge(r.source).cls"><img v-if="r.source === 'AI_SAVED'" :src="botUrl" class="bi" alt="" />{{ badge(r.source).label }}</span>
-          </div>
-          <div class="meta">
-            <span v-if="r.cookTime"><InlineIcon :svg="clockSvg" :size="12" /> {{ r.cookTime }}분</span>
-            <span><InlineIcon :svg="starSvg" :size="13" style="transform: translateY(-2px)" /> {{ Number(r.avgRating).toFixed(1) }}<template v-if="r.reviewCount"> ({{ r.reviewCount }})</template></span>
-          </div>
-          <div class="ings" v-if="r.mainIngredients?.length">{{ r.mainIngredients.join(' · ') }}</div>
-        </div>
-      </li>
+      <RecipeCard v-for="r in content" :key="r.recipeId" :recipe="r" @open="goDetail" @toggle-wish="toggleWish" />
     </ul>
 
     <button v-if="!loading && page + 1 < totalPages" class="more" :disabled="loadingMore" @click="loadMore">
@@ -241,20 +206,6 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 .count { font-size: 12px; color: #999; margin: 0 0 10px; }
 
 .grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.card { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; overflow: hidden; cursor: pointer; transition: box-shadow .15s; }
-.card:hover { box-shadow: 0 6px 18px rgba(0,0,0,.06); }
-.thumb { position: relative; height: 150px; background: #f1f3f5 center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 34px; color: #c7ccd1; }
-.heart { position: absolute; top: 10px; right: 10px; border: none; background: rgba(255,255,255,.9); width: 32px; height: 32px; border-radius: 50%; font-size: 17px; color: #bbb; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.heart.on { color: #ef4444; }
-.info { padding: 14px 16px 16px; }
-.trow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.title { font-size: 15px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.src { flex: 0 0 auto; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 8px; background: #eef2f7; color: #64748b; }
-.src.user { background: #fff7ed; color: #c2410c; }
-.src.ai { background: #f5f3ff; color: #7c3aed; }
-.bi { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
-.meta { display: flex; gap: 10px; font-size: 12px; color: #888; margin-top: 8px; }
-.ings { font-size: 12px; color: #aaa; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }

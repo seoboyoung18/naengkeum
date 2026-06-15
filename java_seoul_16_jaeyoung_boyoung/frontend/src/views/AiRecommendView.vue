@@ -62,7 +62,8 @@ async function run() {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
         'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
+        // 성공 시 SSE(text/event-stream), 사전 차단 에러 시 JSON 메시지를 받기 위해 둘 다 허용
+        'Accept': 'text/event-stream, application/json',
       },
       body: JSON.stringify(options),
     })

@@ -124,6 +124,10 @@ public interface RecipeMapper {
     /** 마이 레시피 목록(author_id=나, 공개/비공개 포함, 최신순). */
     List<MyRecipeItem> selectMyRecipes(@Param("memberId") Long memberId);
 
+    /** 특정 작성자의 공개 레시피 목록(is_public=TRUE, 최신순). 타 유저 프로필용. */
+    List<RecipeListRow> selectByAuthor(@Param("authorId") Long authorId,
+                                       @Param("viewerId") Long viewerId);
+
     // =================================================================
     //  recipe insert 후 생성 키 회수용 (ai_recipe → recipe 복사)
     // =================================================================

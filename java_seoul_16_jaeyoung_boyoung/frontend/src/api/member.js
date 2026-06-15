@@ -30,6 +30,12 @@ export async function fetchProfile(userId) {
   return data
 }
 
+/** 타 유저가 공개한 레시피 목록(공개) — RecipeListItem[] */
+export async function fetchUserRecipes(userId) {
+  const { data } = await http.get(`/api/member/${userId}/recipes`)
+  return data
+}
+
 /** 내가 팔로우하는 목록 — FollowUserItem[] */
 export async function listFollowing() {
   const { data } = await http.get('/api/member/me/following')

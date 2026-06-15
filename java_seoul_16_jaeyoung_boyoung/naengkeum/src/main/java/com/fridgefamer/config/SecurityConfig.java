@@ -97,7 +97,8 @@ public class SecurityConfig {
                                 "/api/ingredients/**", // 식재료 사전 자동완성/제안 (조회만)
                                 "/api/challenge", // 챌린지 목록 (조회)
                                 "/api/challenge/stats", // 챌린지 통계
-                                "/api/member/*/profile" // 타 유저 프로필
+                                "/api/member/*/profile", // 타 유저 프로필
+                                "/api/member/*/recipes" // 타 유저 공개 레시피 목록
                         ).permitAll()
 
                         // 리뷰 목록 조회는 GET만 공개 (POST/PUT/DELETE는 인증 필요)

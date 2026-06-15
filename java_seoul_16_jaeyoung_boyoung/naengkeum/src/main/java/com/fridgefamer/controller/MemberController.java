@@ -8,7 +8,9 @@ import com.fridgefamer.dto.response.member.FollowUserItem;
 import com.fridgefamer.dto.response.member.MyPageResponse;
 import com.fridgefamer.dto.response.member.MyReviewItem;
 import com.fridgefamer.dto.response.member.OtherProfileResponse;
+import com.fridgefamer.dto.response.recipe.RecipeListItem;
 import com.fridgefamer.service.MemberService;
+import com.fridgefamer.service.RecipeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -50,9 +52,11 @@ import java.util.Map;
 public class MemberController {
 
     private final MemberService memberService;
+    private final RecipeService recipeService;
 
-    public MemberController(MemberService memberService) {
+    public MemberController(MemberService memberService, RecipeService recipeService) {
         this.memberService = memberService;
+        this.recipeService = recipeService;
     }
 
     // -----------------------------------------------------------------
@@ -115,6 +119,14 @@ public class MemberController {
     ) {
         Long viewerId = currentMemberIdOrNull();
         return memberService.getOtherProfile(userId, viewerId);
+    }
+
+    /** 타 유저가 공개한 레시피 목록 — 공개(인증 선택). 비공개 레시피는 제외. */
+    @GetMapping("/{userId}/recipes")
+    public List<RecipeListItem> otherRecipes(
+            @PathVariable @Positive(message = "userId는 양수여야 합니다") Long userId
+    ) {
+        return recipeService.listPublicByAuthor(userId, currentMemberIdOrNull());
     }
 
     // =================================================================

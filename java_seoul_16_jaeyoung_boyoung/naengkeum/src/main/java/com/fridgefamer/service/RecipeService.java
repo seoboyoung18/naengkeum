@@ -199,6 +199,13 @@ public class RecipeService {
     }
 
     // =====================================================================
+    //  특정 작성자의 공개 레시피 목록 (타 유저 프로필 D11용, is_public=TRUE만)
+    // =====================================================================
+    public List<RecipeListItem> listPublicByAuthor(Long authorId, Long viewerId) {
+        return enrich(recipeMapper.selectByAuthor(authorId, viewerId));
+    }
+
+    // =====================================================================
     //  내부 헬퍼 — ai_recipe JSON 배열 → recipe_ingredient/step 행
     // =====================================================================
 

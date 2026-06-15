@@ -10,6 +10,7 @@ public record OtherProfileResponse(
         Long memberId,
         String nickname,
         int reviewCount,
+        int recipeCount,
         int followerCount,
         boolean isFollowing
 ) {}
