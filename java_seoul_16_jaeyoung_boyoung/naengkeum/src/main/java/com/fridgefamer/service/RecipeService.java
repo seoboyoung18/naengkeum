@@ -19,6 +19,7 @@ import com.fridgefamer.dto.response.recipe.RecipePublished;
 import com.fridgefamer.dto.response.recipe.RecipeSaved;
 import com.fridgefamer.dto.response.recipe.RecipeStep;
 import com.fridgefamer.dto.response.wishlist.AiRecipeRow;
+import com.fridgefamer.config.SecurityUtils;
 import com.fridgefamer.exception.ApiException;
 import com.fridgefamer.exception.ErrorCode;
 import com.fridgefamer.mapper.recipe.RecipeMapper;
@@ -196,6 +197,23 @@ public class RecipeService {
     // =====================================================================
     public List<MyRecipeItem> listMine(Long memberId) {
         return recipeMapper.selectMyRecipes(memberId);
+    }
+
+    // =====================================================================
+    //  DELETE /api/recipe/{recipeId} — 본인 또는 관리자 삭제
+    //  자식(재료/단계/리뷰/찜/신고)은 FK ON DELETE CASCADE로 함께 삭제.
+    // =====================================================================
+    @Transactional
+    public void delete(Long memberId, Long recipeId) {
+        RecipeOwnerRow row = recipeMapper.selectRecipeOwner(recipeId);
+        if (row == null) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "레시피를 찾을 수 없습니다");
+        }
+        boolean owner = row.authorId() != null && row.authorId().equals(memberId);
+        if (!owner && !SecurityUtils.isAdmin()) {
+            throw new ApiException(ErrorCode.FORBIDDEN, "본인 또는 관리자만 삭제할 수 있습니다");
+        }
+        recipeMapper.deleteRecipe(recipeId);
     }
 
     // =====================================================================
