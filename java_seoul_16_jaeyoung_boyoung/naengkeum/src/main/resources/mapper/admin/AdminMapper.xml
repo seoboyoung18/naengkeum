@@ -20,7 +20,7 @@
          ORDER BY member_id DESC
     </select>
 
-    <!-- 관리자 레시피 목록: 사용자 레시피 + 신고 달린 공공 레시피, 신고 누적순 -->
+    <!-- 관리자 레시피 목록: 사용자가 등록한 레시피만(author_id IS NOT NULL). 미처리 신고 누적순 -->
     <select id="selectAdminRecipes"
             resultType="com.fridgefamer.dto.response.admin.AdminRecipeRow">
         SELECT
@@ -29,20 +29,18 @@
             m.nickname  AS authorNickname,
             r.is_public AS isPublic,
             (SELECT COUNT(*) FROM review rv WHERE rv.recipe_id = r.recipe_id) AS reviewCount,
-            (SELECT COUNT(*) FROM report rp WHERE rp.recipe_id = r.recipe_id) AS reportCount
+            (SELECT COUNT(*) FROM report rp
+              WHERE rp.recipe_id = r.recipe_id AND rp.status = 'PENDING') AS reportCount
           FROM recipe r
-          LEFT JOIN member m ON m.member_id = r.author_id
-         WHERE (
-                r.author_id IS NOT NULL
-                OR EXISTS (SELECT 1 FROM report rp WHERE rp.recipe_id = r.recipe_id)
-               )
+          JOIN member m ON m.member_id = r.author_id
+         WHERE r.author_id IS NOT NULL
         <if test="keyword != null and keyword != ''">
             AND r.title LIKE CONCAT('%', #{keyword}, '%')
         </if>
          ORDER BY reportCount DESC, r.created_at DESC
     </select>
 
-    <!-- 전체 리뷰 목록: 신고 누적순, 레시피 제목/작성자 닉네임 동반 -->
+    <!-- 전체 리뷰 목록: 미처리 신고 누적순, 레시피 제목/작성자 닉네임 동반 -->
     <select id="selectAllReviews"
             resultType="com.fridgefamer.dto.response.admin.AdminReviewRow">
         SELECT
@@ -52,13 +50,67 @@
             m.nickname    AS authorNickname,
             rv.rating     AS rating,
             rv.content    AS content,
-            (SELECT COUNT(*) FROM report rp WHERE rp.review_id = rv.review_id) AS reportCount,
+            (SELECT COUNT(*) FROM report rp
+              WHERE rp.review_id = rv.review_id AND rp.status = 'PENDING') AS reportCount,
             rv.created_at AS createdAt
           FROM review rv
           JOIN member m ON m.member_id = rv.member_id
           JOIN recipe r ON r.recipe_id = rv.recipe_id
          ORDER BY reportCount DESC, rv.created_at DESC
     </select>
+
+    <!-- ===== 신고(report) 관리 ===== -->
+
+    <!-- 미처리 신고 목록: 대상(레시피/리뷰)별 묶음 + 사유 모음 + 누적수, 신고 많은 순 -->
+    <select id="selectPendingReports"
+            resultType="com.fridgefamer.dto.response.admin.AdminReportRow">
+        SELECT 'RECIPE' AS targetType,
+               r.recipe_id AS recipeId,
+               NULL        AS reviewId,
+               r.title     AS title,
+               GROUP_CONCAT(DISTINCT rp.reason ORDER BY rp.reason SEPARATOR ', ') AS reasons,
+               COUNT(*)         AS reportCount,
+               MAX(rp.created_at) AS lastReportedAt
+          FROM report rp
+          JOIN recipe r ON r.recipe_id = rp.recipe_id
+         WHERE rp.status = 'PENDING' AND rp.recipe_id IS NOT NULL
+         GROUP BY r.recipe_id, r.title
+        UNION ALL
+        SELECT 'REVIEW' AS targetType,
+               rv.recipe_id AS recipeId,
+               rv.review_id AS reviewId,
+               rv.content   AS title,
+               GROUP_CONCAT(DISTINCT rp.reason ORDER BY rp.reason SEPARATOR ', ') AS reasons,
+               COUNT(*)         AS reportCount,
+               MAX(rp.created_at) AS lastReportedAt
+          FROM report rp
+          JOIN review rv ON rv.review_id = rp.review_id
+         WHERE rp.status = 'PENDING' AND rp.review_id IS NOT NULL
+         GROUP BY rv.review_id, rv.recipe_id, rv.content
+         ORDER BY reportCount DESC, lastReportedAt DESC
+    </select>
+
+    <!-- 미처리 신고가 달린 콘텐츠 수(대시보드 카드/탭 배지) -->
+    <select id="countPendingReports" resultType="long">
+        SELECT COUNT(*) FROM (
+            SELECT 1
+              FROM report
+             WHERE status = 'PENDING'
+             GROUP BY recipe_id, review_id
+        ) t
+    </select>
+
+    <!-- "무시": 특정 레시피의 미처리 신고를 모두 처리완료로 -->
+    <update id="resolveRecipeReports">
+        UPDATE report SET status = 'RESOLVED'
+         WHERE recipe_id = #{recipeId} AND status = 'PENDING'
+    </update>
+
+    <!-- "무시": 특정 리뷰의 미처리 신고를 모두 처리완료로 -->
+    <update id="resolveReviewReports">
+        UPDATE report SET status = 'RESOLVED'
+         WHERE review_id = #{reviewId} AND status = 'PENDING'
+    </update>
 
     <!-- 사용자 활성/차단 토글 -->
     <update id="updateActive">

@@ -2,6 +2,7 @@ package com.fridgefamer.controller;
 
 import com.fridgefamer.dto.request.admin.UserActiveRequest;
 import com.fridgefamer.dto.response.admin.AdminRecipeRow;
+import com.fridgefamer.dto.response.admin.AdminReportRow;
 import com.fridgefamer.dto.response.admin.AdminReviewRow;
 import com.fridgefamer.dto.response.admin.AdminStats;
 import com.fridgefamer.dto.response.admin.AdminUserRow;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 관리자 전용 API — /api/admin/**.
@@ -60,6 +62,30 @@ public class AdminController {
     @GetMapping("/reviews")
     public List<AdminReviewRow> reviews() {
         return adminService.listReviews();
+    }
+
+    /** 미처리 신고 목록 (대상별 묶음, 신고 누적순). 신고 탭. */
+    @GetMapping("/reports")
+    public List<AdminReportRow> reports() {
+        return adminService.listReports();
+    }
+
+    /** "무시" — 레시피의 미처리 신고를 모두 처리완료로. */
+    @PatchMapping("/reports/recipe/{recipeId}/resolve")
+    public Map<String, String> resolveRecipeReports(
+            @PathVariable @Positive(message = "recipeId는 양수여야 합니다") Long recipeId
+    ) {
+        adminService.resolveRecipeReports(recipeId);
+        return Map.of("message", "신고를 처리했습니다");
+    }
+
+    /** "무시" — 리뷰의 미처리 신고를 모두 처리완료로. */
+    @PatchMapping("/reports/review/{reviewId}/resolve")
+    public Map<String, String> resolveReviewReports(
+            @PathVariable @Positive(message = "reviewId는 양수여야 합니다") Long reviewId
+    ) {
+        adminService.resolveReviewReports(reviewId);
+        return Map.of("message", "신고를 처리했습니다");
     }
 
     /** 사용자 차단/해제. body { "active": false } = 차단. */

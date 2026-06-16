@@ -1,6 +1,7 @@
 package com.fridgefamer.service;
 
 import com.fridgefamer.dto.response.admin.AdminRecipeRow;
+import com.fridgefamer.dto.response.admin.AdminReportRow;
 import com.fridgefamer.dto.response.admin.AdminReviewRow;
 import com.fridgefamer.dto.response.admin.AdminStats;
 import com.fridgefamer.dto.response.admin.AdminUserRow;
@@ -43,6 +44,23 @@ public class AdminService {
         return adminMapper.selectAllReviews();
     }
 
+    /** 미처리 신고 목록 (대상별 묶음, 신고 누적순). */
+    public List<AdminReportRow> listReports() {
+        return adminMapper.selectPendingReports();
+    }
+
+    /** "무시" — 레시피의 미처리 신고를 처리완료로. */
+    @Transactional
+    public void resolveRecipeReports(Long recipeId) {
+        adminMapper.resolveRecipeReports(recipeId);
+    }
+
+    /** "무시" — 리뷰의 미처리 신고를 처리완료로. */
+    @Transactional
+    public void resolveReviewReports(Long reviewId) {
+        adminMapper.resolveReviewReports(reviewId);
+    }
+
     /**
      * 사용자 차단/해제. active=false면 차단(is_active=0), true면 해제.
      * 안전장치: 관리자 계정은 차단 불가(서로 잠그는 사고 방지).
@@ -71,7 +89,8 @@ public class AdminService {
                 adminMapper.countMembers(),
                 adminMapper.countRecipes(),
                 adminMapper.countReviews(),
-                adminMapper.countActiveChallengeParticipants()
+                adminMapper.countActiveChallengeParticipants(),
+                adminMapper.countPendingReports()
         );
     }
 }
