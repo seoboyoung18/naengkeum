@@ -9,17 +9,23 @@ import recipeIcon from '../assets/icons/pizza-slice.svg?raw'
 import challengeIcon from '../assets/icons/trophy.svg?raw'
 import userIcon from '../assets/icons/user.svg?raw'
 import logoutIcon from '../assets/icons/log-out.svg?raw'
+import adminIcon from '../assets/icons/shield-lock.svg?raw'
+import { computed } from 'vue'
 
 const auth = useAuthStore()
 const router = useRouter()
 
-const items = [
-  { to: '/home', label: '홈', icon: homeIcon },
-  { to: '/fridge', label: '냉장고', icon: fridgeIcon },
-  { to: '/recipe', label: '레시피', icon: recipeIcon },
-  { to: '/challenge', label: '챌린지', icon: challengeIcon },
-  { to: '/mypage', label: '마이', icon: userIcon },
-]
+const items = computed(() => {
+  const base = [
+    { to: '/home', label: '홈', icon: homeIcon },
+    { to: '/fridge', label: '냉장고', icon: fridgeIcon },
+    { to: '/recipe', label: '레시피', icon: recipeIcon },
+    { to: '/challenge', label: '챌린지', icon: challengeIcon },
+    { to: '/mypage', label: '마이', icon: userIcon },
+  ]
+  if (auth.isAdmin) base.push({ to: '/admin', label: '관리자', icon: adminIcon })
+  return base
+})
 
 function logout() {
   auth.logout()
@@ -29,7 +35,7 @@ function logout() {
 
 <template>
   <aside class="side">
-    <RouterLink to="/home" class="logo"><LottieIcon :data="fridgeAnim" :size="38" /> 냉큼</RouterLink>
+    <RouterLink to="/home" class="logo"><LottieIcon :data="fridgeAnim" :size="80" /> 냉큼</RouterLink>
 
     <nav class="nav">
       <RouterLink
@@ -65,15 +71,18 @@ function logout() {
   box-sizing: border-box;
 }
 .logo {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   font-weight: 800;
-  font-size: 20px;
+  font-size: 26px;
   color: var(--primary);
   text-decoration: none;
-  padding: 6px 8px 24px;
   letter-spacing: -0.3px;
+  padding: 8px 8px 18px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
 }
 .nav { display: flex; flex-direction: column; gap: 4px; }
 .item {

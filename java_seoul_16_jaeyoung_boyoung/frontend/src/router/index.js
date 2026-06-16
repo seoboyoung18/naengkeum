@@ -21,6 +21,9 @@ const routes = [
   { path: '/user/:userId', name: 'user-profile', component: () => import('../views/UserProfileView.vue'), props: true },
   { path: '/mypage', name: 'mypage', component: () => import('../views/MyPageView.vue') },
 
+  // 관리자 전용
+  { path: '/admin', name: 'admin', component: () => import('../views/AdminView.vue'), meta: { admin: true } },
+
   { path: '/:pathMatch(.*)*', redirect: '/home' },
 ]
 
@@ -36,6 +39,10 @@ router.beforeEach((to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
   if (to.name === 'login' && auth.isAuthenticated) {
+    return { name: 'home' }
+  }
+  // 관리자 전용 페이지는 ADMIN만
+  if (to.meta.admin && !auth.isAdmin) {
     return { name: 'home' }
   }
 })
