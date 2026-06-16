@@ -3,7 +3,7 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.fridgefamer.mapper.admin.AdminMapper">
 
-    <!-- 전체 사용자 목록 (활성/차단 모두, 최신 가입 순) -->
+    <!-- 전체 사용자 목록 (활성/차단 모두, 최신 가입 순) — keyword로 닉네임/이메일 검색 -->
     <select id="selectAllUsers"
             resultType="com.fridgefamer.dto.response.admin.AdminUserRow">
         SELECT
@@ -13,7 +13,51 @@
             role      AS role,
             is_active AS active
           FROM member
+        <if test="keyword != null and keyword != ''">
+            WHERE nickname LIKE CONCAT('%', #{keyword}, '%')
+               OR email    LIKE CONCAT('%', #{keyword}, '%')
+        </if>
          ORDER BY member_id DESC
+    </select>
+
+    <!-- 관리자 레시피 목록: 사용자 레시피 + 신고 달린 공공 레시피, 신고 누적순 -->
+    <select id="selectAdminRecipes"
+            resultType="com.fridgefamer.dto.response.admin.AdminRecipeRow">
+        SELECT
+            r.recipe_id AS recipeId,
+            r.title     AS title,
+            m.nickname  AS authorNickname,
+            r.is_public AS isPublic,
+            (SELECT COUNT(*) FROM review rv WHERE rv.recipe_id = r.recipe_id) AS reviewCount,
+            (SELECT COUNT(*) FROM report rp WHERE rp.recipe_id = r.recipe_id) AS reportCount
+          FROM recipe r
+          LEFT JOIN member m ON m.member_id = r.author_id
+         WHERE (
+                r.author_id IS NOT NULL
+                OR EXISTS (SELECT 1 FROM report rp WHERE rp.recipe_id = r.recipe_id)
+               )
+        <if test="keyword != null and keyword != ''">
+            AND r.title LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+         ORDER BY reportCount DESC, r.created_at DESC
+    </select>
+
+    <!-- 전체 리뷰 목록: 신고 누적순, 레시피 제목/작성자 닉네임 동반 -->
+    <select id="selectAllReviews"
+            resultType="com.fridgefamer.dto.response.admin.AdminReviewRow">
+        SELECT
+            rv.review_id  AS reviewId,
+            rv.recipe_id  AS recipeId,
+            r.title       AS recipeTitle,
+            m.nickname    AS authorNickname,
+            rv.rating     AS rating,
+            rv.content    AS content,
+            (SELECT COUNT(*) FROM report rp WHERE rp.review_id = rv.review_id) AS reportCount,
+            rv.created_at AS createdAt
+          FROM review rv
+          JOIN member m ON m.member_id = rv.member_id
+          JOIN recipe r ON r.recipe_id = rv.recipe_id
+         ORDER BY reportCount DESC, rv.created_at DESC
     </select>
 
     <!-- 사용자 활성/차단 토글 -->

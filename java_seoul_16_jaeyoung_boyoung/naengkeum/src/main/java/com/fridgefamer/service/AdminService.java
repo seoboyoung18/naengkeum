@@ -1,5 +1,7 @@
 package com.fridgefamer.service;
 
+import com.fridgefamer.dto.response.admin.AdminRecipeRow;
+import com.fridgefamer.dto.response.admin.AdminReviewRow;
 import com.fridgefamer.dto.response.admin.AdminStats;
 import com.fridgefamer.dto.response.admin.AdminUserRow;
 import com.fridgefamer.exception.ApiException;
@@ -14,8 +16,8 @@ import java.util.List;
  * 관리자 전용 서비스. /api/admin/** 는 SecurityConfig에서 ROLE_ADMIN으로 보호되므로
  * 이 서비스의 메서드는 호출 시점에 이미 관리자임이 보장된다.
  *
- * <p>신고 기능은 두지 않는다(팀 합의). 관리자는 콘텐츠를 직접 보고 기존 DELETE로
- * 삭제하며(verifyOwner가 관리자를 허용), 여기서는 사용자 관리 + 대시보드 통계만 담당.</p>
+ * <p>사용자 관리(목록/검색/차단) + 대시보드 통계 + 신고 누적 콘텐츠(레시피/리뷰) 목록을 담당.
+ * 콘텐츠 삭제는 기존 DELETE(레시피/리뷰)를 관리자가 그대로 사용한다(권한 검증이 관리자 허용).</p>
  */
 @Service
 public class AdminService {
@@ -26,9 +28,19 @@ public class AdminService {
         this.adminMapper = adminMapper;
     }
 
-    /** 전체 사용자 목록 (활성/차단 모두). */
-    public List<AdminUserRow> listUsers() {
-        return adminMapper.selectAllUsers();
+    /** 전체 사용자 목록 (활성/차단 모두). keyword로 닉네임/이메일 검색(null이면 전체). */
+    public List<AdminUserRow> listUsers(String keyword) {
+        return adminMapper.selectAllUsers(trimToNull(keyword));
+    }
+
+    /** 관리자 레시피 목록 (사용자 레시피 + 신고 달린 공공 레시피, 신고 누적순). */
+    public List<AdminRecipeRow> listRecipes(String keyword) {
+        return adminMapper.selectAdminRecipes(trimToNull(keyword));
+    }
+
+    /** 전체 리뷰 목록 (신고 누적순). */
+    public List<AdminReviewRow> listReviews() {
+        return adminMapper.selectAllReviews();
     }
 
     /**
@@ -45,6 +57,12 @@ public class AdminService {
             throw new ApiException(ErrorCode.BAD_REQUEST, "관리자 계정은 차단할 수 없습니다");
         }
         adminMapper.updateActive(targetMemberId, active);
+    }
+
+    private String trimToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
 
     /** 대시보드 통계. */

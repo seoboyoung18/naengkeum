@@ -1,6 +1,8 @@
 package com.fridgefamer.controller;
 
 import com.fridgefamer.dto.request.admin.UserActiveRequest;
+import com.fridgefamer.dto.response.admin.AdminRecipeRow;
+import com.fridgefamer.dto.response.admin.AdminReviewRow;
 import com.fridgefamer.dto.response.admin.AdminStats;
 import com.fridgefamer.dto.response.admin.AdminUserRow;
 import com.fridgefamer.service.AdminService;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -21,7 +24,8 @@ import java.util.List;
  *
  * <p>SecurityConfig에서 이 경로 전체를 ROLE_ADMIN으로 보호하므로,
  * 일반 사용자/미인증은 컨트롤러 진입 전에 401/403으로 차단된다.
- * (신고 기능 없음 — 콘텐츠 삭제는 기존 DELETE를 관리자가 그대로 사용)</p>
+ * 레시피/리뷰 목록은 신고 누적순으로 노출하며, 삭제는 레시피=DELETE /api/recipe/{id},
+ * 리뷰=DELETE /api/review/{id}(둘 다 관리자 허용)를 사용한다.</p>
  */
 @RestController
 @RequestMapping("/api/admin")
@@ -40,10 +44,22 @@ public class AdminController {
         return adminService.stats();
     }
 
-    /** 전체 사용자 목록 (활성/차단 모두). */
+    /** 전체 사용자 목록 (활성/차단 모두). keyword로 닉네임/이메일 검색. */
     @GetMapping("/users")
-    public List<AdminUserRow> users() {
-        return adminService.listUsers();
+    public List<AdminUserRow> users(@RequestParam(required = false) String keyword) {
+        return adminService.listUsers(keyword);
+    }
+
+    /** 레시피 목록 (사용자 레시피 + 신고 달린 공공 레시피, 신고 누적순). keyword로 제목 검색. */
+    @GetMapping("/recipes")
+    public List<AdminRecipeRow> recipes(@RequestParam(required = false) String keyword) {
+        return adminService.listRecipes(keyword);
+    }
+
+    /** 전체 리뷰 목록 (신고 누적순). 삭제는 기존 DELETE /api/review/{id}를 관리자가 사용. */
+    @GetMapping("/reviews")
+    public List<AdminReviewRow> reviews() {
+        return adminService.listReviews();
     }
 
     /** 사용자 차단/해제. body { "active": false } = 차단. */
