@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -160,6 +161,15 @@ public class RecipeController {
     @GetMapping("/mine")
     public List<MyRecipeItem> mine() {
         return recipeService.listMine(currentMemberId());
+    }
+
+    /** 레시피 삭제 — 본인이 등록한 레시피 또는 관리자. 없으면 404, 권한 없으면 403. */
+    @DeleteMapping("/{recipeId}")
+    public Map<String, String> delete(
+            @PathVariable @Positive(message = "recipeId는 양수여야 합니다") Long recipeId
+    ) {
+        recipeService.delete(currentMemberId(), recipeId);
+        return Map.of("message", "삭제 완료");
     }
 
     // =================================================================

@@ -82,6 +82,8 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/recipe/*/publish").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/recipe/mine").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/recipe/*/image").authenticated()
+                        // 레시피 삭제(본인/관리자)는 인증 필요 — 아래 permitAll보다 먼저 선언
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/recipe/*").authenticated()
 
                         // 공개 경로
                         .requestMatchers(

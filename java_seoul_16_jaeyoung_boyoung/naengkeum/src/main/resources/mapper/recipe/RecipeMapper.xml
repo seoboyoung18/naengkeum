@@ -276,6 +276,11 @@
          WHERE recipe_id = #{recipeId}
     </update>
 
+    <!-- 레시피 삭제 (자식 테이블은 FK ON DELETE CASCADE로 함께 정리) -->
+    <delete id="deleteRecipe">
+        DELETE FROM recipe WHERE recipe_id = #{recipeId}
+    </delete>
+
     <!-- 대표 이미지 경로 갱신 (사용자가 직접 찍은 음식 사진) -->
     <update id="updateImageUrl">
         UPDATE recipe SET image_url = #{imageUrl}
