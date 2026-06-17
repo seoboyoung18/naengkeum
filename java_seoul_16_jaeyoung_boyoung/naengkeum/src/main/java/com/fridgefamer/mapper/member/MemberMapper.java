@@ -55,6 +55,10 @@ public interface MemberMapper {
     int updateAllergies(@Param("memberId") Long memberId,
                         @Param("allergies") String allergiesCsv);
 
+    /** 프로필 사진 URL 갱신. 본인(memberId) 행만. */
+    int updateProfileImage(@Param("memberId") Long memberId,
+                           @Param("imageUrl") String imageUrl);
+
     /** 소프트 삭제 — is_active=0 으로 전환. */
     int softDeleteById(@Param("memberId") Long memberId);
 

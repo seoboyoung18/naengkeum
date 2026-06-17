@@ -9,6 +9,7 @@ package com.fridgefamer.dto.response.member;
 public record OtherProfileResponse(
         Long memberId,
         String nickname,
+        String profileImageUrl,
         int reviewCount,
         int recipeCount,
         int followerCount,

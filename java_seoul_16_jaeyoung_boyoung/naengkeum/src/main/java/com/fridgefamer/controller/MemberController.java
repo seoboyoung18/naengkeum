@@ -10,6 +10,7 @@ import com.fridgefamer.dto.response.member.MyReviewItem;
 import com.fridgefamer.dto.response.member.OtherProfileResponse;
 import com.fridgefamer.dto.response.recipe.RecipeListItem;
 import com.fridgefamer.service.MemberService;
+import com.fridgefamer.service.ProfileImageService;
 import com.fridgefamer.service.RecipeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -20,11 +21,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -53,10 +56,14 @@ public class MemberController {
 
     private final MemberService memberService;
     private final RecipeService recipeService;
+    private final ProfileImageService profileImageService;
 
-    public MemberController(MemberService memberService, RecipeService recipeService) {
+    public MemberController(MemberService memberService,
+                           RecipeService recipeService,
+                           ProfileImageService profileImageService) {
         this.memberService = memberService;
         this.recipeService = recipeService;
+        this.profileImageService = profileImageService;
     }
 
     // -----------------------------------------------------------------
@@ -80,6 +87,16 @@ public class MemberController {
         Long memberId = currentMemberId();
         memberService.deleteMe(memberId, req.password());
         return Map.of("message", "탈퇴 완료");
+    }
+
+    /**
+     * 프로필 사진 업로드 — 본인 아바타. multipart/form-data, 파트명 "image".
+     * @return 저장된 이미지 공개 URL ({ "profileImageUrl": "/images/profile/..." }).
+     */
+    @PostMapping("/me/avatar")
+    public Map<String, String> uploadAvatar(@RequestParam("image") MultipartFile image) {
+        String url = profileImageService.upload(currentMemberId(), image);
+        return Map.of("profileImageUrl", url);
     }
 
     // -----------------------------------------------------------------

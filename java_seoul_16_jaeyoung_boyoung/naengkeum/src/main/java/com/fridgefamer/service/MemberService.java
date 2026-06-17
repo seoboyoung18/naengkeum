@@ -45,6 +45,7 @@ public class MemberService {
         return new MyPageResponse(
                 row.memberId(),
                 row.nickname(),
+                row.profileImageUrl(),
                 maskEmail(row.email()),
                 parseAllergies(row.allergies()),
                 stats

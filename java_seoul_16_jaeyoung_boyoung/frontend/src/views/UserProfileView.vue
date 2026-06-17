@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchProfile, fetchUserRecipes } from '../api/member'
+import { API_BASE } from '../api/http'
 import { follow, unfollow } from '../api/follow'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import { useAuthStore } from '../stores/auth'
@@ -21,6 +22,11 @@ const error = ref('')
 const busy = ref(false)
 
 const isMe = computed(() => profile.value && auth.memberId === profile.value.memberId)
+const avatarUrl = computed(() => {
+  const u = profile.value?.profileImageUrl
+  if (!u) return null
+  return u.startsWith('/') ? API_BASE + u : u
+})
 
 async function load() {
   loading.value = true
@@ -91,7 +97,8 @@ onMounted(load)
 
     <template v-else-if="profile">
       <div class="card">
-        <div class="avatar">{{ profile.nickname?.[0] || '👤' }}</div>
+        <img v-if="avatarUrl" :src="avatarUrl" class="avatar-img" alt="프로필 사진" />
+        <div v-else class="avatar">{{ profile.nickname?.[0] || '👤' }}</div>
         <div class="nick">{{ profile.nickname }}</div>
         <ul class="stats">
           <li><span>{{ profile.recipeCount }}</span>레시피</li>
@@ -128,6 +135,7 @@ onMounted(load)
 .back { border: none; background: none; color: var(--primary-deep); font-size: 14px; cursor: pointer; padding: 0 0 14px; }
 .card { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 16px; padding: 32px 24px; text-align: center; max-width: 420px; }
 .avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-size: 30px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.avatar-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 12px; }
 .nick { font-size: 20px; font-weight: 700; }
 .stats { list-style: none; display: flex; justify-content: center; gap: 28px; padding: 0; margin: 16px 0 18px; }
 .stats li { font-size: 12px; color: #888; }
