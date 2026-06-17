@@ -60,12 +60,13 @@
     <select id="findActiveById"
             resultType="com.fridgefamer.dto.response.member.MemberBasicRow">
         SELECT
-            member_id   AS memberId,
+            member_id         AS memberId,
             email,
             password,
             nickname,
+            profile_image_url AS profileImageUrl,
             allergies,
-            is_active   AS isActive
+            is_active         AS isActive
           FROM member
          WHERE member_id = #{memberId}
            AND is_active = 1
@@ -90,6 +91,11 @@
 
     <update id="updateAllergies">
         UPDATE member SET allergies = #{allergies}
+         WHERE member_id = #{memberId} AND is_active = 1
+    </update>
+
+    <update id="updateProfileImage">
+        UPDATE member SET profile_image_url = #{imageUrl}
          WHERE member_id = #{memberId} AND is_active = 1
     </update>
 
@@ -218,8 +224,9 @@
     <select id="selectOtherProfile"
             resultType="com.fridgefamer.dto.response.member.OtherProfileResponse">
         SELECT
-            m.member_id    AS memberId,
-            m.nickname     AS nickname,
+            m.member_id        AS memberId,
+            m.nickname         AS nickname,
+            m.profile_image_url AS profileImageUrl,
             (SELECT COUNT(*) FROM review WHERE member_id = m.member_id) AS reviewCount,
             (SELECT COUNT(*) FROM recipe WHERE author_id = m.member_id AND is_public = TRUE) AS recipeCount,
             (SELECT COUNT(*) FROM follow WHERE followee_id = m.member_id) AS followerCount,

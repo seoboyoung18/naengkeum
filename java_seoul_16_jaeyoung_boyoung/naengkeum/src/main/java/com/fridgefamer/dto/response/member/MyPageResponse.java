@@ -11,6 +11,7 @@ import java.util.List;
 public record MyPageResponse(
         Long memberId,
         String nickname,
+        String profileImageUrl,
         String email,
         List<String> allergies,
         MyStats stats
