@@ -1,7 +1,8 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getMyPage, updateMe, listMyReviews } from '../api/member'
+import { getMyPage, updateMe, listMyReviews, uploadProfilePhoto } from '../api/member'
+import { API_BASE } from '../api/http'
 import { listWishlist, removeRecipeWish, removeAiWish } from '../api/wishlist'
 import { useAuthStore } from '../stores/auth'
 import AiRecipeModal from '../components/AiRecipeModal.vue'
@@ -28,6 +29,41 @@ const saving = ref(false)
 
 // AI 레시피 상세 모달
 const aiModalId = ref(null)
+
+// 프로필 사진
+const avatarInput = ref(null)
+const avatarUploading = ref(false)
+const avatarUrl = computed(() => {
+  const u = me.value?.profileImageUrl
+  if (!u) return null
+  return u.startsWith('/') ? API_BASE + u : u
+})
+function pickAvatar() {
+  if (!avatarUploading.value) avatarInput.value?.click()
+}
+async function onAvatarChange(e) {
+  const file = e.target.files?.[0]
+  e.target.value = '' // 같은 파일 재선택 허용
+  if (!file) return
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    toast.error('jpg, png, webp 이미지만 올릴 수 있어요')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('이미지는 5MB 이하여야 해요')
+    return
+  }
+  avatarUploading.value = true
+  try {
+    const { profileImageUrl } = await uploadProfilePhoto(file)
+    me.value.profileImageUrl = profileImageUrl
+    toast.success('프로필 사진을 변경했어요')
+  } catch (err) {
+    toast.error(err.response?.data?.message || '업로드에 실패했어요')
+  } finally {
+    avatarUploading.value = false
+  }
+}
 
 async function loadAll() {
   loading.value = true
@@ -112,7 +148,12 @@ onMounted(loadAll)
       <div class="profile">
         <div class="prow">
           <div class="pleft">
-            <div class="avatar">{{ me.nickname?.[0] || '👤' }}</div>
+            <button class="avatar-wrap" type="button" @click="pickAvatar" :title="avatarUploading ? '업로드 중…' : '프로필 사진 변경'">
+              <img v-if="avatarUrl" :src="avatarUrl" class="avatar-img" alt="프로필 사진" />
+              <span v-else class="avatar">{{ me.nickname?.[0] || '👤' }}</span>
+              <span class="cam">{{ avatarUploading ? '…' : '📷' }}</span>
+            </button>
+            <input ref="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="onAvatarChange" />
             <div class="pinfo">
               <div class="nick">{{ me.nickname }}</div>
               <div class="email">{{ me.email }}</div>
@@ -203,7 +244,10 @@ onMounted(loadAll)
 .profile { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
 .prow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .pleft { display: flex; gap: 14px; align-items: center; min-width: 0; }
-.avatar { flex: 0 0 auto; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-size: 22px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.avatar-wrap { position: relative; flex: 0 0 auto; width: 56px; height: 56px; padding: 0; border: none; background: none; cursor: pointer; border-radius: 50%; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-size: 22px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.avatar-img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; display: block; }
+.cam { position: absolute; right: -2px; bottom: -2px; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); font-size: 11px; display: flex; align-items: center; justify-content: center; }
 .pinfo { min-width: 0; }
 .nick { font-size: 18px; font-weight: 700; }
 .email { font-size: 13px; color: #999; margin-top: 2px; }

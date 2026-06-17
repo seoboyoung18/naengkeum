@@ -12,6 +12,16 @@ export async function updateMe(payload) {
   return data
 }
 
+/** 프로필 사진 업로드 — multipart(파트명 image) → { profileImageUrl } */
+export async function uploadProfilePhoto(file) {
+  const form = new FormData()
+  form.append('image', file)
+  const { data } = await http.post('/api/member/me/avatar', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
 /** 내가 쓴 리뷰 목록 — ?page=&size= → PageResponse<MyReviewItem> */
 export async function listMyReviews(params = {}) {
   const { data } = await http.get('/api/member/me/reviews', { params })
