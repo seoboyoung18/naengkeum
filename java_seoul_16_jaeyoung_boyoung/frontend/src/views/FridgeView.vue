@@ -2,6 +2,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { listFridge, deleteFridgeItem } from '../api/fridge'
 import FridgeItemForm from '../components/FridgeItemForm.vue'
+import InlineIcon from '../components/InlineIcon.vue'
+import editSvg from '../assets/icons/edit.svg?raw'
+import trashSvg from '../assets/icons/trash.svg?raw'
 import { useToast } from '../composables/useToast'
 
 const toast = useToast()
@@ -127,8 +130,8 @@ onMounted(load)
             <td>{{ it.expiryDate }}</td>
             <td><span class="dday" :class="dDayClass(it.dDay)">{{ dDayText(it.dDay) }}</span></td>
             <td class="man">
-              <button class="ic" @click="openEdit(it)">✏️</button>
-              <button class="ic" @click="onDelete(it)">🗑️</button>
+              <button class="ic" @click="openEdit(it)"><InlineIcon :svg="editSvg" :size="16" /></button>
+              <button class="ic" @click="onDelete(it)"><InlineIcon :svg="trashSvg" :size="16" /></button>
             </td>
           </tr>
         </tbody>
@@ -174,7 +177,8 @@ onMounted(load)
 .dday.ok { background: var(--primary-tint); color: var(--primary-deep); }
 .dday.soon { background: #fff7ed; color: #f59e0b; }
 .dday.expired { background: #fef2f2; color: #ef4444; }
-.ic { border: none; background: none; font-size: 16px; cursor: pointer; padding: 4px; }
+.ic { border: none; background: none; cursor: pointer; padding: 4px; color: #8b95a1; display: inline-flex; align-items: center; }
+.ic:hover { color: var(--text, #23272e); }
 
 .muted { color: #999; }
 .empty { text-align: center; padding: 40px 0; }

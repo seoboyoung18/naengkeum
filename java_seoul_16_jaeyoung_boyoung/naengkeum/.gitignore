@@ -50,3 +50,9 @@ HELP.md
 # OS
 .DS_Store
 Thumbs.db
+
+# 업로드 산출물(런타임) — 단, 시드 레시피 대표 이미지(seed-*)는 레포에 포함
+uploads/*
+!uploads/recipe/
+uploads/recipe/*
+!uploads/recipe/seed-*

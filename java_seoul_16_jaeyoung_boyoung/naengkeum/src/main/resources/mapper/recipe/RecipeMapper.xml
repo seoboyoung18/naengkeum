@@ -68,11 +68,13 @@
         SELECT <include refid="listColumns"/>
           FROM recipe r
         <include refid="searchWhere"/>
+        <!-- 정렬 동점(특히 시드의 동일 created_at)에서 페이지네이션이 흔들리지 않도록
+             항상 고유값 recipe_id를 마지막 타이브레이커로 둔다. -->
         <choose>
-            <when test="sort == 'POPULAR'">ORDER BY r.view_count DESC, r.created_at DESC</when>
-            <when test="sort == 'RATING'">ORDER BY avgRating DESC, reviewCount DESC</when>
-            <when test="sort == 'COOK_TIME'">ORDER BY (r.cook_time IS NULL), r.cook_time ASC</when>
-            <otherwise>ORDER BY r.created_at DESC</otherwise>
+            <when test="sort == 'POPULAR'">ORDER BY r.view_count DESC, r.created_at DESC, r.recipe_id DESC</when>
+            <when test="sort == 'RATING'">ORDER BY avgRating DESC, reviewCount DESC, r.recipe_id DESC</when>
+            <when test="sort == 'COOK_TIME'">ORDER BY (r.cook_time IS NULL), r.cook_time ASC, r.recipe_id DESC</when>
+            <otherwise>ORDER BY r.created_at DESC, r.recipe_id DESC</otherwise>
         </choose>
         LIMIT #{size} OFFSET #{offset}
     </select>
@@ -91,7 +93,7 @@
         SELECT <include refid="listColumns"/>
           FROM recipe r
          WHERE r.is_public = TRUE
-         ORDER BY r.view_count DESC, r.created_at DESC
+         ORDER BY r.view_count DESC, r.created_at DESC, r.recipe_id DESC
          LIMIT #{limit}
     </select>
 
