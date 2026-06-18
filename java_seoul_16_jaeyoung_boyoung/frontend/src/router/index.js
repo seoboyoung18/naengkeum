@@ -7,6 +7,7 @@ const routes = [
   // 공개(레이아웃 없음)
   { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { public: true, noLayout: true } },
   { path: '/register', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { public: true, noLayout: true } },
+  { path: '/oauth/callback', name: 'oauth-callback', component: () => import('../views/OAuthCallbackView.vue'), meta: { public: true, noLayout: true } },
 
   // 인증 필요(공통 레이아웃)
   { path: '/home', name: 'home', component: () => import('../views/HomeView.vue') },

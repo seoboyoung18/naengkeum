@@ -5,15 +5,20 @@ export const TOKEN_KEY = 'naengkeum.token'
 const MEMBER_KEY = 'naengkeum.memberId'
 const NICK_KEY = 'naengkeum.nickname'
 
-/** JWT payload에서 role 추출 (서명 검증은 서버 몫, 여기선 UI 게이팅용 읽기 전용). */
-function roleFromToken(token) {
+/** JWT payload 디코드 (서명 검증은 서버 몫, 여기선 UI용 읽기 전용). 실패 시 null. */
+function decodePayload(token) {
   try {
     const payload = token.split('.')[1]
     const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
-    return JSON.parse(json).role || null
+    return JSON.parse(json)
   } catch (_) {
     return null
   }
+}
+
+/** JWT payload에서 role 추출. */
+function roleFromToken(token) {
+  return decodePayload(token)?.role || null
 }
 
 /**
@@ -53,6 +58,22 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem(MEMBER_KEY, String(data.memberId ?? ''))
       localStorage.setItem(NICK_KEY, data.nickname ?? '')
       return data
+    },
+
+    /**
+     * 소셜 로그인 콜백 — 백엔드가 발급한 JWT 하나로 상태를 복원한다.
+     * 토큰 payload(sub=memberId, nickname, role)에서 직접 읽어 추가 호출 없음.
+     */
+    loginWithToken(token) {
+      const payload = decodePayload(token)
+      if (!payload) throw new Error('유효하지 않은 토큰입니다')
+      this.token = token
+      this.memberId = payload.sub ? Number(payload.sub) : null
+      this.nickname = payload.nickname || null
+      this.role = payload.role || null
+      localStorage.setItem(TOKEN_KEY, token)
+      localStorage.setItem(MEMBER_KEY, String(this.memberId ?? ''))
+      localStorage.setItem(NICK_KEY, this.nickname ?? '')
     },
 
     /** 마이페이지 조회 — GET /api/member/me (인증 필요) */
