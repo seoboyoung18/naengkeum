@@ -1,9 +1,15 @@
 package com.fridgefamer.config;
 
+import com.fridgefamer.config.oauth.CustomOAuth2UserService;
+import com.fridgefamer.config.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.fridgefamer.config.oauth.OAuth2SuccessHandler;
 import com.fridgefamer.exception.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -45,10 +51,24 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          CustomOAuth2UserService customOAuth2UserService,
+                          OAuth2SuccessHandler oAuth2SuccessHandler,
+                          HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+        this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
     }
 
     @Bean
@@ -95,6 +115,8 @@ public class SecurityConfig {
                                 "/api/auth/login", // 로그인
                                 "/api/auth/register", // 회원가입
                                 "/api/auth/check-email", // 이메일 중복 확인
+                                "/oauth2/**", // 소셜 로그인 시작(authorize 리다이렉트)
+                                "/login/oauth2/**", // 소셜 로그인 콜백(code 교환)
                                 "/api/recipe/**", // 레시피 검색/상세 (조회만)
                                 "/api/ingredients/**", // 식재료 사전 자동완성/제안 (조회만)
                                 "/api/challenge", // 챌린지 목록 (조회)
@@ -116,6 +138,21 @@ public class SecurityConfig {
 
                         // 나머지는 모두 인증 필요
                         .anyRequest().authenticated())
+
+                // ----- 소셜 로그인 (구글 / 카카오) -----
+                // STATELESS라 인가요청은 쿠키 저장소(cookieAuthorizationRequestRepository)로 보관.
+                // 성공 시 우리 JWT를 발급해 프론트로 리다이렉트, 실패 시 프론트 로그인으로 복귀.
+                .oauth2Login(oauth -> oauth
+                        .authorizationEndpoint(ae -> ae
+                                .authorizationRequestRepository(cookieAuthorizationRequestRepository))
+                        .userInfoEndpoint(ui -> ui.userService(customOAuth2UserService))
+                        .successHandler(oAuth2SuccessHandler)
+                        .failureHandler((req, res, ex) -> {
+                            // 실패 원인을 로그로 남겨 디버깅 가능하게(토큰 교환/응답 파싱 등).
+                            log.warn("소셜 로그인 실패: {}", ex.getMessage(), ex);
+                            cookieAuthorizationRequestRepository.removeAuthorizationRequestCookies(req, res);
+                            res.sendRedirect(frontendBaseUrl + "/login?error=oauth");
+                        }))
 
                 // ----- 인증 실패/권한 부족 시 통일된 JSON 응답 -----
                 .exceptionHandling(eh -> eh
