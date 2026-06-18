@@ -36,6 +36,26 @@ public interface MemberMapper {
     MemberAuthRow findAuthByEmail(@Param("email") String email);
 
     // =================================================================
+    //  소셜 로그인(OAuth2) 그룹 — V13
+    // =================================================================
+
+    /** (provider, socialId)로 소셜 회원 조회. 없으면 null. */
+    MemberAuthRow findBySocial(@Param("provider") String provider,
+                               @Param("socialId") String socialId);
+
+    /**
+     * 기존 LOCAL 회원에 소셜 식별자 연결.
+     * 이미 다른 소셜이 연결된(=social_provider≠LOCAL) 계정은 건드리지 않으려고
+     * WHERE에 social_provider='LOCAL' 조건을 둔다(0행 갱신 = 무해).
+     */
+    int linkSocial(@Param("memberId") Long memberId,
+                   @Param("provider") String provider,
+                   @Param("socialId") String socialId);
+
+    /** 소셜 신규 가입 — password는 NULL, role은 USER. */
+    int insertSocialMember(@Param("cmd") SocialRegisterCommand cmd);
+
+    // =================================================================
     //  Member 그룹 — 기본 조회 / 수정
     // =================================================================
 
@@ -132,5 +152,29 @@ public interface MemberMapper {
         public String getNickname()        { return nickname; }
         public String getAllergies()       { return allergies; }
         public boolean isMarketingAgree()  { return marketingAgree; }
+    }
+
+    /** 소셜 가입 INSERT용 — generated key 회수 위해 mutable. */
+    class SocialRegisterCommand {
+        private Long memberId;
+        private final String email;       // 제공자가 이메일 미제공 시 null
+        private final String nickname;
+        private final String provider;    // GOOGLE / KAKAO
+        private final String socialId;
+
+        public SocialRegisterCommand(String email, String nickname,
+                                     String provider, String socialId) {
+            this.email = email;
+            this.nickname = nickname;
+            this.provider = provider;
+            this.socialId = socialId;
+        }
+
+        public Long getMemberId()        { return memberId; }
+        public void setMemberId(Long id) { this.memberId = id; }
+        public String getEmail()         { return email; }
+        public String getNickname()      { return nickname; }
+        public String getProvider()      { return provider; }
+        public String getSocialId()      { return socialId; }
     }
 }

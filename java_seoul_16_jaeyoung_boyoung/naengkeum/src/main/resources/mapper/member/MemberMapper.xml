@@ -54,6 +54,49 @@
     </select>
 
     <!-- =========================================================== -->
+    <!--  소셜 로그인(OAuth2) 그룹 — V13                              -->
+    <!-- =========================================================== -->
+
+    <select id="findBySocial"
+            resultType="com.fridgefamer.dto.response.auth.MemberAuthRow">
+        SELECT
+            member_id   AS memberId,
+            email       AS email,
+            password    AS password,
+            nickname    AS nickname,
+            is_active   AS isActive,
+            role        AS role
+          FROM member
+         WHERE social_provider = #{provider}
+           AND social_id = #{socialId}
+         LIMIT 1
+    </select>
+
+    <update id="linkSocial">
+        UPDATE member
+           SET social_provider = #{provider},
+               social_id = #{socialId}
+         WHERE member_id = #{memberId}
+           AND social_provider = 'LOCAL'
+    </update>
+
+    <insert id="insertSocialMember"
+            useGeneratedKeys="true"
+            keyProperty="cmd.memberId"
+            keyColumn="member_id">
+        INSERT INTO member
+            (email, password, nickname, social_provider, social_id, role, is_active)
+        VALUES
+            (#{cmd.email},
+             NULL,
+             #{cmd.nickname},
+             #{cmd.provider},
+             #{cmd.socialId},
+             'USER',
+             1)
+    </insert>
+
+    <!-- =========================================================== -->
     <!--  Member 그룹 — 기본 조회 / 수정                              -->
     <!-- =========================================================== -->
 

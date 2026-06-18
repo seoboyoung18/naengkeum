@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { API_BASE } from '../api/http'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -11,7 +12,8 @@ const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const loading = ref(false)
-const error = ref('')
+// 소셜 로그인 실패 시 백엔드가 ?error=oauth 로 돌려보낸다.
+const error = ref(route.query.error === 'oauth' ? '소셜 로그인에 실패했습니다. 다시 시도해 주세요.' : '')
 
 async function onSubmit() {
   error.value = ''
@@ -25,6 +27,11 @@ async function onSubmit() {
   } finally {
     loading.value = false
   }
+}
+
+/** 소셜 로그인 시작 — 백엔드 authorize 엔드포인트로 풀페이지 이동(OAuth2 리다이렉트). */
+function socialLogin(provider) {
+  window.location.href = `${API_BASE}/oauth2/authorization/${provider}`
 }
 </script>
 
@@ -53,6 +60,29 @@ async function onSubmit() {
       </form>
 
       <RouterLink class="link" to="/register">회원가입</RouterLink>
+
+      <div class="divider"><span>또는</span></div>
+
+      <div class="social">
+        <button type="button" class="social-btn kakao" @click="socialLogin('kakao')">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#000" d="M12 3C6.9 3 3 6.3 3 10.3c0 2.6 1.7 4.9 4.3 6.2-.2.7-.7 2.5-.8 2.9 0 0 0 .3.2.4.1.1.3 0 .3 0 .5-.1 2.7-1.8 3.6-2.5.4 0 .8.1 1.1.1 5.1 0 9-3.3 9-7.3S17.1 3 12 3z"/></svg>
+          </span>
+          카카오로 시작하기
+        </button>
+
+        <button type="button" class="social-btn google" @click="socialLogin('google')">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 18 18" width="18" height="18">
+              <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.71-1.57 2.68-3.88 2.68-6.62z"/>
+              <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+              <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/>
+              <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+            </svg>
+          </span>
+          Google로 시작하기
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -83,4 +113,26 @@ input[type='email'], input[type='password'] {
 }
 .submit:disabled { opacity: 0.6; cursor: not-allowed; }
 .link { display: block; text-align: center; margin-top: 16px; color: var(--primary-deep); font-size: 13px; }
+
+/* 구분선 "또는" */
+.divider {
+  display: flex; align-items: center; text-align: center;
+  margin: 20px 0 14px; color: #aaa; font-size: 12px;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--line, #e5e7eb);
+}
+.divider span { padding: 0 12px; }
+
+/* 소셜 로그인 버튼 */
+.social { display: flex; flex-direction: column; gap: 10px; }
+.social-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 12px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: 1px solid transparent;
+}
+.social-btn .ico { display: inline-flex; }
+.social-btn.kakao { background: #fee500; color: #191600; }
+.social-btn.google { background: #fff; color: #3c4043; border-color: var(--line, #dadce0); }
+.social-btn:hover { filter: brightness(0.97); }
 </style>

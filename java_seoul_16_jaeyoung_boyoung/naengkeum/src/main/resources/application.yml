@@ -28,6 +28,10 @@ spring:
   profiles:
     # 기본 dev. 운영 배포 시 환경변수로 prod 지정
     active: ${SPRING_PROFILES_ACTIVE:dev}
+    # dev가 활성화되면 application-local.yml(개인 비밀값)도 자동으로 함께 로드.
+    # application-local.yml은 .gitignore 처리되어 각자 로컬에만 존재(없어도 무해).
+    group:
+      dev: "local"
 
   # ----- Flyway 공통 설정 -----
   # 환경별 locations는 application-dev.yml / application-prod.yml에서 override
@@ -37,6 +41,41 @@ spring:
     validate-on-migrate: true       # 마이그레이션 파일 변경 감지
     out-of-order: false             # 버전 순서 엄격 준수 (V1→V2→V3)
     table: flyway_schema_history    # 마이그레이션 이력 테이블명
+
+  # ----- 소셜 로그인 (OAuth2 Client) -----
+  # 🚨 client-id/secret은 절대 Git에 커밋 금지 — 반드시 환경변수로 주입.
+  #    기본값은 더미("changeme")라 키 없이도 앱은 정상 기동하고, 소셜 버튼을
+  #    실제로 누를 때만 제공자 측에서 invalid_client 에러가 난다.
+  #    구글: https://console.cloud.google.com → OAuth 2.0 클라이언트 ID
+  #    카카오: https://developers.kakao.com → 내 애플리케이션 → REST API 키
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:changeme}
+            client-secret: ${GOOGLE_CLIENT_SECRET:changeme}
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID:changeme}
+            client-secret: ${KAKAO_CLIENT_SECRET:changeme}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-name: Kakao
+            scope:
+              - account_email
+              - profile_nickname
+        provider:
+          # 카카오는 표준 제공자가 아니라 엔드포인트를 직접 명시해야 한다.
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
 
 # ----- MyBatis 공통 설정 -----
 mybatis:
@@ -70,6 +109,11 @@ app:
   upload:
     dir: ${UPLOAD_DIR:./uploads}        # 로컬 디스크 저장 루트 (gitignore 권장)
     public-path: /images                # 정적 서빙 URL prefix
+  # 소셜 로그인 성공/실패 후 돌아갈 프론트엔드 주소.
+  # 운영 배포 시 FRONTEND_BASE_URL 환경변수로 실제 도메인 지정.
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+    oauth-redirect-path: /oauth/callback   # 토큰을 전달받는 프론트 라우트
 
 # ============================================================================
 #  OpenAI (AI 레시피 추천 / 코칭용 — WBS-③·④)
