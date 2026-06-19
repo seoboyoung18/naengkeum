@@ -7,7 +7,9 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+# npm ci는 lock 완전 일치를 요구 → 플랫폼별 optional dep 누락 시 실패.
+# 배포 빌드는 npm install로 유연하게 해결.
+RUN npm install --no-audit --no-fund
 COPY . .
 # vite build(PROD)면 API_BASE가 자동으로 상대경로('') → nginx 같은 도메인 프록시.
 RUN npm run build
