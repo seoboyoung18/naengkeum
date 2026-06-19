@@ -8,8 +8,14 @@ import { useAuthStore, TOKEN_KEY } from '../stores/auth'
  * - 요청 인터셉터: 토큰이 있으면 Authorization: Bearer 자동 첨부.
  * - 응답 인터셉터: 401(미인증/만료/위조)이면 로그아웃 후 /login으로.
  */
-/** 백엔드 base URL — axios 인스턴스와 SSE fetch에서 공통 사용 */
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+/**
+ * 백엔드 base URL — axios 인스턴스와 SSE fetch에서 공통 사용.
+ * - 개발(vite dev): http://localhost:8080
+ * - 운영 빌드(vite build, PROD): '' (상대경로) → nginx 같은 도메인으로 /api 프록시 (CORS 불필요)
+ * - 필요 시 VITE_API_BASE_URL로 명시 오버라이드 가능
+ */
+export const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? '' : 'http://localhost:8080')
 
 const http = axios.create({
   baseURL: API_BASE,

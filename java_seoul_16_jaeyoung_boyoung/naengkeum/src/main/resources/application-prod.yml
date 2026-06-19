@@ -1,0 +1,61 @@
+# ============================================================================
+#  냉큼(Naeng-Keum) — application-prod.yml
+#  운영 환경 설정
+#
+#  🚨 모든 민감 정보는 환경변수로 주입. 기본값 절대 두지 않음.
+#     누락 시 애플리케이션 시작 실패 → 의도된 안전장치.
+# ============================================================================
+
+spring:
+  # ----- DB 연결 (환경변수 필수) -----
+  #  컨테이너 내부 MySQL은 TLS 미설정이므로 useSSL=false + allowPublicKeyRetrieval.
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  # ----- Flyway 운영 -----
+  # 🚨 D1 (개발용 fixtures)는 절대 포함하지 않음
+  flyway:
+    locations:
+      - classpath:db/migration   # V1, V2, V3만
+
+# ----- 개발 도구 비활성화 -----
+spring.devtools:
+  restart:
+    enabled: false
+  livereload:
+    enabled: false
+
+# ----- 서버 (nginx 리버스 프록시 뒤) -----
+#  X-Forwarded-* 를 신뢰해 https/도메인 기반 baseUrl을 복원한다.
+#  ⚠️ OAuth2 redirect-uri({baseUrl}/login/oauth2/code/*)가 https로 생성되려면 필수.
+server:
+  forward-headers-strategy: framework
+
+# ----- JWT (운영: secret 환경변수 필수, 기본값 없음) -----
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
+  long-expiration: ${JWT_LONG_EXPIRATION:2592000000}
+  header: Authorization
+  prefix: "Bearer "
+
+# ----- 식약처 공공 API (데이터 적재용) -----
+foodsafety:
+  api-key: ${FOODSAFETY_API_KEY:sample}
+  base-url: https://openapi.foodsafetykorea.go.kr/api
+
+# ----- 로깅 (운영 간소화) -----
+logging:
+  level:
+    root: WARN
+    com.fridgefamer: INFO
+    com.fridgefamer.mapper: INFO     # SQL은 INFO 레벨로
+    org.springframework.security: WARN
