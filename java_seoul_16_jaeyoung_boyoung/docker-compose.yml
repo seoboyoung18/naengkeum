@@ -56,7 +56,10 @@ services:
       - app
     ports:
       - "80:80"
-      # 443은 certbot/TLS 적용(배포 단계)에서 추가
+      - "443:443"
+    volumes:
+      # certbot standalone로 발급한 호스트 인증서를 읽기전용 마운트
+      - /etc/letsencrypt:/etc/letsencrypt:ro
 
 volumes:
   mysql-data:
