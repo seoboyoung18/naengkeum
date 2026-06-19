@@ -3,6 +3,8 @@ import { ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { register as registerApi, checkEmail as checkEmailApi } from '../api/auth'
 import { useAuthStore } from '../stores/auth'
+import LottieIcon from '../components/LottieIcon.vue'
+import fridgeAnim from '../assets/fridge-green.json'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -80,7 +82,7 @@ async function onSubmit() {
 <template>
   <div class="auth">
     <div class="card">
-      <h1 class="title">🧊 냉큼 회원가입</h1>
+      <h1 class="title"><LottieIcon :data="fridgeAnim" :size="48" :zoom="1.7" /> <span class="brand">냉큼</span> 회원가입</h1>
 
       <form @submit.prevent="onSubmit">
         <label>이메일</label>
@@ -124,7 +126,10 @@ async function onSubmit() {
 <style scoped>
 .auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f7f8fa; padding: 24px; }
 .card { width: 100%; max-width: 360px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 16px; padding: 26px 22px; }
-.title { font-size: 22px; margin: 0 0 18px; text-align: center; }
+.title { font-size: 22px; margin: 0 0 18px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; transform: translateX(-4px); }
+.title .bi { display: inline-flex; color: var(--primary-deep); }
+.title .bi :deep(svg) { width: 22px; height: 22px; }
+.title .brand { color: var(--primary-deep); font-weight: 800; letter-spacing: -0.3px; }
 form { display: flex; flex-direction: column; }
 label { font-size: 13px; color: #555; margin: 12px 0 4px; }
 input[type='email'], input[type='password'], input[type='text'] {

@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { listFollowing, listFollowers } from '../api/member'
 import { follow, unfollow } from '../api/follow'
 import { useToast } from '../composables/useToast'
+import InlineIcon from '../components/InlineIcon.vue'
+import userSvg from '../assets/icons/user.svg?raw'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,7 +60,7 @@ onMounted(load)
     <ul v-else class="list">
       <li v-for="u in items" :key="u.memberId" class="row">
         <div class="who" @click="goProfile(u)">
-          <div class="avatar">{{ u.nickname?.[0] || '👤' }}</div>
+          <div class="avatar"><template v-if="u.nickname">{{ u.nickname[0] }}</template><InlineIcon v-else :svg="userSvg" :size="20" /></div>
           <div>
             <div class="nick">{{ u.nickname }}</div>
             <div class="sub">리뷰 {{ u.reviewCount }}</div>

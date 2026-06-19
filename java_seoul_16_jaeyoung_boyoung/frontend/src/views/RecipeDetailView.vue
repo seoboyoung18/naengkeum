@@ -9,6 +9,7 @@ import { useToast } from '../composables/useToast'
 import InlineIcon from '../components/InlineIcon.vue'
 import clockSvg from '../assets/icons/clock-outline.svg?raw'
 import starSvg from '../assets/icons/star.svg?raw'
+import imageSvg from '../assets/icons/image.svg?raw'
 
 const toast = useToast()
 
@@ -119,7 +120,7 @@ onMounted(load)
       <!-- 상단: 이미지(좌) + 정보(우) -->
       <div class="top">
         <div class="hero" :style="heroUrl ? { backgroundImage: `url(${heroUrl})` } : null">
-          <span v-if="!heroUrl" class="ph">🍽️</span>
+          <InlineIcon v-if="!heroUrl" :svg="imageSvg" :size="64" class="ph" />
 
           <!-- 본인이 등록한 레시피에만 사진 올리기 버튼 -->
           <button

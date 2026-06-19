@@ -3,6 +3,7 @@ import { API_BASE } from '../api/http'
 import InlineIcon from './InlineIcon.vue'
 import clockSvg from '../assets/icons/clock-outline.svg?raw'
 import starSvg from '../assets/icons/star.svg?raw'
+import imageSvg from '../assets/icons/image.svg?raw'
 import botUrl from '../assets/icons/message-bot.svg'
 
 const props = defineProps({
@@ -30,7 +31,7 @@ function badge(source) { return SOURCE_BADGE[source] || SOURCE_BADGE.PUBLIC }
 <template>
   <li class="card" @click="emit('open', recipe.recipeId)">
     <div class="thumb" :style="imageUrl(recipe.thumbnailUrl) ? { backgroundImage: `url(${imageUrl(recipe.thumbnailUrl)})` } : null">
-      <span v-if="!recipe.thumbnailUrl">🍽️</span>
+      <InlineIcon v-if="!recipe.thumbnailUrl" :svg="imageSvg" :size="40" />
       <button v-if="wishable" class="heart" :class="{ on: recipe.isWishlisted }" @click.stop="emit('toggle-wish', recipe)">
         {{ recipe.isWishlisted ? '♥' : '♡' }}
       </button>

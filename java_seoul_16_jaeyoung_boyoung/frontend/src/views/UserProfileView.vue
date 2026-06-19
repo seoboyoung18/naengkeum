@@ -8,6 +8,8 @@ import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import { useAuthStore } from '../stores/auth'
 import { useToast } from '../composables/useToast'
 import RecipeCard from '../components/RecipeCard.vue'
+import InlineIcon from '../components/InlineIcon.vue'
+import userSvg from '../assets/icons/user.svg?raw'
 
 const props = defineProps({ userId: { type: [String, Number], required: true } })
 const router = useRouter()
@@ -98,7 +100,7 @@ onMounted(load)
     <template v-else-if="profile">
       <div class="card">
         <img v-if="avatarUrl" :src="avatarUrl" class="avatar-img" alt="프로필 사진" />
-        <div v-else class="avatar">{{ profile.nickname?.[0] || '👤' }}</div>
+        <div v-else class="avatar"><template v-if="profile.nickname">{{ profile.nickname[0] }}</template><InlineIcon v-else :svg="userSvg" :size="28" /></div>
         <div class="nick">{{ profile.nickname }}</div>
         <ul class="stats">
           <li><span>{{ profile.recipeCount }}</span>레시피</li>

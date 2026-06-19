@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { API_BASE } from '../api/http'
+import LottieIcon from '../components/LottieIcon.vue'
+import fridgeAnim from '../assets/fridge-green.json'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -38,7 +40,7 @@ function socialLogin(provider) {
 <template>
   <div class="auth">
     <div class="card">
-      <h1 class="title">🧊 냉큼</h1>
+      <h1 class="title"><LottieIcon :data="fridgeAnim" :size="56" :zoom="1.7" /> <span class="brand">냉큼</span></h1>
       <p class="sub">남은 재료로 큼지막한 행복을</p>
 
       <form @submit.prevent="onSubmit">
@@ -98,7 +100,10 @@ function socialLogin(provider) {
   background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 16px;
   padding: 28px 22px;
 }
-.title { font-size: 26px; margin: 0; text-align: center; }
+.title { font-size: 26px; margin: 0; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; transform: translateX(-4px); }
+.title .bi { display: inline-flex; color: var(--primary-deep); }
+.title .bi :deep(svg) { width: 26px; height: 26px; }
+.title .brand { color: var(--primary-deep); font-weight: 800; letter-spacing: -0.3px; }
 .sub { color: #888; font-size: 13px; text-align: center; margin: 6px 0 20px; }
 form { display: flex; flex-direction: column; }
 label { font-size: 13px; color: #555; margin: 10px 0 4px; }

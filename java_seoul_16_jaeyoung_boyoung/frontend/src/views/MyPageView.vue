@@ -10,6 +10,7 @@ import MyRecipeList from '../components/MyRecipeList.vue'
 import { useToast } from '../composables/useToast'
 import InlineIcon from '../components/InlineIcon.vue'
 import clockSvg from '../assets/icons/clock-outline.svg?raw'
+import userSvg from '../assets/icons/user.svg?raw'
 import botUrl from '../assets/icons/message-bot.svg'
 
 const router = useRouter()
@@ -150,7 +151,7 @@ onMounted(loadAll)
           <div class="pleft">
             <button class="avatar-wrap" type="button" @click="pickAvatar" :title="avatarUploading ? '업로드 중…' : '프로필 사진 변경'">
               <img v-if="avatarUrl" :src="avatarUrl" class="avatar-img" alt="프로필 사진" />
-              <span v-else class="avatar">{{ me.nickname?.[0] || '👤' }}</span>
+              <span v-else class="avatar"><template v-if="me.nickname">{{ me.nickname[0] }}</template><InlineIcon v-else :svg="userSvg" :size="28" /></span>
               <span class="cam">{{ avatarUploading ? '…' : '📷' }}</span>
             </button>
             <input ref="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="onAvatarChange" />
