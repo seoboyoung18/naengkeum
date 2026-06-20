@@ -1,9 +1,9 @@
-/* ── Paperlogy 미리보기 (로컬 설치 폰트 매핑 — 배포엔 셀프호스팅 필요) ── */
-@font-face { font-family: 'Paperlogy'; font-weight: 400; font-style: normal; src: local('Paperlogy 4 Regular'), local('Paperlogy-4Regular'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 500; font-style: normal; src: local('Paperlogy 5 Medium'), local('Paperlogy-5Medium'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 600; font-style: normal; src: local('Paperlogy 6 SemiBold'), local('Paperlogy-6SemiBold'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 700; font-style: normal; src: local('Paperlogy 7 Bold'), local('Paperlogy-7Bold'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 800; font-style: normal; src: local('Paperlogy 8 ExtraBold'), local('Paperlogy-8ExtraBold'); }
+/* ── Paperlogy 셀프호스팅 (woff2 번들 — 모든 기기에서 동일 표시) ── */
+@font-face { font-family: 'Paperlogy'; font-weight: 400; font-style: normal; font-display: swap; src: url('./assets/fonts/Paperlogy-4Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 500; font-style: normal; font-display: swap; src: url('./assets/fonts/Paperlogy-5Medium.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 600; font-style: normal; font-display: swap; src: url('./assets/fonts/Paperlogy-6SemiBold.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 700; font-style: normal; font-display: swap; src: url('./assets/fonts/Paperlogy-7Bold.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 800; font-style: normal; font-display: swap; src: url('./assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2'); }
 
 :root {
   /* ───────── Voltagent-derived design tokens (pilot: 다크 셸 + 밝은 콘텐츠) ───────── */
