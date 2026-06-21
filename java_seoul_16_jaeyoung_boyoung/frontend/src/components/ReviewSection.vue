@@ -2,6 +2,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { listReviews, createReview, updateReview, deleteReview } from '../api/review'
+import ReportButton from './ReportButton.vue'
 import { useToast } from '../composables/useToast'
 
 const toast = useToast()
@@ -153,6 +154,9 @@ onMounted(load)
           <div v-if="r.isOwner" class="actions">
             <button @click="startEdit(r)">수정</button>
             <button @click="remove(r)">삭제</button>
+          </div>
+          <div v-else class="actions">
+            <ReportButton target-type="REVIEW" :target-id="r.reviewId" compact />
           </div>
         </template>
       </li>

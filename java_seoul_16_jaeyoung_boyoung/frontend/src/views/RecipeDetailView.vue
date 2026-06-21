@@ -5,6 +5,7 @@ import { fetchRecipeDetail, uploadRecipeImage } from '../api/recipe'
 import { API_BASE } from '../api/http'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import ReviewSection from '../components/ReviewSection.vue'
+import ReportButton from '../components/ReportButton.vue'
 import { useToast } from '../composables/useToast'
 import InlineIcon from '../components/InlineIcon.vue'
 import clockSvg from '../assets/icons/clock-outline.svg?raw'
@@ -159,9 +160,13 @@ onMounted(load)
             <div v-if="recipe.nutrition.sodium != null"><b>{{ recipe.nutrition.sodium }}</b>나트륨</div>
           </div>
 
-          <button class="wish-btn" :class="{ on: recipe.isWishlisted }" @click="toggleWish">
-            {{ recipe.isWishlisted ? '♥ 찜 해제' : '♡ 찜하기' }}
-          </button>
+          <div class="cta-row">
+            <button class="wish-btn" :class="{ on: recipe.isWishlisted }" @click="toggleWish">
+              {{ recipe.isWishlisted ? '♥ 찜 해제' : '♡ 찜하기' }}
+            </button>
+            <!-- 본인 레시피는 신고 버튼 숨김 -->
+            <ReportButton v-if="!recipe.isOwner" target-type="RECIPE" :target-id="recipe.recipeId" />
+          </div>
         </div>
       </div>
 
@@ -225,6 +230,7 @@ onMounted(load)
 .nutri div b { display: block; font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
 
 /* CTA — 일렉트릭 그린 + near-black 글자, 6px */
+.cta-row { display: flex; align-items: center; gap: 10px; }
 .wish-btn { border: none; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700;
   border-radius: var(--r-sm); padding: 13px 28px; cursor: pointer; }
 .wish-btn.on { background: var(--surface); color: var(--primary-deep); border: 1px solid var(--primary); }

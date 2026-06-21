@@ -64,9 +64,3 @@ export async function resolveReviewReports(reviewId) {
   const { data } = await http.patch(`/api/admin/reports/review/${reviewId}/resolve`)
   return data
 }
-
-/** 신고 접수(일반 사용자용) — { targetType:'RECIPE'|'REVIEW', targetId, reason? }. 중복 시 409. */
-export async function createReport(payload) {
-  const { data } = await http.post('/api/report', payload)
-  return data
-}
