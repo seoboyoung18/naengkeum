@@ -118,11 +118,37 @@ curl http://localhost/actuator/health      # {"status":"UP"}
 3. 인증서 볼륨 마운트 → nginx reload → https 동작
 4. 80→443 리다이렉트
 
-## 10. 핸드오프 (보영)
+## 10. 소셜 로그인 운영설정 (보영) — 도메인·HTTPS 확정 후
 
-도메인(`https://${DOMAIN}`) 공유 → 보영이:
-- 구글/카카오 콘솔에 운영 Redirect URI 추가: `https://${DOMAIN}/login/oauth2/code/{google|kakao}`
-- 서버 `.env`에 `GOOGLE_CLIENT_ID/SECRET`, `KAKAO_CLIENT_ID/SECRET` 입력 → `docker compose up -d`
+운영 도메인 `https://naengkeum.duckdns.org` 기준. 코드는 이미 완성 — **콘솔 + 서버 `.env`** 설정만 하면 동작.
+
+### 10-1. 구글 콘솔 (console.cloud.google.com → API 및 서비스 → 사용자 인증 정보)
+- OAuth 2.0 클라이언트 ID → **승인된 리디렉션 URI**에 추가(로컬 URI는 지우지 말고 유지):
+  - `https://naengkeum.duckdns.org/login/oauth2/code/google`
+- OAuth 동의 화면이 "테스트" 상태면 테스트 사용자에 시연 계정 추가(또는 게시).
+
+### 10-2. 카카오 콘솔 (developers.kakao.com → 내 애플리케이션)
+- **카카오 로그인 > Redirect URI**: `https://naengkeum.duckdns.org/login/oauth2/code/kakao`
+- **앱 설정 > 플랫폼 > Web > 사이트 도메인**: `https://naengkeum.duckdns.org` 추가
+- **카카오 로그인 활성화** ON, **동의항목**: 카카오계정(이메일)·닉네임 = `account_email`, `profile_nickname`
+- **보안 > Client Secret**: 발급 + **활성화 ON** (코드가 `client_secret_post` 사용)
+- `KAKAO_CLIENT_ID` = **REST API 키** (네이티브/JS 키 아님)
+
+### 10-3. 서버 `.env` 입력 후 재기동
+```bash
+ssh -i <키페어>.pem ec2-user@<EIP>
+cd app/java_seoul_16_jaeyoung_boyoung
+nano .env        # 아래 5개 값 확정
+#   FRONTEND_BASE_URL=https://naengkeum.duckdns.org
+#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+#   KAKAO_CLIENT_ID  / KAKAO_CLIENT_SECRET
+docker compose up -d            # app 컨테이너만 새 env로 재생성(--build 불필요)
+docker compose ps               # app 다시 Up 확인
+```
+
+### 10-4. 검증
+- `https://naengkeum.duckdns.org` → 로그인 화면 → **구글/카카오 버튼** 클릭 → 제공자 동의 → `/oauth/callback` 복귀 → 로그인 완료.
+- 실패 시: `docker compose logs -f app` 에서 `invalid_client`(키 불일치) / `redirect_uri_mismatch`(콘솔 URI 누락) 메시지 확인.
 
 ---
 
