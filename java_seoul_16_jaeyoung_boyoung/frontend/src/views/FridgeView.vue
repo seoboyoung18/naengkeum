@@ -136,7 +136,9 @@ onMounted(() => { load(); loadSeasonings() })
       <div v-if="ownedSeasonings.length" class="sr-groups">
         <div class="sr-group" v-for="g in seasoningGroups" :key="g.key">
           <span class="sr-gl" :class="'sr-gl-' + g.key">{{ g.label }}</span>
-          <span class="chip" v-for="s in g.items" :key="s.seasoningId">{{ s.name }}</span>
+          <div class="sr-chips">
+            <span class="chip" v-for="s in g.items" :key="s.seasoningId">{{ s.name }}</span>
+          </div>
         </div>
       </div>
       <span v-else class="sr-empty">아직 없어요 · ＋ 조미료 추가로 체크하세요</span>
@@ -202,29 +204,32 @@ onMounted(() => { load(); loadSeasonings() })
 </template>
 
 <style scoped>
-.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.h { margin: 0; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.h { margin: 0; font-size: 26px; }
 .actions { display: flex; gap: 8px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
 .add-btn { flex: 0 0 auto; border: none; background: var(--primary); color: var(--on-primary); border-radius: 8px;
   padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .add-btn.alt { background: var(--primary-tint); color: var(--primary-deep); }
-.summary { list-style: none; display: flex; gap: 8px; padding: 0; margin: 0 0 14px; }
+.summary { list-style: none; display: flex; gap: 8px; padding: 0; margin: 0 0 18px; }
 .summary li { flex: 1; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 10px; padding: 10px; text-align: center; font-size: 12px; color: #666; }
 .summary li span { display: block; font-size: 18px; font-weight: 800; color: var(--primary-deep); }
 .summary li.warn span { color: #f59e0b; }
 
-.seasoning-row { margin: 0 0 14px; }
-.sr-label { display: block; font-size: 13px; font-weight: 700; color: var(--primary-deep); margin-bottom: 6px; }
+.seasoning-row { margin: 0 0 18px; }
+.sr-label { display: block; font-size: 17px; font-weight: 700; color: var(--primary-deep); margin-bottom: 6px; }
 .sr-groups { display: flex; flex-direction: column; gap: 6px; }
-.sr-group { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.sr-gl { font-size: 11px; font-weight: 700; color: #888; background: #f1f3f5; border-radius: 6px; padding: 2px 8px; min-width: 34px; text-align: center; }
+.sr-group { display: flex; align-items: center; gap: 6px; }
+.sr-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.sr-gl { font-size: 12px; font-weight: 700; color: #888; background: #f1f3f5; border-radius: 6px; padding: 2px 8px; min-width: 34px; text-align: center; }
+/* 냉장/냉동/실온 라벨 — 동일 디자인, 각 색을 12% 틴트로 연하게 채움(냉장 기준 통일) */
 .sr-gl-FRIDGE { color: var(--primary-deep); background: var(--primary-tint); }
-.sr-gl-FREEZER { color: #2563eb; background: #eff6ff; }
-.sr-gl-ROOM_TEMP { color: #b45309; background: #fff7ed; }
-.chip { background: #f1f5f9; color: #475569; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+.sr-gl-FREEZER { color: #2563eb; background: rgba(37, 99, 235, 0.12); }
+.sr-gl-ROOM_TEMP { color: #b45309; background: rgba(180, 83, 9, 0.12); }
+/* 조미료 칩 — 연한 회색 채움 알약형(테두리 없음), 흰 카드 위에서 또렷하게 */
+.chip { background: #e5e7eb; color: #374151; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 600; }
 .sr-empty { font-size: 12px; color: #aaa; }
 
-.filters { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.filters { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
 .tabs { display: flex; gap: 6px; }
 .tabs button { padding: 7px 12px; border: 1px solid var(--line); background: #fff; border-radius: 999px; font-size: 13px; color: #666; cursor: pointer; }
 .tabs button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
