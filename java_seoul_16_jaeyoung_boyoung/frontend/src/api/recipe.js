@@ -30,22 +30,40 @@ export async function fetchRecipeDetail(recipeId) {
 
 /**
  * "내 레시피로 담기" — AI 결과 콘텐츠를 마이 레시피(비공개)로 등록 → { recipeId }
- * payload: { title, summary, ingredientsJson:[{name,qty,unit}], stepsJson:[{stepNumber,description}], cookTime }
+ * payload: { title, summary, note(작성자 소감, 선택), ingredientsJson:[{name,qty,unit}], stepsJson:[{stepNumber,description}], cookTime }
  */
 export async function registerFromAi(payload) {
   const { data } = await http.post('/api/recipe/from-ai', payload)
   return data
 }
 
-/** 마이 레시피 목록(공개/비공개 포함) → [{ recipeId, title, cookTime, isPublic, source, createdAt }] */
+/** 마이 레시피 목록(공개/비공개 포함) → [{ recipeId, title, cookTime, isPublic, imageUrl, source, createdAt }] */
 export async function listMyRecipes() {
   const { data } = await http.get('/api/recipe/mine')
   return data
 }
 
-/** "공개하기" — 마이 레시피를 공개 카탈로그에 게시 → { recipeId, isPublic } */
+/** "공개하기" — 마이 레시피를 공개 카탈로그에 게시 → { recipeId, isPublic }. 사진 없으면 400. */
 export async function publishRecipe(recipeId) {
   const { data } = await http.patch(`/api/recipe/${recipeId}/publish`)
+  return data
+}
+
+/** "비공개로 전환" — 공개했던 내 레시피를 다시 비공개로 → { recipeId, isPublic } */
+export async function unpublishRecipe(recipeId) {
+  const { data } = await http.patch(`/api/recipe/${recipeId}/unpublish`)
+  return data
+}
+
+/** 레시피 삭제 — 본인이 등록한 레시피만(관리자 포함). → { message } */
+export async function deleteRecipe(recipeId) {
+  const { data } = await http.delete(`/api/recipe/${recipeId}`)
+  return data
+}
+
+/** "내 후기" 작성/수정 — 본인이 등록한 레시피만. 빈 값이면 후기 삭제 → { authorReview } */
+export async function updateRecipeReview(recipeId, review) {
+  const { data } = await http.patch(`/api/recipe/${recipeId}/review`, { review })
   return data
 }
 

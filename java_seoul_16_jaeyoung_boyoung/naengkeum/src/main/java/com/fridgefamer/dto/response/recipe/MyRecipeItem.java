@@ -13,6 +13,7 @@ public record MyRecipeItem(
         String title,
         Integer cookTime,
         boolean isPublic,
+        String imageUrl,
         String source,
         LocalDateTime createdAt
 ) {}

@@ -1,5 +1,6 @@
 package com.fridgefamer.controller;
 
+import com.fridgefamer.dto.request.recipe.AuthorReviewRequest;
 import com.fridgefamer.dto.request.wishlist.SaveAiRecipeRequest;
 import com.fridgefamer.dto.response.common.PageResponse;
 import com.fridgefamer.dto.response.recipe.MyRecipeItem;
@@ -136,12 +137,32 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    /** "공개하기" — 마이 레시피를 공개 카탈로그에 게시. 본인 소유만(403). */
+    /** "공개하기" — 마이 레시피를 공개 카탈로그에 게시. 본인 소유만(403). 사진 없으면 400. */
     @PatchMapping("/{recipeId}/publish")
     public RecipePublished publish(
             @PathVariable @Positive(message = "recipeId는 양수여야 합니다") Long recipeId
     ) {
         return recipeService.publish(currentMemberId(), recipeId);
+    }
+
+    /** "비공개로 전환" — 공개했던 내 레시피를 다시 비공개로. 본인 소유만(403). */
+    @PatchMapping("/{recipeId}/unpublish")
+    public RecipePublished unpublish(
+            @PathVariable @Positive(message = "recipeId는 양수여야 합니다") Long recipeId
+    ) {
+        return recipeService.unpublish(currentMemberId(), recipeId);
+    }
+
+    /** "내 후기" 작성/수정 — 본인이 등록한 레시피만(403). 빈 값이면 후기 삭제. */
+    @PatchMapping("/{recipeId}/review")
+    public Map<String, String> updateReview(
+            @PathVariable @Positive(message = "recipeId는 양수여야 합니다") Long recipeId,
+            @Valid @RequestBody AuthorReviewRequest req
+    ) {
+        String saved = recipeService.updateAuthorReview(currentMemberId(), recipeId, req.review());
+        Map<String, String> body = new java.util.HashMap<>();
+        body.put("authorReview", saved);
+        return body;
     }
 
     /**

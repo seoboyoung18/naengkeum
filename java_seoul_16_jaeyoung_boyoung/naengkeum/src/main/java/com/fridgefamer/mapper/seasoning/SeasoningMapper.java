@@ -19,6 +19,9 @@ public interface SeasoningMapper {
     /** 조미료 마스터 전체 + 회원 보유 여부(owned). sort_order, name 순. */
     List<SeasoningItem> selectCatalogWithOwned(@Param("memberId") Long memberId);
 
+    /** 회원이 보유한 조미료 이름 목록. AI 추천에서 "보유" 판정(용량 무관)에 사용. */
+    List<String> selectOwnedNames(@Param("memberId") Long memberId);
+
     /** 회원의 보유 조미료 전체 삭제(set 동기화 1단계). */
     int deleteOwnedByMember(@Param("memberId") Long memberId);
 

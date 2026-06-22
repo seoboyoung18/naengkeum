@@ -14,6 +14,8 @@ public record RecipeDetail(
         Long recipeId,
         String title,
         String summary,
+        String authorNote,
+        String authorReview,
         String thumbnailUrl,
         Integer cookTime,
         BigDecimal avgRating,

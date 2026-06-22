@@ -12,6 +12,8 @@ public record RecipeDetailRow(
         Long recipeId,
         String title,
         String summary,
+        String authorNote,
+        String authorReview,
         String thumbnailUrl,
         Integer cookTime,
         Long authorId,

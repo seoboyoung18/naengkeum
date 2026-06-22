@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchRecipeDetail, uploadRecipeImage } from '../api/recipe'
+import { fetchRecipeDetail, uploadRecipeImage, updateRecipeReview } from '../api/recipe'
 import { API_BASE } from '../api/http'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
 import ReviewSection from '../components/ReviewSection.vue'
@@ -11,6 +11,7 @@ import InlineIcon from '../components/InlineIcon.vue'
 import clockSvg from '../assets/icons/clock-outline.svg?raw'
 import starSvg from '../assets/icons/star.svg?raw'
 import imageSvg from '../assets/icons/image.svg?raw'
+import chatBubbleSvg from '../assets/icons/chat-bubble-empty.svg?raw'
 
 const toast = useToast()
 
@@ -24,6 +25,10 @@ const error = ref('')
 // 사진 업로드용
 const fileInput = ref(null)
 const uploading = ref(false)
+
+// 내 후기(작성자 후기) 편집용
+const myReview = ref('')
+const savingReview = ref(false)
 
 const hasNutrition = computed(() => {
   const n = recipe.value?.nutrition
@@ -43,10 +48,27 @@ async function load() {
   error.value = ''
   try {
     recipe.value = await fetchRecipeDetail(props.recipeId)
+    myReview.value = recipe.value.authorReview || ''
   } catch (e) {
     error.value = e.response?.status === 404 ? '레시피를 찾을 수 없습니다' : (e.response?.data?.message || '불러오기 실패')
   } finally {
     loading.value = false
+  }
+}
+
+// 내 후기 저장 (본인 레시피만 칸이 보임)
+async function saveMyReview() {
+  if (savingReview.value) return
+  savingReview.value = true
+  try {
+    const { authorReview } = await updateRecipeReview(recipe.value.recipeId, myReview.value.trim())
+    recipe.value.authorReview = authorReview
+    myReview.value = authorReview || ''
+    toast.success('후기를 저장했어요')
+  } catch (e) {
+    toast.error(e.response?.data?.message || '후기 저장에 실패했어요')
+  } finally {
+    savingReview.value = false
   }
 }
 
@@ -151,6 +173,12 @@ onMounted(load)
           </div>
           <p v-if="recipe.summary" class="summary">{{ recipe.summary }}</p>
 
+          <!-- 작성자 소감(담을 때 본인이 남긴 한마디) -->
+          <div v-if="recipe.authorNote" class="author-note">
+            <span class="an-label"><InlineIcon :svg="chatBubbleSvg" :size="13" /> 작성자 한마디</span>
+            <p class="an-text">{{ recipe.authorNote }}</p>
+          </div>
+
           <!-- 영양정보 -->
           <div v-if="hasNutrition" class="nutri">
             <div v-if="recipe.nutrition.calories != null"><b>{{ recipe.nutrition.calories }}</b>kcal</div>
@@ -196,6 +224,27 @@ onMounted(load)
         </div>
 
         <div class="side-col">
+          <!-- 내 후기: 본인 레시피면 작성/수정, 아니면 내용 있을 때만 읽기 전용 -->
+          <div v-if="recipe.isOwner" class="card my-review">
+            <h3 class="sec">내 후기</h3>
+            <textarea
+              v-model="myReview"
+              class="review-input"
+              rows="4"
+              maxlength="1000"
+              placeholder="직접 만들어 본 후기를 남겨보세요. 예: 양념을 반으로 줄이니 딱 좋았어요!"
+            ></textarea>
+            <div class="review-actions">
+              <button class="review-save" :disabled="savingReview" @click="saveMyReview">
+                {{ savingReview ? '저장 중…' : '후기 저장' }}
+              </button>
+            </div>
+          </div>
+          <div v-else-if="recipe.authorReview" class="card my-review">
+            <h3 class="sec">작성자 후기</h3>
+            <p class="review-text">{{ recipe.authorReview }}</p>
+          </div>
+
           <div class="card">
             <ReviewSection :recipe-id="recipe.recipeId" @changed="reloadStats" />
           </div>
@@ -224,13 +273,18 @@ onMounted(load)
 .meta { display: flex; gap: 14px; font-size: 14px; color: var(--text-soft); margin-top: 10px; font-family: var(--font-mono); }
 .summary { font-size: 15px; color: #555; margin: 12px 0 0; line-height: 1.6; }
 
+/* 작성자 소감 — 부드러운 강조 카드 */
+.author-note { margin-top: 14px; background: var(--primary-tint); border-radius: var(--r-sm); padding: 12px 14px; }
+.author-note .an-label { font-size: 12px; font-weight: 700; color: var(--primary-deep); }
+.author-note .an-text { font-size: 14px; color: #444; margin: 6px 0 0; line-height: 1.55; white-space: pre-wrap; }
+
 /* 영양 5칸 — 하어라인 카드 + 모노 수치 (Voltagent 톤) */
 .nutri { display: flex; gap: 10px; margin: 20px 0; }
 .nutri div { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 4px; text-align: center; font-size: 11px; color: var(--text-soft); box-shadow: var(--shadow-card); }
 .nutri div b { display: block; font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
 
 /* CTA — 일렉트릭 그린 + near-black 글자, 6px */
-.cta-row { display: flex; align-items: center; gap: 10px; }
+.cta-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .wish-btn { border: none; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700;
   border-radius: var(--r-sm); padding: 13px 28px; cursor: pointer; }
 .wish-btn.on { background: var(--surface); color: var(--primary-deep); border: 1px solid var(--primary); }
@@ -239,6 +293,15 @@ onMounted(load)
 .cols { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; margin-top: 24px; }
 .main-col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 20px 22px; box-shadow: var(--shadow-card); }
+
+/* 내 후기 — 리뷰 카드 8px 위 */
+.my-review { margin-bottom: 8px; }
+.review-input { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: 14px; resize: vertical; font-family: inherit; line-height: 1.5; }
+.review-input:focus { outline: none; border-color: var(--primary); }
+.review-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.review-save { border: none; background: var(--primary); color: var(--on-primary); font-size: 14px; font-weight: 700; border-radius: var(--r-sm); padding: 9px 18px; cursor: pointer; }
+.review-save:disabled { opacity: .6; cursor: default; }
+.review-text { font-size: 14px; color: #444; margin: 0; line-height: 1.6; white-space: pre-wrap; }
 
 .sec { font-size: 16px; margin: 0 0 14px; }
 .ings { list-style: none; padding: 0; margin: 0; }

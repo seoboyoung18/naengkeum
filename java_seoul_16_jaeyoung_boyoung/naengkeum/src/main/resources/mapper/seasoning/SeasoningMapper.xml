@@ -26,6 +26,15 @@
          ORDER BY s.sort_order, s.name
     </select>
 
+    <!-- 회원 보유 조미료 이름만 (AI 추천 보유판정용) -->
+    <select id="selectOwnedNames" resultType="string">
+        SELECT s.name
+          FROM member_seasoning ms
+          JOIN seasoning s ON s.seasoning_id = ms.seasoning_id
+         WHERE ms.member_id = #{memberId}
+         ORDER BY s.sort_order, s.name
+    </select>
+
     <!-- set 동기화 1: 회원 보유 전체 삭제 -->
     <delete id="deleteOwnedByMember">
         DELETE FROM member_seasoning WHERE member_id = #{memberId}

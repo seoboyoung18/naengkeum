@@ -120,6 +120,8 @@
         SELECT r.recipe_id AS recipeId,
                r.title,
                r.summary,
+               r.author_note AS authorNote,
+               r.author_review AS authorReview,
                r.image_url AS thumbnailUrl,
                r.cook_time AS cookTime,
                r.author_id AS authorId,
@@ -237,10 +239,11 @@
             useGeneratedKeys="true"
             keyProperty="cmd.recipeId"
             keyColumn="recipe_id">
-        INSERT INTO recipe (title, summary, cook_time, source,
+        INSERT INTO recipe (title, summary, author_note, cook_time, source,
                             author_id, is_public, source_ai_recipe_id)
         VALUES (#{cmd.title},
                 #{cmd.summary},
+                #{cmd.authorNote},
                 #{cmd.cookTime},
                 'AI_SAVED',
                 #{cmd.authorId},
@@ -262,12 +265,14 @@
         </foreach>
     </insert>
 
-    <!-- 공개하기 권한 검증용 — 없으면 null(404). author_id NULL=공공 -->
+    <!-- 공개하기/비공개/삭제 권한 검증용 — 없으면 null(404). author_id NULL=공공.
+         image_url 은 "사진 없으면 공개 불가" 검증에 사용. -->
     <select id="selectRecipeOwner"
             resultType="com.fridgefamer.dto.response.recipe.RecipeOwnerRow">
         SELECT recipe_id  AS recipeId,
                author_id  AS authorId,
-               is_public  AS isPublic
+               is_public  AS isPublic,
+               image_url  AS imageUrl
           FROM recipe
          WHERE recipe_id = #{recipeId}
          LIMIT 1
@@ -275,6 +280,12 @@
 
     <update id="markPublic">
         UPDATE recipe SET is_public = TRUE
+         WHERE recipe_id = #{recipeId}
+    </update>
+
+    <!-- 공개 → 비공개 전환(멱등). 공개 카탈로그에서 내려간다. -->
+    <update id="markPrivate">
+        UPDATE recipe SET is_public = FALSE
          WHERE recipe_id = #{recipeId}
     </update>
 
@@ -289,13 +300,21 @@
          WHERE recipe_id = #{recipeId}
     </update>
 
-    <!-- 마이 레시피 목록 (author_id=나, 공개/비공개 모두, 최신순) -->
+    <!-- 작성자 후기 갱신 (상세 페이지에서 본인이 작성/수정). 권한 검증은 서비스에서 선행. -->
+    <update id="updateAuthorReview">
+        UPDATE recipe SET author_review = #{review}
+         WHERE recipe_id = #{recipeId}
+    </update>
+
+    <!-- 마이 레시피 목록 (author_id=나, 공개/비공개 모두, 최신순).
+         image_url 로 "사진 등록 여부"를 함께 내려 공개 가능 여부 판단에 사용. -->
     <select id="selectMyRecipes"
             resultType="com.fridgefamer.dto.response.recipe.MyRecipeItem">
         SELECT recipe_id  AS recipeId,
                title,
                cook_time  AS cookTime,
                is_public  AS isPublic,
+               image_url  AS imageUrl,
                source,
                created_at AS createdAt
           FROM recipe

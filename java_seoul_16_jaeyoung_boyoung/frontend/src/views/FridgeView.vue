@@ -7,6 +7,7 @@ import SeasoningModal from '../components/SeasoningModal.vue'
 import InlineIcon from '../components/InlineIcon.vue'
 import editSvg from '../assets/icons/edit.svg?raw'
 import trashSvg from '../assets/icons/trash.svg?raw'
+import hourglassSvg from '../assets/icons/hourglass.svg?raw'
 import { useToast } from '../composables/useToast'
 
 const toast = useToast()
@@ -131,7 +132,7 @@ onMounted(() => { load(); loadSeasonings() })
 
     <!-- 보유 조미료 (냉장/냉동/실온 분류) -->
     <div class="seasoning-row">
-      <span class="sr-label">🧂 내 조미료</span>
+      <span class="sr-label"><InlineIcon :svg="hourglassSvg" :size="16" /> 내 조미료</span>
       <div v-if="ownedSeasonings.length" class="sr-groups">
         <div class="sr-group" v-for="g in seasoningGroups" :key="g.key">
           <span class="sr-gl" :class="'sr-gl-' + g.key">{{ g.label }}</span>

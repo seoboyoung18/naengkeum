@@ -8,6 +8,8 @@ import { registerFromAi } from '../api/recipe'
 import { useToast } from '../composables/useToast'
 import InlineIcon from '../components/InlineIcon.vue'
 import clockSvg from '../assets/icons/clock-outline.svg?raw'
+import graphUpSvg from '../assets/icons/graph-up.svg?raw'
+import userSvg from '../assets/icons/user.svg?raw'
 import botUrl from '../assets/icons/message-bot.svg'
 
 const router = useRouter()
@@ -173,7 +175,7 @@ function goRecipe() {
 
 <template>
   <section>
-    <h2 class="h"><img :src="botUrl" class="bi" alt="" /> AI 레시피 추천</h2>
+    <h2 class="h"><img :src="botUrl" class="bi" alt="" />AI 레시피 추천</h2>
     <p class="lead">냉장고 재료로 만들 수 있는 레시피를 추천해 드려요.</p>
 
     <div class="layout">
@@ -199,7 +201,7 @@ function goRecipe() {
 
         <div v-else class="result">
           <div v-if="result.source" class="badge" :class="result.source.origin === 'DB' ? 'db' : 'ai'">
-        <template v-if="result.source.origin === 'DB'">보유 재료 기반 추천 레시피</template><template v-else><img :src="botUrl" class="bi" alt="" /> AI 생성 레시피</template>
+        <template v-if="result.source.origin === 'DB'">보유 재료 기반 추천 레시피</template><template v-else><img :src="botUrl" class="bi" alt="" />AI 생성 레시피</template>
       </div>
 
       <h3 v-if="result.title" class="title">{{ result.title }}</h3>
@@ -227,8 +229,8 @@ function goRecipe() {
 
       <div v-if="result.meta" class="meta">
         <span v-if="result.meta.cookTime"><InlineIcon :svg="clockSvg" :size="12" /> {{ result.meta.cookTime }}분</span>
-        <span v-if="result.meta.difficulty">📊 {{ result.meta.difficulty }}</span>
-        <span v-if="result.meta.servings">🍽 {{ result.meta.servings }}인분</span>
+        <span v-if="result.meta.difficulty"><InlineIcon :svg="graphUpSvg" :size="13" /> {{ result.meta.difficulty }}</span>
+        <span v-if="result.meta.servings"><InlineIcon :svg="userSvg" :size="13" /> {{ result.meta.servings }}인분</span>
       </div>
 
       <p v-if="streamError" class="err">⚠️ {{ streamError }} (다시 시도해 보세요)</p>
@@ -279,7 +281,8 @@ function goRecipe() {
 .result { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 14px; padding: 20px 22px; }
 
 @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
-.badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; margin-bottom: 8px; }
+.h { display: flex; align-items: center; gap: 8px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; margin-bottom: 8px; }
 .badge.db { background: #eff6ff; color: #2563eb; }
 .badge.ai { background: #f5f3ff; color: #7c3aed; }
 .title { font-size: 19px; margin: 4px 0; }
@@ -297,6 +300,8 @@ function goRecipe() {
 .steps .n { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 .steps .d { flex: 1; font-size: 14px; }
 .meta { display: flex; gap: 14px; color: #888; font-size: 13px; margin-top: 12px; }
+/* 메타 아이콘(시계·graph-up·user)만 브랜드 그린, 텍스트는 회색 유지 */
+.meta :deep(.ii) { color: #00D992; }
 .muted { color: #999; font-size: 13px; margin-top: 10px; }
 .actions { display: flex; gap: 8px; margin-top: 16px; }
 .ghost { flex: 1; border: 1px solid var(--primary-deep); color: var(--primary-deep); background: #fff; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; }
@@ -305,5 +310,5 @@ function goRecipe() {
 .register { flex: 1; border: none; background: var(--primary); color: var(--on-primary); border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .register:disabled { opacity: .6; }
 .reg-note { font-size: 12px; color: #999; margin: 8px 0 0; }
-.bi { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
+.bi { width: 22px; height: 22px; object-fit: contain; vertical-align: -2px; }
 </style>

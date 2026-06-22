@@ -117,6 +117,9 @@ public interface RecipeMapper {
     /** 공개로 전환(is_public=TRUE). 멱등. */
     int markPublic(@Param("recipeId") Long recipeId);
 
+    /** 공개 → 비공개로 전환(is_public=FALSE). 멱등. */
+    int markPrivate(@Param("recipeId") Long recipeId);
+
     /**
      * 레시피 삭제. recipe_ingredient/recipe_step/review/wishlist/report는
      * 모두 FK ON DELETE CASCADE라 함께 정리된다. 권한 검증은 서비스에서 선행.
@@ -126,6 +129,10 @@ public interface RecipeMapper {
     /** 레시피 대표 이미지 경로 갱신. 본인 레시피 검증은 서비스에서 선행. */
     int updateImageUrl(@Param("recipeId") Long recipeId,
                        @Param("imageUrl") String imageUrl);
+
+    /** 작성자 후기 갱신. 본인 레시피 검증은 서비스에서 선행. null이면 후기 삭제. */
+    int updateAuthorReview(@Param("recipeId") Long recipeId,
+                           @Param("review") String review);
 
     /** 마이 레시피 목록(author_id=나, 공개/비공개 포함, 최신순). */
     List<MyRecipeItem> selectMyRecipes(@Param("memberId") Long memberId);
@@ -143,14 +150,17 @@ public interface RecipeMapper {
         private final Long sourceAiRecipeId;
         private final String title;
         private final String summary;
+        private final String authorNote;
         private final Integer cookTime;
 
         public RecipeInsertCommand(Long authorId, Long sourceAiRecipeId,
-                                   String title, String summary, Integer cookTime) {
+                                   String title, String summary, String authorNote,
+                                   Integer cookTime) {
             this.authorId = authorId;
             this.sourceAiRecipeId = sourceAiRecipeId;
             this.title = title;
             this.summary = summary;
+            this.authorNote = authorNote;
             this.cookTime = cookTime;
         }
 
@@ -160,6 +170,7 @@ public interface RecipeMapper {
         public Long getSourceAiRecipeId()  { return sourceAiRecipeId; }
         public String getTitle()           { return title; }
         public String getSummary()         { return summary; }
+        public String getAuthorNote()      { return authorNote; }
         public Integer getCookTime()       { return cookTime; }
     }
 }

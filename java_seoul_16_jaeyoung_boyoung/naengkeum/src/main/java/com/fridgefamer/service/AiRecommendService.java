@@ -10,6 +10,7 @@ import com.fridgefamer.exception.ErrorCode;
 import com.fridgefamer.mapper.ai.AiMapper;
 import com.fridgefamer.mapper.fridge.FridgeMapper;
 import com.fridgefamer.mapper.recipe.RecipeMapper;
+import com.fridgefamer.mapper.seasoning.SeasoningMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,6 +82,7 @@ public class AiRecommendService {
     private final FridgeMapper fridgeMapper;
     private final AiMapper aiMapper;
     private final RecipeMapper recipeMapper;
+    private final SeasoningMapper seasoningMapper;
     private final RestClient restClient;
     private final String apiKey;
     private final String model;
@@ -89,12 +91,14 @@ public class AiRecommendService {
     public AiRecommendService(FridgeMapper fridgeMapper,
                               AiMapper aiMapper,
                               RecipeMapper recipeMapper,
+                              SeasoningMapper seasoningMapper,
                               @Value("${openai.base-url}") String baseUrl,
                               @Value("${openai.api-key}") String apiKey,
                               @Value("${openai.model}") String model) {
         this.fridgeMapper = fridgeMapper;
         this.aiMapper = aiMapper;
         this.recipeMapper = recipeMapper;
+        this.seasoningMapper = seasoningMapper;
         this.apiKey = apiKey;
         this.model = model;
 
@@ -118,20 +122,30 @@ public class AiRecommendService {
         }
         String allergies = req.applyAllergyOrDefault() ? aiMapper.selectAllergies(memberId) : null;
 
+        // 보유 조미료(양념)는 용량과 무관하게 "보유"로 간주 — fridge_item과 별개 테이블이라 따로 조회.
+        List<String> ownedSeasonings = seasoningMapper.selectOwnedNames(memberId);
+
         // 2) SSE 시작 — 이후 실패는 error 이벤트로 전달
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
-        executor.submit(() -> stream(emitter, fridge, allergies, req));
+        executor.submit(() -> stream(emitter, fridge, ownedSeasonings, allergies, req));
         return emitter;
     }
 
     // =====================================================================
     //  비동기 스트리밍 본체
     // =====================================================================
-    private void stream(SseEmitter emitter, List<FridgeItem> fridge, String allergies, AiRecommendRequest req) {
+    private void stream(SseEmitter emitter, List<FridgeItem> fridge, List<String> ownedSeasonings,
+                        String allergies, AiRecommendRequest req) {
         try {
             Set<String> owned = fridge.stream()
-                    .map(f -> f.name().trim().toLowerCase(Locale.ROOT))
+                    .map(f -> norm(f.name()))
                     .collect(Collectors.toSet());
+            // 보유 조미료를 보유 집합에 합친다(용량 무관) → 레시피 재료 표시에서 "구매"가 아닌 "보유"로.
+            for (String s : ownedSeasonings) {
+                if (s != null && !s.isBlank()) {
+                    owned.add(norm(s));
+                }
+            }
 
             // ===== 1단계: 냉장고로 "현실적으로 만들 수 있는" DB 레시피 매칭 =====
             //  (보유 ≥ MIN_MATCH_FOR_DB 그리고 사야 할 재료 ≤ MAX_INGREDIENTS_TO_BUY)
@@ -154,7 +168,7 @@ public class AiRecommendService {
 
             // ===== 2단계: AI 생성 (현실적 DB 후보가 없거나, 적어서 다양성을 위해 AI 선택) =====
             //  후보가 있으면 참고로 전달해 AI가 현실성을 유지하도록 한다.
-            streamAiRecipe(emitter, fridge, owned, allergies, req, candidates);
+            streamAiRecipe(emitter, fridge, owned, ownedSeasonings, allergies, req, candidates);
         } catch (Exception e) {
             log.warn("AI recommend stream failed: {}", e.getMessage());
             sendErrorQuietly(emitter, e.getMessage());
@@ -177,7 +191,7 @@ public class AiRecommendService {
         }
         for (RecipeIngredient ing : recipeMapper.selectIngredients(chosen.recipeId())) {
             boolean isOwned = ing.name() != null
-                    && owned.contains(ing.name().trim().toLowerCase(Locale.ROOT));
+                    && owned.contains(norm(ing.name()));
             Map<String, Object> value = new LinkedHashMap<>();
             value.put("name", ing.name());
             value.put("qty", ing.qty());
@@ -202,11 +216,11 @@ public class AiRecommendService {
     //  AI 생성 스트리밍 (source=AI) — 약한 DB 후보를 참고로 전달
     // =====================================================================
     private void streamAiRecipe(SseEmitter emitter, List<FridgeItem> fridge, Set<String> owned,
-                                String allergies, AiRecommendRequest req,
+                                List<String> ownedSeasonings, String allergies, AiRecommendRequest req,
                                 List<RecipeMatchCandidate> references) throws Exception {
         send(emitter, "source", Map.of("origin", "AI"));
 
-        Map<String, Object> recipe = callOpenAi(fridge, allergies, req, references);
+        Map<String, Object> recipe = callOpenAi(fridge, ownedSeasonings, allergies, req, references);
 
         send(emitter, "title", recipe.getOrDefault("title", "추천 레시피"));
             if (recipe.get("summary") != null) {
@@ -216,7 +230,7 @@ public class AiRecommendService {
                 Map<String, Object> m = asMap(ing);
                 Object name = m.get("name");
                 boolean isOwned = name != null
-                        && owned.contains(name.toString().trim().toLowerCase(Locale.ROOT));
+                        && owned.contains(norm(name.toString()));
                 Map<String, Object> value = new LinkedHashMap<>();
                 value.put("name", name);
                 value.put("qty", m.get("qty"));
@@ -238,8 +252,9 @@ public class AiRecommendService {
     //  OpenAI Chat Completions (JSON 모드) 호출 → 파싱된 레시피 Map
     // =====================================================================
     @SuppressWarnings("unchecked")
-    private Map<String, Object> callOpenAi(List<FridgeItem> fridge, String allergies,
-                                           AiRecommendRequest req, List<RecipeMatchCandidate> references) {
+    private Map<String, Object> callOpenAi(List<FridgeItem> fridge, List<String> ownedSeasonings,
+                                           String allergies, AiRecommendRequest req,
+                                           List<RecipeMatchCandidate> references) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", model);
         body.put("temperature", 1.0);   // 다양성↑ (같은 재료 반복 호출 시 비슷한 결과 방지)
@@ -247,7 +262,7 @@ public class AiRecommendService {
         body.put("response_format", Map.of("type", "json_object"));
         body.put("messages", List.of(
                 Map.of("role", "system", "content", systemPrompt()),
-                Map.of("role", "user", "content", userPrompt(fridge, allergies, req, references))));
+                Map.of("role", "user", "content", userPrompt(fridge, ownedSeasonings, allergies, req, references))));
 
         Map<String, Object> resp = restClient.post()
                 .uri("/chat/completions")
@@ -285,8 +300,8 @@ public class AiRecommendService {
                """;
     }
 
-    private String userPrompt(List<FridgeItem> fridge, String allergies, AiRecommendRequest req,
-                              List<RecipeMatchCandidate> references) {
+    private String userPrompt(List<FridgeItem> fridge, List<String> ownedSeasonings, String allergies,
+                              AiRecommendRequest req, List<RecipeMatchCandidate> references) {
         StringBuilder sb = new StringBuilder();
         sb.append("냉장고 재료 목록(이름 / 수량 / 보관 / D-day):\n");
         for (FridgeItem f : fridge) {
@@ -294,6 +309,12 @@ public class AiRecommendService {
               .append(" / ").append(f.qty()).append(f.unit() == null ? "" : f.unit())
               .append(" / ").append(f.storageType())
               .append(" / D").append(f.dDay() >= 0 ? "+" + f.dDay() : String.valueOf(f.dDay()))
+              .append("\n");
+        }
+        // 보유 조미료는 용량과 무관하게 충분히 있다고 가정 — '사야 하는 재료'에서 제외하고 자유롭게 사용.
+        if (ownedSeasonings != null && !ownedSeasonings.isEmpty()) {
+            sb.append("\n보유 중인 조미료/양념(용량 충분, 마음껏 사용 가능): ")
+              .append(String.join(", ", ownedSeasonings))
               .append("\n");
         }
         if (req.prioritizeExpiryOrDefault()) {
@@ -348,6 +369,11 @@ public class AiRecommendService {
         } catch (Exception ignore) {
             // 이미 끊긴 연결 등 — 무시
         }
+    }
+
+    /** 재료명 비교용 정규화 — 소문자 + 모든 공백 제거(예: "다진 마늘" == "다진마늘"). */
+    private static String norm(String s) {
+        return s == null ? "" : s.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
     }
 
     @SuppressWarnings("unchecked")

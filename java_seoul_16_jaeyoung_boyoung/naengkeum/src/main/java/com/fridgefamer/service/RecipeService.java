@@ -108,7 +108,8 @@ public class RecipeService {
                 && row.authorId().equals(viewerId);
 
         return new RecipeDetail(
-                row.recipeId(), row.title(), row.summary(), row.thumbnailUrl(), row.cookTime(),
+                row.recipeId(), row.title(), row.summary(), row.authorNote(), row.authorReview(),
+                row.thumbnailUrl(), row.cookTime(),
                 row.avgRating(), row.reviewCount(), row.isWishlisted(), isOwner,
                 nutrition, ingredients, steps);
     }
@@ -128,8 +129,9 @@ public class RecipeService {
         }
 
         // 중복 담기는 UNIQUE(author_id, source_ai_recipe_id) → DuplicateKey → 409 (자동 변환)
+        // 기존 ai_recipe 복사 경로는 소감 입력 화면이 없으므로 author_note=null.
         RecipeInsertCommand cmd = new RecipeInsertCommand(
-                memberId, aiRecipeId, ai.title(), ai.summary(), ai.cookTime());
+                memberId, aiRecipeId, ai.title(), ai.summary(), null, ai.cookTime());
         recipeMapper.insertRecipe(cmd);
         Long recipeId = cmd.getRecipeId();
 
@@ -152,7 +154,7 @@ public class RecipeService {
     public RecipeSaved createFromAiContent(Long memberId, SaveAiRecipeRequest req) {
         // 콘텐츠는 ai_recipe를 거치지 않으므로 source_ai_recipe_id=null (중복 방지 미적용)
         RecipeInsertCommand cmd = new RecipeInsertCommand(
-                memberId, null, req.title(), req.summary(), req.cookTime());
+                memberId, null, req.title(), req.summary(), trimToNull(req.note()), req.cookTime());
         recipeMapper.insertRecipe(cmd);
         Long recipeId = cmd.getRecipeId();
 
@@ -165,6 +167,13 @@ public class RecipeService {
             recipeMapper.insertSteps(recipeId, steps);
         }
         return new RecipeSaved(recipeId);
+    }
+
+    /** 공백만 있거나 null이면 null, 아니면 트림된 문자열. (소감/이미지 URL 정규화용) */
+    private String trimToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
 
     /** List&lt;JsonNode&gt; → JSON 배열 문자열(파싱 재사용용). WishlistService와 동일 방침(Jackson 빈 비의존). */
@@ -186,6 +195,10 @@ public class RecipeService {
         if (row.authorId() == null || !row.authorId().equals(memberId)) {
             throw new ApiException(ErrorCode.FORBIDDEN, "본인이 등록한 레시피만 공개할 수 있습니다");
         }
+        // 사진 없는 레시피는 공개 불가 — 대표 이미지가 있어야 공개 카탈로그에 올릴 수 있다.
+        if (trimToNull(row.imageUrl()) == null) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, "대표 사진을 등록해야 공개할 수 있어요");
+        }
         if (!Boolean.TRUE.equals(row.isPublic())) {
             recipeMapper.markPublic(recipeId);
         }
@@ -193,10 +206,47 @@ public class RecipeService {
     }
 
     // =====================================================================
+    //  PATCH /api/recipe/{recipeId}/unpublish — "비공개로 전환"
+    //  공개했던 내 레시피를 다시 비공개로 내린다. 본인 소유만(403).
+    // =====================================================================
+    @Transactional
+    public RecipePublished unpublish(Long memberId, Long recipeId) {
+        RecipeOwnerRow row = recipeMapper.selectRecipeOwner(recipeId);
+        if (row == null) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "레시피를 찾을 수 없습니다");
+        }
+        if (row.authorId() == null || !row.authorId().equals(memberId)) {
+            throw new ApiException(ErrorCode.FORBIDDEN, "본인이 등록한 레시피만 비공개로 전환할 수 있습니다");
+        }
+        if (Boolean.TRUE.equals(row.isPublic())) {
+            recipeMapper.markPrivate(recipeId);
+        }
+        return new RecipePublished(recipeId, false);
+    }
+
+    // =====================================================================
     //  GET /api/recipe/mine — 마이 레시피 (author_id=나, 공개/비공개 포함)
     // =====================================================================
     public List<MyRecipeItem> listMine(Long memberId) {
         return recipeMapper.selectMyRecipes(memberId);
+    }
+
+    // =====================================================================
+    //  PATCH /api/recipe/{recipeId}/review — "내 후기" 작성/수정
+    //  본인이 등록한 레시피만(403). 빈 값이면 후기 삭제(null 저장).
+    // =====================================================================
+    @Transactional
+    public String updateAuthorReview(Long memberId, Long recipeId, String review) {
+        RecipeOwnerRow row = recipeMapper.selectRecipeOwner(recipeId);
+        if (row == null) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "레시피를 찾을 수 없습니다");
+        }
+        if (row.authorId() == null || !row.authorId().equals(memberId)) {
+            throw new ApiException(ErrorCode.FORBIDDEN, "본인이 등록한 레시피만 후기를 작성할 수 있습니다");
+        }
+        String normalized = trimToNull(review);
+        recipeMapper.updateAuthorReview(recipeId, normalized);
+        return normalized;
     }
 
     // =====================================================================

@@ -4,6 +4,7 @@ import tools.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -19,6 +20,10 @@ public record SaveAiRecipeRequest(
         String title,
 
         String summary,
+
+        /** 작성자 소감(선택) — "내 레시피로 담기" 시 본인이 남기는 한마디. */
+        @Size(max = 500, message = "소감은 500자 이하여야 합니다")
+        String note,
 
         @NotEmpty(message = "ingredientsJson은 비어 있을 수 없습니다")
         List<JsonNode> ingredientsJson,
