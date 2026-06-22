@@ -48,7 +48,8 @@ public class MemberService {
                 row.profileImageUrl(),
                 maskEmail(row.email()),
                 parseAllergies(row.allergies()),
-                stats
+                stats,
+                row.password() == null || row.password().isBlank()  // 소셜 전용 계정(비번 없음)
         );
     }
 
@@ -92,7 +93,11 @@ public class MemberService {
     @Transactional
     public void deleteMe(Long memberId, String rawPassword) {
         MemberBasicRow current = findActiveOrThrow(memberId);
-        if (!passwordEncoder.matches(rawPassword, current.password())) {
+        // 소셜 로그인 전용 계정은 비밀번호가 없다(NULL) → 비밀번호 확인 없이 탈퇴 허용.
+        // 일반(LOCAL) 계정이거나 비밀번호가 연결된 계정은 비밀번호 일치를 강제한다.
+        boolean hasLocalPassword = current.password() != null && !current.password().isBlank();
+        if (hasLocalPassword
+                && (rawPassword == null || !passwordEncoder.matches(rawPassword, current.password()))) {
             throw new ApiException(ErrorCode.UNAUTHORIZED, "비밀번호가 일치하지 않습니다");
         }
         memberMapper.softDeleteById(memberId);

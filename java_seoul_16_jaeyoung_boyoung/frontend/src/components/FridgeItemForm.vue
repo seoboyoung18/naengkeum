@@ -134,7 +134,11 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
           </div>
           <div>
             <label>단위</label>
-            <input v-model="form.unit" type="text" placeholder="개/g/ml" />
+            <div class="seg seg-unit">
+              <button type="button" :class="{ on: form.unit === '개' }" @click="form.unit = '개'">개</button>
+              <button type="button" :class="{ on: form.unit === 'g' }" @click="form.unit = 'g'">g</button>
+              <button type="button" :class="{ on: form.unit === 'ml' }" @click="form.unit = 'ml'">ml</button>
+            </div>
           </div>
         </div>
 
@@ -181,6 +185,7 @@ input { padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; f
 .seg { display: flex; gap: 6px; }
 .seg button { flex: 1; padding: 10px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 14px; cursor: pointer; color: #555; }
 .seg button.on { border-color: var(--primary-deep); background: var(--primary-tint); color: var(--primary-deep); font-weight: 700; }
+.seg-unit button { padding: 11px 6px; }
 .err { color: #e11d48; font-size: 13px; margin: 12px 0 0; }
 .submit { margin-top: 18px; padding: 13px; border: none; border-radius: 8px; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700; cursor: pointer; }
 .submit:disabled { opacity: .6; }

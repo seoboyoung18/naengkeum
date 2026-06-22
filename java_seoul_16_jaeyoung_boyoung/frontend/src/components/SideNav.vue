@@ -10,10 +10,14 @@ import challengeIcon from '../assets/icons/trophy.svg?raw'
 import userIcon from '../assets/icons/user.svg?raw'
 import logoutIcon from '../assets/icons/log-out.svg?raw'
 import adminIcon from '../assets/icons/shield-lock.svg?raw'
-import { computed } from 'vue'
+import WithdrawModal from './WithdrawModal.vue'
+import { useToast } from '../composables/useToast'
+import { computed, ref } from 'vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const toast = useToast()
+const showWithdraw = ref(false)
 
 const items = computed(() => {
   const base = [
@@ -29,6 +33,12 @@ const items = computed(() => {
 
 function logout() {
   auth.logout()
+  router.push({ name: 'login' })
+}
+
+function onWithdrawn() {
+  showWithdraw.value = false
+  toast.success('탈퇴가 완료되었습니다')
   router.push({ name: 'login' })
 }
 </script>
@@ -55,7 +65,10 @@ function logout() {
       <button class="logout" @click="logout">
         <span class="ic" v-html="logoutIcon"></span><span>로그아웃</span>
       </button>
+      <button class="withdraw" @click="showWithdraw = true">회원탈퇴</button>
     </div>
+
+    <WithdrawModal v-if="showWithdraw" @close="showWithdraw = false" @withdrawn="onWithdrawn" />
   </aside>
 </template>
 
@@ -114,4 +127,15 @@ function logout() {
   border-radius: var(--r-sm);
 }
 .logout:hover { background: var(--canvas-soft); color: var(--ink); }
+.withdraw {
+  border: none;
+  background: none;
+  color: var(--mute);
+  font-size: 12px;
+  text-align: left;
+  padding: 4px 12px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.withdraw:hover { color: #ef4444; }
 </style>

@@ -57,3 +57,9 @@ export async function listFollowers() {
   const { data } = await http.get('/api/member/me/followers')
   return data
 }
+
+/** 회원 탈퇴(soft) — DELETE /api/member/me { password } → { message } */
+export async function deleteMe(password) {
+  const { data } = await http.delete('/api/member/me', { data: { password } })
+  return data
+}
