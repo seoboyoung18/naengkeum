@@ -14,7 +14,8 @@ public record MyPageResponse(
         String profileImageUrl,
         String email,
         List<String> allergies,
-        MyStats stats
+        MyStats stats,
+        boolean socialOnly
 ) {
     /** 마이페이지 통계 — 5종 카운트. */
     public record MyStats(
