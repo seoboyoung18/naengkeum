@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { listFridge, deleteFridgeItem } from '../api/fridge'
+import { getSeasonings } from '../api/seasoning'
 import FridgeItemForm from '../components/FridgeItemForm.vue'
+import SeasoningModal from '../components/SeasoningModal.vue'
 import InlineIcon from '../components/InlineIcon.vue'
 import editSvg from '../assets/icons/edit.svg?raw'
 import trashSvg from '../assets/icons/trash.svg?raw'
@@ -31,6 +33,21 @@ const error = ref('')
 const showForm = ref(false)
 const editing = ref(null)
 
+const showSeasoning = ref(false)
+const ownedSeasonings = ref([])
+
+const SEASONING_STORAGES = [
+  { key: 'FRIDGE', label: '냉장' },
+  { key: 'FREEZER', label: '냉동' },
+  { key: 'ROOM_TEMP', label: '실온' },
+]
+// 보유 조미료를 냉장/냉동/실온으로 분류(권장 보관 위치 기준), 비어있는 그룹은 숨김
+const seasoningGroups = computed(() =>
+  SEASONING_STORAGES
+    .map((g) => ({ ...g, items: ownedSeasonings.value.filter((s) => s.storageType === g.key) }))
+    .filter((g) => g.items.length),
+)
+
 const imminentCount = computed(() => items.value.filter((i) => i.dDay <= 3).length)
 
 async function load() {
@@ -53,6 +70,19 @@ function selectSort(k) { sort.value = k; load() }
 function openAdd() { editing.value = null; showForm.value = true }
 function openEdit(item) { editing.value = item; showForm.value = true }
 function onSaved() { showForm.value = false; load(); toast.success('냉장고에 저장했어요') }
+
+function openSeasoning() { showSeasoning.value = true }
+async function loadSeasonings() {
+  try {
+    const data = await getSeasonings()
+    ownedSeasonings.value = data.filter((s) => s.owned)
+  } catch (_) { /* 무시 */ }
+}
+function onSeasoningSaved(updated) {
+  ownedSeasonings.value = updated.filter((s) => s.owned)
+  showSeasoning.value = false
+  toast.success('조미료를 저장했어요')
+}
 
 async function onDelete(item) {
   if (!confirm(`'${item.name}'을(를) 삭제할까요?`)) return
@@ -78,14 +108,17 @@ function dDayClass(d) {
   return 'ok'
 }
 
-onMounted(load)
+onMounted(() => { load(); loadSeasonings() })
 </script>
 
 <template>
   <section>
     <div class="head">
       <h2 class="h">내 냉장고</h2>
-      <button class="add-btn" @click="openAdd">＋ 재료 추가</button>
+      <div class="actions">
+        <button class="add-btn" @click="openAdd">＋ 재료 추가</button>
+        <button class="add-btn alt" @click="openSeasoning">＋ 조미료 추가</button>
+      </div>
     </div>
 
     <!-- 요약 -->
@@ -95,6 +128,18 @@ onMounted(load)
       <li><span>{{ summary.roomTempCount }}</span>실온</li>
       <li class="warn"><span>{{ imminentCount }}</span>임박</li>
     </ul>
+
+    <!-- 보유 조미료 (냉장/냉동/실온 분류) -->
+    <div class="seasoning-row">
+      <span class="sr-label">🧂 내 조미료</span>
+      <div v-if="ownedSeasonings.length" class="sr-groups">
+        <div class="sr-group" v-for="g in seasoningGroups" :key="g.key">
+          <span class="sr-gl" :class="'sr-gl-' + g.key">{{ g.label }}</span>
+          <span class="chip" v-for="s in g.items" :key="s.seasoningId">{{ s.name }}</span>
+        </div>
+      </div>
+      <span v-else class="sr-empty">아직 없어요 · ＋ 조미료 추가로 체크하세요</span>
+    </div>
 
     <!-- 필터 -->
     <div class="filters">
@@ -145,18 +190,38 @@ onMounted(load)
       @close="showForm = false"
       @saved="onSaved"
     />
+
+    <!-- 조미료 선택 모달 -->
+    <SeasoningModal
+      v-if="showSeasoning"
+      @close="showSeasoning = false"
+      @saved="onSeasoningSaved"
+    />
   </section>
 </template>
 
 <style scoped>
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .h { margin: 0; }
+.actions { display: flex; gap: 8px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
 .add-btn { flex: 0 0 auto; border: none; background: var(--primary); color: var(--on-primary); border-radius: 8px;
   padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.add-btn.alt { background: var(--primary-tint); color: var(--primary-deep); }
 .summary { list-style: none; display: flex; gap: 8px; padding: 0; margin: 0 0 14px; }
 .summary li { flex: 1; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-card); border-radius: 10px; padding: 10px; text-align: center; font-size: 12px; color: #666; }
 .summary li span { display: block; font-size: 18px; font-weight: 800; color: var(--primary-deep); }
 .summary li.warn span { color: #f59e0b; }
+
+.seasoning-row { margin: 0 0 14px; }
+.sr-label { display: block; font-size: 13px; font-weight: 700; color: var(--primary-deep); margin-bottom: 6px; }
+.sr-groups { display: flex; flex-direction: column; gap: 6px; }
+.sr-group { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.sr-gl { font-size: 11px; font-weight: 700; color: #888; background: #f1f3f5; border-radius: 6px; padding: 2px 8px; min-width: 34px; text-align: center; }
+.sr-gl-FRIDGE { color: var(--primary-deep); background: var(--primary-tint); }
+.sr-gl-FREEZER { color: #2563eb; background: #eff6ff; }
+.sr-gl-ROOM_TEMP { color: #b45309; background: #fff7ed; }
+.chip { background: #f1f5f9; color: #475569; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+.sr-empty { font-size: 12px; color: #aaa; }
 
 .filters { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .tabs { display: flex; gap: 6px; }
