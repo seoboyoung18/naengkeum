@@ -8,14 +8,16 @@ import trashSvg from '../assets/icons/trash.svg?raw'
 import shieldSvg from '../assets/icons/shield-lock.svg?raw'
 import starSvg from '../assets/icons/star.svg?raw'
 import {
-  getStats, getUsers, setUserActive,
+  getStats, getUsers, setUserActive, setUserRole, deleteUser,
   getRecipes, deleteRecipe,
   getReviews, deleteReview,
   getReports, resolveRecipeReports, resolveReviewReports,
 } from '../api/admin'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const toast = useToast()
+const auth = useAuthStore()
 
 const tab = ref('dash')
 const stats = ref(null)
@@ -90,6 +92,34 @@ async function toggleActive(u) {
     toast.success(next ? '차단을 해제했어요' : '회원을 차단했어요')
   } catch (e) {
     toast.error(e.response?.data?.message || '처리에 실패했어요')
+  }
+}
+
+// 역할 변경(USER↔ADMIN). 승격은 모든 관리자 가능, 강등은 운영자만(백엔드 403).
+async function changeRole(u) {
+  const toAdmin = u.role !== 'ADMIN'
+  const nextRole = toAdmin ? 'ADMIN' : 'USER'
+  if (!confirm(`'${u.nickname}' 회원을 ${toAdmin ? '관리자로 승격' : '일반 회원으로 강등'}할까요?`)) return
+  try {
+    await setUserRole(u.memberId, nextRole)
+    u.role = nextRole
+    toast.success(toAdmin ? '관리자로 변경했어요' : '일반 회원으로 변경했어요')
+  } catch (e) {
+    toast.error(e.response?.data?.message || '역할 변경에 실패했어요')
+  }
+}
+
+// 회원 삭제(hard delete). 관리자는 먼저 강등 후 삭제(백엔드 400).
+async function removeUser(u) {
+  if (u.role === 'ADMIN') return
+  if (!confirm(`'${u.nickname}' 회원을 삭제할까요?\n리뷰·냉장고·찜·팔로우 등 개인 데이터가 영구 삭제됩니다.\n(작성한 레시피는 익명으로 보존)\n되돌릴 수 없습니다.`)) return
+  try {
+    await deleteUser(u.memberId)
+    users.value = users.value.filter((x) => x.memberId !== u.memberId)
+    toast.success('회원을 삭제했어요')
+    loadStats() // 전체 회원 수 갱신
+  } catch (e) {
+    toast.error(e.response?.data?.message || '삭제에 실패했어요')
   }
 }
 
@@ -211,8 +241,20 @@ onMounted(loadStats)
             <tr v-for="u in users" :key="u.memberId">
               <td class="strong">{{ u.nickname }}</td>
               <td class="muted">{{ u.email }}</td>
-              <td><span class="role" :class="u.role === 'ADMIN' ? 'admin' : 'user'">{{ u.role }}</span></td>
+              <td>
+                <span class="role" :class="u.role === 'ADMIN' ? 'admin' : 'user'">{{ u.role }}</span>
+                <button
+                  v-if="u.memberId !== auth.memberId"
+                  class="btn role-btn"
+                  @click="changeRole(u)"
+                >{{ u.role === 'ADMIN' ? '유저로' : '관리자로' }}</button>
+              </td>
               <td class="r">
+                <button
+                  class="btn del"
+                  :disabled="u.role === 'ADMIN'"
+                  @click="removeUser(u)"
+                ><InlineIcon :svg="trashSvg" :size="13" /> 삭제</button>
                 <button
                   class="btn"
                   :class="u.active ? 'warn' : 'ok'"
@@ -346,6 +388,7 @@ tbody tr { border-top: 1px solid #eeede8; }
 .role { font-size: 11px; padding: 2px 8px; border-radius: 6px; font-family: var(--font-mono); }
 .role.admin { background: #e1f5ee; color: #0f6e56; }
 .role.user { background: #f1efe8; color: #5f5e5a; }
+.role-btn { margin-left: 6px; padding: 3px 9px; font-size: 11px; }
 
 /* 신고수 */
 .rep { font-size: 12px; color: #999; font-family: var(--font-mono); }

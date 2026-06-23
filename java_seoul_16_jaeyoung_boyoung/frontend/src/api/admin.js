@@ -23,6 +23,18 @@ export async function setUserActive(memberId, active) {
   return data
 }
 
+/** 회원 역할 변경 — role: 'USER' | 'ADMIN'. 강등은 운영자 계정만(403), 본인 강등 불가(400). */
+export async function setUserRole(memberId, role) {
+  const { data } = await http.patch(`/api/admin/users/${memberId}/role`, { role })
+  return data
+}
+
+/** 회원 삭제(hard delete) — 개인 데이터 CASCADE, 작성 레시피는 익명 보존. (ADMIN 삭제 시 400) */
+export async function deleteUser(memberId) {
+  const { data } = await http.delete(`/api/admin/users/${memberId}`)
+  return data
+}
+
 /** 레시피 목록(사용자 등록분, 미처리 신고 누적순) — ?keyword= 제목 부분일치(선택). AdminRecipeRow[] */
 export async function getRecipes(keyword) {
   const { data } = await http.get('/api/admin/recipes', { params: keyword ? { keyword } : {} })
