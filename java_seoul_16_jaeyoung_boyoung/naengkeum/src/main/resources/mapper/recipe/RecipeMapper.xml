@@ -272,10 +272,11 @@
          image_url 은 "사진 없으면 공개 불가" 검증에 사용. -->
     <select id="selectRecipeOwner"
             resultType="com.fridgefamer.dto.response.recipe.RecipeOwnerRow">
-        SELECT recipe_id  AS recipeId,
-               author_id  AS authorId,
-               is_public  AS isPublic,
-               image_url  AS imageUrl
+        SELECT recipe_id             AS recipeId,
+               author_id             AS authorId,
+               is_public             AS isPublic,
+               image_url             AS imageUrl,
+               ingredients_consumed  AS ingredientsConsumed
           FROM recipe
          WHERE recipe_id = #{recipeId}
          LIMIT 1
@@ -283,6 +284,12 @@
 
     <update id="markPublic">
         UPDATE recipe SET is_public = TRUE
+         WHERE recipe_id = #{recipeId}
+    </update>
+
+    <!-- 공개 시 냉장고 재고 차감을 1회만 수행하기 위한 멱등 플래그 셋. -->
+    <update id="markIngredientsConsumed">
+        UPDATE recipe SET ingredients_consumed = TRUE
          WHERE recipe_id = #{recipeId}
     </update>
 

@@ -25,6 +25,9 @@ import com.fridgefamer.exception.ApiException;
 import com.fridgefamer.exception.ErrorCode;
 import com.fridgefamer.mapper.recipe.RecipeMapper;
 import com.fridgefamer.mapper.recipe.RecipeMapper.RecipeInsertCommand;
+import com.fridgefamer.dto.response.recipe.RecipePublished.ConsumedItem;
+import com.fridgefamer.service.consumption.ConsumptionPlan;
+import com.fridgefamer.service.consumption.IngredientConsumptionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,9 +54,12 @@ public class RecipeService {
     private static final TypeReference<List<Map<String, Object>>> LIST_OF_MAP = new TypeReference<>() {};
 
     private final RecipeMapper recipeMapper;
+    private final IngredientConsumptionService consumptionService;
 
-    public RecipeService(RecipeMapper recipeMapper) {
+    public RecipeService(RecipeMapper recipeMapper,
+                         IngredientConsumptionService consumptionService) {
         this.recipeMapper = recipeMapper;
+        this.consumptionService = consumptionService;
     }
 
     // =====================================================================
@@ -207,7 +213,15 @@ public class RecipeService {
         if (!Boolean.TRUE.equals(row.isPublic())) {
             recipeMapper.markPublic(recipeId);
         }
-        return new RecipePublished(recipeId, true);
+        // 최초 공개 1회에만 냉장고 재고 차감(재공개 중복 차감은 ingredients_consumed로 가드).
+        if (!row.ingredientsConsumed()) {
+            ConsumptionPlan plan = consumptionService.applyOnPublish(memberId, recipeId);
+            List<ConsumedItem> consumed = plan.deductions().stream()
+                    .map(d -> new ConsumedItem(d.name(), d.used(), d.unit(), d.removeItem()))
+                    .toList();
+            return new RecipePublished(recipeId, true, consumed);
+        }
+        return RecipePublished.of(recipeId, true);
     }
 
     // =====================================================================
@@ -226,7 +240,7 @@ public class RecipeService {
         if (Boolean.TRUE.equals(row.isPublic())) {
             recipeMapper.markPrivate(recipeId);
         }
-        return new RecipePublished(recipeId, false);
+        return RecipePublished.of(recipeId, false);
     }
 
     // =====================================================================

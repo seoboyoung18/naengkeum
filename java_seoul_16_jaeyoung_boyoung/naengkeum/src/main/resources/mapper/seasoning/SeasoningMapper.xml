@@ -35,6 +35,11 @@
          ORDER BY s.sort_order, s.name
     </select>
 
+    <!-- 조미료 마스터 전체 이름 (레시피 공개 시 조미료 차감 제외 판정용, 보유 무관) -->
+    <select id="selectAllCatalogNames" resultType="string">
+        SELECT name FROM seasoning ORDER BY sort_order, name
+    </select>
+
     <!-- set 동기화 1: 회원 보유 전체 삭제 -->
     <delete id="deleteOwnedByMember">
         DELETE FROM member_seasoning WHERE member_id = #{memberId}

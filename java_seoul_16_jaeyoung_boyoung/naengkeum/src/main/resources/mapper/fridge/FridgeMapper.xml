@@ -121,6 +121,13 @@
          WHERE fridge_item_id = #{fridgeItemId}
     </update>
 
+    <!-- 레시피 공개 시 재고 부분 차감(수량만 갱신). 차감 후 0이면 서비스가 deleteById로 삭제. -->
+    <update id="updateQty">
+        UPDATE fridge_item
+           SET qty = #{qty}
+         WHERE fridge_item_id = #{fridgeItemId}
+    </update>
+
     <delete id="deleteById">
         DELETE FROM fridge_item WHERE fridge_item_id = #{fridgeItemId}
     </delete>

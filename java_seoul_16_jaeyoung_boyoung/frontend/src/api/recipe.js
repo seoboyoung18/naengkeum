@@ -43,7 +43,11 @@ export async function listMyRecipes() {
   return data
 }
 
-/** "공개하기" — 마이 레시피를 공개 카탈로그에 게시 → { recipeId, isPublic }. 사진 없으면 400. */
+/**
+ * "공개하기" — 마이 레시피를 공개 카탈로그에 게시. 사진 없으면 400.
+ * → { recipeId, isPublic, consumed:[{ name, used, unit, removed }] }
+ * consumed는 최초 공개 시 냉장고에서 차감된 재료(정량·이름일치·단위호환분). 재공개 시엔 빈 배열.
+ */
 export async function publishRecipe(recipeId) {
   const { data } = await http.patch(`/api/recipe/${recipeId}/publish`)
   return data

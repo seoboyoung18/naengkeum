@@ -117,6 +117,9 @@ public interface RecipeMapper {
     /** 공개로 전환(is_public=TRUE). 멱등. */
     int markPublic(@Param("recipeId") Long recipeId);
 
+    /** 공개 시 냉장고 재고 차감을 1회만 수행하기 위한 멱등 플래그 셋(ingredients_consumed=TRUE). */
+    int markIngredientsConsumed(@Param("recipeId") Long recipeId);
+
     /** 공개 → 비공개로 전환(is_public=FALSE). 멱등. */
     int markPrivate(@Param("recipeId") Long recipeId);
 
