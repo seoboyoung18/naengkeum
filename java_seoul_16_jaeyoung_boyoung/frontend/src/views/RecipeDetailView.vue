@@ -43,6 +43,19 @@ const heroUrl = computed(() => {
   return u.startsWith('/') ? API_BASE + u : u
 })
 
+// 작성자 프로필 사진 — 업로드 경로(/...)면 백엔드 호스트 prefix
+const authorAvatar = computed(() => {
+  const u = recipe.value?.author?.profileImageUrl
+  if (!u) return null
+  return u.startsWith('/') ? API_BASE + u : u
+})
+
+// 작성자 프로필로 이동 — 팔로우 동선
+function goAuthor() {
+  const id = recipe.value?.author?.memberId
+  if (id) router.push({ name: 'user-profile', params: { userId: id } })
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -195,6 +208,17 @@ onMounted(load)
             <!-- 본인 레시피는 신고 버튼 숨김 -->
             <ReportButton v-if="!recipe.isOwner" target-type="RECIPE" :target-id="recipe.recipeId" />
           </div>
+
+          <!-- 이 레시피를 공개한 사람 — 클릭 시 프로필로 이동(팔로우 동선) -->
+          <button v-if="recipe.author" class="author-card" @click="goAuthor">
+            <img v-if="authorAvatar" :src="authorAvatar" class="ac-avatar-img" alt="" />
+            <span v-else class="ac-avatar">{{ recipe.author.nickname?.[0] || '?' }}</span>
+            <span class="ac-text">
+              <span class="ac-label">레시피를 공개한 사람</span>
+              <span class="ac-nick">{{ recipe.author.nickname }}</span>
+            </span>
+            <span class="ac-arrow" aria-hidden="true">›</span>
+          </button>
         </div>
       </div>
 
@@ -288,6 +312,20 @@ onMounted(load)
 .wish-btn { border: none; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700;
   border-radius: var(--r-sm); padding: 13px 28px; cursor: pointer; }
 .wish-btn.on { background: var(--surface); color: var(--primary-deep); border: 1px solid var(--primary); }
+
+/* 작성자 카드 — 찜 버튼 아래, 클릭 시 프로필로 이동 */
+.author-card { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: 12px 14px; cursor: pointer; text-align: left; box-shadow: var(--shadow-card); transition: border-color .15s ease; }
+.author-card:hover { border-color: var(--primary); }
+.ac-avatar, .ac-avatar-img { width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto; }
+.ac-avatar { background: var(--primary-tint); color: var(--primary-deep); font-weight: 800; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; }
+.ac-avatar-img { object-fit: cover; }
+.ac-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ac-label { font-size: 11px; color: var(--text-soft); }
+.ac-nick { font-size: 15px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-arrow { color: #c0c6cc; font-size: 22px; flex: 0 0 auto; line-height: 1; }
 
 /* 하단 2단 */
 .cols { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; margin-top: 24px; }

@@ -6,6 +6,7 @@ import tools.jackson.databind.json.JsonMapper;
 import com.fridgefamer.dto.request.wishlist.SaveAiRecipeRequest;
 import com.fridgefamer.dto.response.common.PageResponse;
 import com.fridgefamer.dto.response.recipe.MyRecipeItem;
+import com.fridgefamer.dto.response.recipe.RecipeAuthor;
 import com.fridgefamer.dto.response.recipe.RecipeAutocompleteItem;
 import com.fridgefamer.dto.response.recipe.RecipeDetail;
 import com.fridgefamer.dto.response.recipe.RecipeDetailRow;
@@ -107,11 +108,15 @@ public class RecipeService {
                 && row.authorId() != null
                 && row.authorId().equals(viewerId);
 
+        // 이 레시피를 공개한 사람 — 공공 시드 레시피는 author_id=null이라 author도 null.
+        RecipeAuthor author = row.authorId() == null ? null
+                : new RecipeAuthor(row.authorId(), row.authorNickname(), row.authorProfileImage());
+
         return new RecipeDetail(
                 row.recipeId(), row.title(), row.summary(), row.authorNote(), row.authorReview(),
                 row.thumbnailUrl(), row.cookTime(),
                 row.avgRating(), row.reviewCount(), row.isWishlisted(), isOwner,
-                nutrition, ingredients, steps);
+                author, nutrition, ingredients, steps);
     }
 
     // =====================================================================

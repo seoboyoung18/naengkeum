@@ -125,6 +125,8 @@
                r.image_url AS thumbnailUrl,
                r.cook_time AS cookTime,
                r.author_id AS authorId,
+               m.nickname AS authorNickname,
+               m.profile_image_url AS authorProfileImage,
                r.calories,
                r.carbs,
                r.protein,
@@ -136,6 +138,7 @@
                        WHERE w.recipe_id = r.recipe_id
                          AND w.member_id = #{viewerId}) AS isWishlisted
           FROM recipe r
+          LEFT JOIN member m ON m.member_id = r.author_id
          WHERE r.recipe_id = #{recipeId}
          LIMIT 1
     </select>
