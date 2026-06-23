@@ -40,18 +40,39 @@ async function publish(r) {
   }
   busy.value = r.recipeId
   try {
-    await publishRecipe(r.recipeId)
+    const res = await publishRecipe(r.recipeId)
     if (props.onlyPrivate) {
       items.value = items.value.filter((x) => x.recipeId !== r.recipeId)
     } else {
       r.isPublic = true
     }
-    toast.success('공개했어요. 이제 모두가 검색·찜할 수 있어요')
+    const [msg, duration] = publishMessage(res?.consumed)
+    toast.success(msg, duration)
   } catch (e) {
     toast.error(e.response?.data?.message || '공개에 실패했어요')
   } finally {
     busy.value = null
   }
+}
+
+// 공개 응답의 차감 내역(consumed)으로 토스트 메시지 + 표시시간을 만든다.
+// 차감이 없으면 기존 안내, 있으면 "대파 1개, 앞다리살 200g 차감" 식으로 보여준다.
+function publishMessage(consumed) {
+  if (!consumed || consumed.length === 0) {
+    return ['공개했어요. 이제 모두가 검색·찜할 수 있어요', undefined]
+  }
+  const parts = consumed.map((c) => `${c.name} ${formatQty(c.used)}${c.unit}`)
+  let msg = `공개했어요 · 냉장고에서 ${parts.join(', ')} 차감`
+  const usedUp = consumed.filter((c) => c.removed).map((c) => c.name)
+  if (usedUp.length > 0) msg += ` · 다 써서 삭제: ${usedUp.join(', ')}`
+  return [msg, 3800]
+}
+
+// 1, 0.5 같은 수량을 깔끔히 표기(불필요한 소수점/0 제거).
+function formatQty(n) {
+  const num = Number(n)
+  if (Number.isNaN(num)) return n
+  return String(Number(num.toFixed(2)))
 }
 
 async function unpublish(r) {

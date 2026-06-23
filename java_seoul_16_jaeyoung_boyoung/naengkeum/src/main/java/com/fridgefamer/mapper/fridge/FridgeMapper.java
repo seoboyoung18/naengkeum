@@ -55,6 +55,10 @@ public interface FridgeMapper {
     int updateFridgeItem(@Param("fridgeItemId") Long fridgeItemId,
                          @Param("cmd") FridgeItemCommand cmd);
 
+    /** 수량만 갱신 — 레시피 공개 시 재고 부분 차감용(0이면 호출 측이 deleteById로 삭제). */
+    int updateQty(@Param("fridgeItemId") Long fridgeItemId,
+                  @Param("qty") BigDecimal qty);
+
     int deleteById(@Param("fridgeItemId") Long fridgeItemId);
 
     // =================================================================
