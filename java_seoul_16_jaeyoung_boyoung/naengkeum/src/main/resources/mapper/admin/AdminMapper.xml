@@ -124,6 +124,22 @@
         SELECT role FROM member WHERE member_id = #{memberId}
     </select>
 
+    <!-- 회원 hard delete (개인 데이터 CASCADE, 작성 레시피는 author_id=NULL로 보존) -->
+    <delete id="deleteMember">
+        DELETE FROM member WHERE member_id = #{memberId}
+    </delete>
+
+    <!-- 회원 역할 변경 (USER↔ADMIN) -->
+    <update id="updateRole">
+        UPDATE member SET role = #{role}
+         WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 이메일 조회 (운영자(원조 관리자) 판별용) -->
+    <select id="selectEmail" resultType="java.lang.String">
+        SELECT email FROM member WHERE member_id = #{memberId}
+    </select>
+
     <!-- ===== 대시보드 통계 ===== -->
     <select id="countMembers" resultType="long">
         SELECT COUNT(*) FROM member WHERE is_active = 1

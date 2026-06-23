@@ -56,6 +56,20 @@ public interface AdminMapper {
     /** 특정 회원의 역할 조회(자기 자신/관리자 보호용). 없으면 null. */
     String selectRole(@Param("memberId") Long memberId);
 
+    /**
+     * 회원 hard delete. 개인 데이터(리뷰/냉장고/찜/팔로우/챌린지/배지/신고/조미료)는 FK CASCADE로
+     * 함께 삭제되고, 작성한 레시피는 author_id가 NULL로 전환되어 공공처럼 보존된다(V6 SET NULL).
+     * @return 삭제된 행 수(0이면 없는 회원).
+     */
+    int deleteMember(@Param("memberId") Long memberId);
+
+    /** 회원 역할 변경(USER↔ADMIN). @return 갱신된 행 수(0이면 없는 회원). */
+    int updateRole(@Param("memberId") Long memberId,
+                   @Param("role") String role);
+
+    /** 특정 회원의 이메일 조회(운영자(원조 관리자) 판별용). 없으면 null. */
+    String selectEmail(@Param("memberId") Long memberId);
+
     // ---- 대시보드 통계 ----
     long countMembers();
     long countRecipes();

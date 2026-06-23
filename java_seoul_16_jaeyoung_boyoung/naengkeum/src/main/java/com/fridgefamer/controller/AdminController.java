@@ -1,6 +1,7 @@
 package com.fridgefamer.controller;
 
 import com.fridgefamer.dto.request.admin.UserActiveRequest;
+import com.fridgefamer.dto.request.admin.UserRoleRequest;
 import com.fridgefamer.dto.response.admin.AdminRecipeRow;
 import com.fridgefamer.dto.response.admin.AdminReportRow;
 import com.fridgefamer.dto.response.admin.AdminReviewRow;
@@ -9,7 +10,10 @@ import com.fridgefamer.dto.response.admin.AdminUserRow;
 import com.fridgefamer.service.AdminService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -95,5 +99,29 @@ public class AdminController {
             @Valid @RequestBody UserActiveRequest req
     ) {
         adminService.setUserActive(memberId, req.active());
+    }
+
+    /** 회원 삭제(hard delete). 관리자 계정은 삭제 불가(400). 개인 데이터는 CASCADE, 작성 레시피는 익명 보존. */
+    @DeleteMapping("/users/{memberId}")
+    public Map<String, String> deleteUser(
+            @PathVariable @Positive(message = "memberId는 양수여야 합니다") Long memberId
+    ) {
+        adminService.deleteUser(memberId);
+        return Map.of("message", "회원을 삭제했습니다");
+    }
+
+    /** 회원 역할 변경(USER↔ADMIN). 본인 계정의 관리자 권한 해제는 불가(400). */
+    @PatchMapping("/users/{memberId}/role")
+    public Map<String, String> setUserRole(
+            @PathVariable @Positive(message = "memberId는 양수여야 합니다") Long memberId,
+            @Valid @RequestBody UserRoleRequest req
+    ) {
+        adminService.setUserRole(memberId, req.role(), currentMemberId());
+        return Map.of("message", "역할을 변경했습니다");
+    }
+
+    private Long currentMemberId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (Long) auth.getPrincipal();
     }
 }
