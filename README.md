@@ -36,21 +36,23 @@
 | **3주차** | 레시피 4 · 리뷰 4 · 찜 5 · **AI 추천 1(SSE + 하이브리드)** (총 **14종**) | ✅ 완료 |
 | **4주차** | 팔로우 2 · 챌린지 6 · **AI 코칭 1(SSE)** · **챌린지 진행률/배지 자동지급 1** (총 **10종**) | ✅ 완료 |
 | **5주차** | **관리자 3(통계·사용자 목록·차단/해제)** · **레시피 사진 업로드 1(본인 검증)** · 레시피 담기/공개(from-ai·publish) | ✅ 완료 |
+| **6주차+** | **소셜 로그인(구글·카카오 OAuth2)** · **조미료 보유관리** · **신고(레시피/리뷰)** · **관리자 확장(회원 삭제·역할변경·신고 처리)** · **공개 시 냉장고 재고 자동 차감(F33)** · 작성자 소감/후기 · **AWS 배포(EC2·Docker·HTTPS)** | ✅ 완료 |
 
-**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/AI추천/팔로우/챌린지/AI코칭/**관리자**): 약 **50개 엔드포인트**
+**구현된 API 그룹** (인증/회원/냉장고/식재료/레시피/리뷰/찜/팔로우/챌린지/조미료/신고/관리자/AI): **기능 엔드포인트 68개** (+ 헬스·디버그 7개)
 
 ### 프론트엔드 (Vue 3)
 | 화면 | 내용 | 상태 |
 | --- | --- | --- |
-| 기반 셋업 | Vite·Pinia·Router·Axios + 공통 레이아웃 + **JWT 인터셉터** | ✅ |
-| 인증 | 로그인 / 회원가입(이메일 중복확인·자동로그인) | ✅ |
-| 냉장고 | 보관위치 탭·정렬·D-day 목록·CRUD + 식재료 자동완성·**보관기한 자동 제안** | ✅ |
-| 레시피 | 검색·자동완성·필터(조리시간/내 재료) · 상세(재료·단계·영양) · **본인 레시피 사진 업로드** | ✅ |
-| 리뷰·찜 | 평점 통계·작성/수정/삭제 · 찜 하트 토글 | ✅ |
-| **AI 추천** | **fetch SSE 실시간 스트리밍** · 출처 배지(DB/AI) · 찜 저장 · **내 레시피로 담기 → 공개** | ✅ |
-| 마이페이지 | 내 정보·수정 · 찜 목록(AI 상세 모달) · 내 리뷰 · 내 레시피(공개 관리) | ✅ |
-| **관리자** | 대시보드 통계 · 사용자 목록/차단·해제 (백엔드 완료, 화면 진행 예정) | 🚧 |
-| 마감 | 토스트 알림 · 라우트 전환 폴리싱 | ✅ |
+| 기반 셋업 | Vite·Pinia·Router·Axios + 공통 레이아웃(다크 사이드바) + **JWT 인터셉터·role 가드** | ✅ |
+| 인증 | 로그인 / 회원가입 · **구글·카카오 소셜 로그인** | ✅ |
+| 냉장고 | 보관위치 탭·정렬·D-day 목록·CRUD + 식재료 자동완성·보관기한 제안 + **조미료 보유관리** | ✅ |
+| 레시피 | 검색·자동완성·필터 · 상세(재료·단계·영양·작성자 카드) · **사진 업로드** · **신고** | ✅ |
+| 리뷰·찜 | 평점 통계·작성/수정/삭제 · 찜 토글 · **리뷰 신고** | ✅ |
+| **AI 추천** | **fetch SSE 스트리밍** · 출처 배지(DB/AI) · 찜 저장 · **내 레시피로 담기(소감 입력) → 공개** | ✅ |
+| 마이페이지 | 내 정보·수정 · 찜·내 리뷰 · 내 레시피(**공개/비공개 전환·삭제**, 사진 필수 공개) · 프로필 사진 | ✅ |
+| 유저·팔로우 | 타 유저 프로필(공개 레시피 그리드) · 팔로우 목록 | ✅ |
+| **관리자** | 5탭(대시보드·회원·레시피·리뷰·신고) · 회원 차단/삭제/역할변경 · 신고 처리 | ✅ |
+| 마감 | 토스트 알림 · 브랜드 로고(Lottie)·Paperlogy 폰트 셀프호스팅 · 파비콘 | ✅ |
 
 ---
 
@@ -96,18 +98,25 @@
 - **배지 자동지급** : `PATCH /api/challenge/{id}/progress`로 진행률 갱신 → 100% 달성 시 보상 배지를 자동 지급(중복 방지). 응답의 `badgeEarned`로 "🎉 배지 획득!" 알림 트리거.
 - **AI 식재료 코칭** : `POST /api/ai/coaching` — 애매하게 남은 재료의 보관법(storage)과 활용 조합(combo)을 LLM이 분석해 **SSE 스트리밍**으로 제공.
 
-### ⑤ AI 레시피 담기 · 공개 · 사진 업로드
+### ⑤ AI 레시피 담기 · 공개 · 사진 · 재고 자동 차감
 
-- **내 레시피로 담기** : AI 추천 결과를 개인 보관함에 담기(`POST /api/recipe/from-ai`). 처음엔 비공개.
-- **공개하기** : 담은 레시피를 공개 카탈로그에 게시(`PATCH /api/recipe/{id}/publish`, 본인만). 공개하면 모두가 검색·찜 가능.
-- **사진 업로드** : 본인이 등록한 레시피에 직접 만든 음식 사진 첨부(`POST /api/recipe/{id}/image`). 소유 검증(공공/타인 403), jpg/png/webp + 5MB 제한, 업로드 후 상세·목록에 즉시 반영.
+- **내 레시피로 담기** : AI 추천 결과를 개인 보관함에 담기(`POST /api/recipe/from-ai`). 처음엔 비공개이며, 담을 때 **본인 한마디(소감, `author_note`)** 를 선택 입력.
+- **사진 업로드** : 본인 레시피에 직접 만든 음식 사진 첨부(`POST /api/recipe/{id}/image`). 소유 검증(공공/타인 403), jpg/png/webp + 5MB.
+- **공개하기 + 재고 자동 차감(F33)** : `PATCH /api/recipe/{id}/publish` (본인만, **사진 필수**). 공개 시 레시피에 쓴 **정량 재료를 냉장고에서 자동 차감**(이름 일치 + 단위 호환, 조미료·비정량 제외) → 응답 `consumed[]`. **최초 1회만** 차감(`ingredients_consumed` 플래그로 재공개 중복 차감 방지).
+- **비공개 전환 · 삭제** : `PATCH /api/recipe/{id}/unpublish`(다시 비공개), `DELETE /api/recipe/{id}`(본인 또는 관리자).
+- **작성자 후기** : 상세 페이지에서 본인이 만들어 본 후기(`author_review`)를 작성/수정(`PATCH /api/recipe/{id}/review`).
 
-### ⑥ 관리자 (ADMIN)
+### ⑥ 소셜 로그인 · 조미료 · 신고
 
-- **권한 분리** : 회원 역할(role)을 JWT에 실어 `ROLE_ADMIN`/`ROLE_USER`로 매핑. `/api/admin/**`는 관리자만 접근.
-- **대시보드 통계** : `GET /api/admin/stats` — 회원/레시피/리뷰/챌린지 참여 수 집계.
-- **사용자 관리** : `GET /api/admin/users` 목록, `PATCH /api/admin/users/{id}/active` 차단/해제(관리자 계정은 차단 불가).
-- **콘텐츠 관리** : 별도 신고 기능 없이, 관리자는 기존 삭제 API를 재사용해 부적절 콘텐츠를 직접 삭제(verifyOwner를 "본인 OR 관리자"로 확장).
+- **소셜 로그인(OAuth2)** : 구글·카카오 로그인(`/oauth2/authorization/{provider}`). 백엔드 OAuth2 Client가 회원을 `social_provider`+`social_id`로 매핑(없으면 자동 가입)하고 **우리 JWT를 발급**해 프론트로 리다이렉트(STATELESS, 인가요청은 쿠키 저장).
+- **조미료 보유관리** : 마스터 조미료 목록 + 보유 여부 토글(`/api/seasonings`). AI 추천 시 보유 조미료는 "사야 할 재료"에서 제외.
+- **신고** : 부적절한 레시피/리뷰를 신고(`POST /api/report`, 레시피·리뷰 XOR, 중복 409) → 관리자 신고 탭에 누적.
+
+### ⑦ 관리자 (ADMIN)
+
+- **권한 분리** : 회원 역할(role)을 JWT에 실어 `ROLE_ADMIN`/`ROLE_USER`로 매핑. 프론트는 토큰 디코드로 메뉴·라우트 게이팅, `/api/admin/**`는 백엔드에서 ROLE_ADMIN만 접근.
+- **5탭 대시보드** : 통계(`/stats`) · 회원(검색·차단/해제·**삭제**·**역할 변경**) · 레시피·리뷰(모더레이션) · **신고 처리**(`/reports`, resolve).
+- **운영자 보호** : 관리자 계정은 차단·삭제 불가, 강등은 운영자만(본인 강등 방지).
 
 ---
 
@@ -115,26 +124,33 @@
 
 Flyway 마이그레이션(`java_seoul_16_jaeyoung_boyoung/naengkeum/src/main/resources/db/migration`)으로 관리합니다.
 
+총 **17개 테이블**.
+
 | 테이블 | 설명 |
 | --- | --- |
-| `member` | 회원 (이메일·비밀번호·닉네임·알레르기 CSV·**역할 role USER/ADMIN**) |
+| `member` | 회원 (이메일·비밀번호·닉네임·알레르기 CSV·**역할 role**·**프로필 사진**·**소셜 provider/id**) |
 | `fridge_item` | 내 냉장고 재료 (보관위치·유통기한) |
-| `ingredient_dictionary` | 식재료 사전 150종 (보관법·권장기한) |
-| `recipe` / `recipe_ingredient` / `recipe_step` | 공공/AI 담은 레시피 본문·재료·조리단계 (**author_id·is_public·image_url**) |
+| `ingredient_dictionary` | 식재료 사전 (보관법·권장기한, V16에서 확장) |
+| `seasoning` / `member_seasoning` | 조미료 마스터 / 회원 보유 조미료 (V15) |
+| `recipe` / `recipe_ingredient` / `recipe_step` | 레시피 본문·재료·조리단계 (**author_id·is_public·image_url·author_note·author_review·ingredients_consumed**) |
 | `review` | 레시피 리뷰 (별점 1~5, UNIQUE(member,recipe)) |
 | `wishlist` / `ai_recipe` | 찜 (일반·AI 레시피 XOR) / AI 생성 레시피(JSON) |
-| `follow` / `challenge` / `challenge_participant` / `badge` | 팔로우 · 챌린지 · 챌린지 참여 · 뱃지 (4주차 구현 완료) |
+| `report` | 레시피/리뷰 신고 (XOR, 누적·처리 상태) (V10) |
+| `follow` / `challenge` / `challenge_participant` / `badge` / `member_badge` | 팔로우 · 챌린지 · 참여 · 배지 · 회원 배지 |
 
 | 마이그레이션 | 내용 |
 | --- | --- |
-| `V1__schema.sql` | 전체 테이블 |
-| `V2__indexes.sql` | 인덱스 |
-| `V3__master_data.sql` · `V4__public_recipes.sql` | 마스터/공공 레시피 |
-| `V5__ingredient_dictionary.sql` | 식재료 사전 150종 |
-| `V6__recipe_authorship.sql` | 레시피 소유권(author_id·is_public·source_ai_recipe_id) — AI 담기/공개 기반 |
-| `V7__recipe_nutrition_backfill.sql` | 영양정보 백필 |
-| `V8__add_member_role.sql` | 회원 역할(role USER/ADMIN) 추가 — 관리자 권한 |
-| `V9__set_admin_by_email.sql` | 관리자 계정을 이메일 기준으로 확정 |
+| `V1`~`V2` | 전체 테이블 · 인덱스 |
+| `V3`·`V4` | 마스터 데이터 · 공공 레시피 175건 |
+| `V5`·`V16` | 식재료 사전 적재 및 확장 |
+| `V6`·`V7` | 레시피 소유권(author_id·is_public) · 영양정보 백필 |
+| `V8`·`V9`·`V14` | 회원 역할(role) · 운영자 ADMIN 지정 |
+| `V10` | 신고(report) 테이블 |
+| `V11`·`V13` | 프로필 사진 · 소셜 로그인 컬럼 |
+| `V12` | 시드 레시피 대표 이미지 |
+| `V15` | 조미료(seasoning/member_seasoning) |
+| `V17`·`V18` | 작성자 소감(author_note) · 후기(author_review) |
+| `V19` | 공개 시 재고 차감 플래그(ingredients_consumed) |
 
 ---
 
@@ -145,20 +161,23 @@ Flyway 마이그레이션(`java_seoul_16_jaeyoung_boyoung/naengkeum/src/main/res
 | **Backend** | Spring Boot 4 (Spring 7), **MyBatis** |
 | **Database** | MySQL 8+, **Flyway** (마이그레이션/시드) |
 | **AI 연동** | **SSAFY GMS (OpenAI 호환 프록시)** · 모델 `gpt-4.1-mini` · SSE 스트리밍 |
-| **인증** | JWT (Bearer) |
+| **인증** | JWT (Bearer) · **OAuth2 Client (구글·카카오)** |
 | **JSON** | Jackson 3 (`tools.jackson`) |
 | **빌드/버전관리** | Maven (`mvnw`) · Git / GitLab |
 | **Frontend** | **Vue 3** (Vite) · Pinia · Vue Router · Axios |
+| **배포/인프라** | **AWS EC2** · **Docker Compose**(nginx + app + MySQL) · **Let's Encrypt(HTTPS)** · DuckDNS |
 
 ### 시스템 아키텍처
 
 ```text
-[Vue.js Frontend]
-      │  REST API (Axios) · SSE
+[Vue.js Frontend (nginx 정적 서빙)]
+      │  REST API (Axios) · SSE · OAuth2 redirect
       ▼
 [Spring Boot Backend]  ──(① DB 레시피 매칭)──▶ [MySQL]
       │                                         (식재료 사전 / 레시피 / 유저 데이터)
       └──(② 부족 시 프롬프트 전송, SSE)──▶ [SSAFY GMS · gpt-4.1-mini]
+
+운영: EC2 1대 · Docker Compose(nginx 443 TLS · app · mysql) · HTTPS(Let's Encrypt)
 ```
 
 ---
@@ -177,7 +196,7 @@ naengkeum/
 │   └── exception/     # GlobalExceptionHandler, ApiException, ErrorCode(9종)
 ├── src/main/resources/
 │   ├── mapper/        # MyBatis XML (도메인별)
-│   ├── db/migration/  # Flyway V1~V9
+│   ├── db/migration/  # Flyway V1~V19
 │   ├── db/fixtures/   # dev 시드(D1)
 │   └── application*.yml
 └── src/docs/          # erd.md, api.md (설계/명세)
@@ -262,6 +281,25 @@ curl -N -X POST localhost:8080/api/ai/coaching \
 
 ---
 
+## ☁️ 배포 (운영)
+
+**AWS EC2 단일 인스턴스 + Docker Compose**로 운영합니다.
+
+```text
+EC2 (Docker Compose)
+ ├─ nginx  : 443 TLS(Let's Encrypt) · Vue 빌드 정적 서빙 · /api·/images·/oauth2 프록시
+ ├─ app    : Spring Boot(prod 프로파일) · Flyway 자동 마이그레이션
+ └─ mysql  : 내부 네트워크
+ volumes  : DB 영속화 · 업로드 파일(`uploads/`) 영속화
+```
+
+- **무중단 재배포** : 서버에서 `git pull && docker compose up -d --build` (Flyway가 새 마이그레이션 자동 적용).
+- **HTTPS** : DuckDNS 도메인 + certbot(Let's Encrypt). 소셜 로그인 운영 리다이렉트(https) 충족.
+- **시크릿** : DB·JWT·`OPENAI_API_KEY`·OAuth 키는 서버 `.env`로만 주입(git 커밋 금지).
+- 상세 절차: [`DEPLOY.md`](java_seoul_16_jaeyoung_boyoung/DEPLOY.md)
+
+---
+
 ## 🌐 활용 API 및 외부 연동
 
 | API명 | 활용 방식 |
@@ -273,7 +311,7 @@ curl -N -X POST localhost:8080/api/ai/coaching \
 
 ## 📅 향후 확장 로드맵
 
-- **Phase 2** : 영수증 OCR 등록 · 동네 식재료 쉐어링 · 관리자 대시보드 화면(UI, 백엔드 완료) · AI 레시피 공유 게시판(댓글·좋아요) · 챌린지/배지 화면(UI) · 챌린지 조건별 진행률 자동 추적(현재는 진행률 직접 갱신 방식) · 팔로우 레시피 알림
+- **Phase 2** : 영수증 OCR 등록 · 동네 식재료 쉐어링 · AI 레시피 공유 게시판(댓글·좋아요) · 챌린지 조건별 진행률 자동 추적(현재는 진행률 직접 갱신 방식) · 팔로우 레시피 알림 · 업로드 파일 S3 전환
 
 ---
 
