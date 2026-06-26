@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native'
+import { View, ActivityIndicator, StyleSheet } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { NavigationContainer } from '@react-navigation/native'
@@ -10,23 +10,22 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from './src/stores/auth'
 import { colors } from './src/theme'
 import LoginScreen from './src/screens/LoginScreen'
+import RegisterScreen from './src/screens/RegisterScreen'
 import HomeScreen from './src/screens/HomeScreen'
 import FridgeScreen from './src/screens/FridgeScreen'
 import RecipeListScreen from './src/screens/RecipeListScreen'
+import RecipeDetailScreen from './src/screens/RecipeDetailScreen'
+import MyPageScreen from './src/screens/MyPageScreen'
+import ChallengeScreen from './src/screens/ChallengeScreen'
+import ChallengeDetailScreen from './src/screens/ChallengeDetailScreen'
+import UserProfileScreen from './src/screens/UserProfileScreen'
+import FollowListScreen from './src/screens/FollowListScreen'
 
 const Tab = createBottomTabNavigator()
-const Stack = createNativeStackNavigator()
+const AuthStack = createNativeStackNavigator()
+const RootStack = createNativeStackNavigator()
 
-const TAB_ICON = { 홈: 'home', 냉장고: 'cube', 레시피: 'restaurant', 마이: 'person' }
-
-function MyPlaceholder() {
-  return (
-    <View style={styles.center}>
-      <Ionicons name="construct-outline" size={36} color={colors.mute} />
-      <Text style={styles.soon}>마이페이지 — 다음 단계에서 추가됩니다</Text>
-    </View>
-  )
-}
+const TAB_ICON = { 홈: 'home', 냉장고: 'cube', 레시피: 'restaurant', 챌린지: 'trophy', 마이: 'person' }
 
 function MainTabs() {
   return (
@@ -44,8 +43,37 @@ function MainTabs() {
       <Tab.Screen name="홈" component={HomeScreen} />
       <Tab.Screen name="냉장고" component={FridgeScreen} />
       <Tab.Screen name="레시피" component={RecipeListScreen} />
-      <Tab.Screen name="마이" component={MyPlaceholder} />
+      <Tab.Screen name="챌린지" component={ChallengeScreen} />
+      <Tab.Screen name="마이" component={MyPageScreen} />
     </Tab.Navigator>
+  )
+}
+
+const headerOpts = {
+  headerShown: true,
+  headerTintColor: colors.primaryDeep,
+  headerTitleStyle: { color: colors.text },
+  headerStyle: { backgroundColor: '#fff' },
+}
+
+function MainNavigator() {
+  return (
+    <RootStack.Navigator>
+      <RootStack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
+      <RootStack.Screen name="RecipeDetail" component={RecipeDetailScreen} options={{ ...headerOpts, title: '레시피' }} />
+      <RootStack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} options={{ ...headerOpts, title: '챌린지' }} />
+      <RootStack.Screen name="UserProfile" component={UserProfileScreen} options={{ ...headerOpts, title: '프로필' }} />
+      <RootStack.Screen name="FollowList" component={FollowListScreen} options={{ ...headerOpts, title: '팔로우' }} />
+    </RootStack.Navigator>
+  )
+}
+
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator>
+      <AuthStack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+      <AuthStack.Screen name="Register" component={RegisterScreen} options={{ ...headerOpts, title: '회원가입' }} />
+    </AuthStack.Navigator>
   )
 }
 
@@ -67,13 +95,7 @@ export default function App() {
         </View>
       ) : (
         <NavigationContainer>
-          {token ? (
-            <MainTabs />
-          ) : (
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="Login" component={LoginScreen} />
-            </Stack.Navigator>
-          )}
+          {token ? <MainNavigator /> : <AuthNavigator />}
         </NavigationContainer>
       )}
     </SafeAreaProvider>
@@ -82,5 +104,4 @@ export default function App() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceBg, gap: 10 },
-  soon: { fontSize: 14, color: colors.textSoft },
 })

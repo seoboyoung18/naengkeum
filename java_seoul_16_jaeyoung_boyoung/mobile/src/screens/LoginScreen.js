@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../stores/auth'
 import { colors, radius, cardShadow } from '../theme'
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const login = useAuth((s) => s.login)
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
@@ -69,7 +69,7 @@ export default function LoginScreen() {
             <Text style={styles.submitT}>{loading ? '로그인 중…' : '로그인'}</Text>
           </Pressable>
 
-          <Pressable onPress={soon} style={styles.linkBtn}>
+          <Pressable onPress={() => navigation.navigate('Register')} style={styles.linkBtn}>
             <Text style={styles.link}>회원가입</Text>
           </Pressable>
 
