@@ -3,12 +3,14 @@ import { View, Text, Image, Pressable, ScrollView, Modal, TextInput, StyleSheet,
 import { useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { getMyPage, updateMe } from '../api/member'
-import { listWishlist, removeRecipeWish } from '../api/wishlist'
+import { getMyPage, updateMe, uploadProfilePhoto } from '../api/member'
+import { listWishlist, removeRecipeWish, removeAiWish } from '../api/wishlist'
 import { listMyReviews } from '../api/member'
 import { API_BASE } from '../config'
 import { useAuth } from '../stores/auth'
 import MyRecipeList from '../components/MyRecipeList'
+import AiRecipeModal from '../components/AiRecipeModal'
+import { pickImage } from '../lib/pickImage'
 import { colors, radius, cardShadow } from '../theme'
 
 const abs = (u) => (!u ? null : u.startsWith('/') ? API_BASE + u : u)
@@ -16,7 +18,10 @@ const abs = (u) => (!u ? null : u.startsWith('/') ? API_BASE + u : u)
 export default function MyPageScreen({ navigation }) {
   const setNickname = useAuth((s) => s.setNickname)
   const logout = useAuth((s) => s.logout)
+  const role = useAuth((s) => s.role)
   const [me, setMe] = useState(null)
+  const [aiModalId, setAiModalId] = useState(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
   const [wishes, setWishes] = useState([])
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
@@ -64,17 +69,31 @@ export default function MyPageScreen({ navigation }) {
   }
 
   function openWish(w) {
-    if (w.type === 'AI') Alert.alert('준비 중', 'AI 레시피 상세는 다음 단계에서 추가됩니다.')
+    if (w.type === 'AI') setAiModalId(w.aiRecipeId)
     else navigation.navigate('RecipeDetail', { recipeId: w.recipeId })
   }
   function removeWish(w) {
     Alert.alert('찜 해제', '찜을 해제할까요?', [
       { text: '취소', style: 'cancel' },
       { text: '해제', onPress: async () => {
-        try { if (w.type !== 'AI') await removeRecipeWish(w.recipeId); setWishes((l) => l.filter((x) => x.wishlistId !== w.wishlistId)) }
-        catch (e) { Alert.alert('실패', '해제에 실패했어요') }
+        try {
+          if (w.type === 'AI') await removeAiWish(w.aiRecipeId)
+          else await removeRecipeWish(w.recipeId)
+          setWishes((l) => l.filter((x) => x.wishlistId !== w.wishlistId))
+        } catch (e) { Alert.alert('실패', '해제에 실패했어요') }
       } },
     ])
+  }
+  async function onAvatar() {
+    const { file, error: pErr, canceled } = await pickImage()
+    if (canceled) return
+    if (pErr) { Alert.alert('알림', pErr); return }
+    setAvatarUploading(true)
+    try {
+      const { profileImageUrl } = await uploadProfilePhoto(file)
+      setMe((m) => ({ ...m, profileImageUrl }))
+    } catch (e) { Alert.alert('실패', e.response?.data?.message || '업로드에 실패했어요') }
+    finally { setAvatarUploading(false) }
   }
   function confirmLogout() {
     Alert.alert('로그아웃', '로그아웃할까요?', [{ text: '취소', style: 'cancel' }, { text: '로그아웃', style: 'destructive', onPress: () => logout() }])
@@ -89,15 +108,18 @@ export default function MyPageScreen({ navigation }) {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={false} onRefresh={load} />}>
         <View style={styles.headRow}>
           <Text style={styles.h}>마이페이지</Text>
-          <Pressable onPress={confirmLogout}><Text style={styles.logout}>로그아웃</Text></Pressable>
+          <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+            {role === 'ADMIN' && <Pressable onPress={() => navigation.navigate('Admin')}><Text style={styles.adminLink}>관리자</Text></Pressable>}
+            <Pressable onPress={confirmLogout}><Text style={styles.logout}>로그아웃</Text></Pressable>
+          </View>
         </View>
 
         <View style={styles.profile}>
           <View style={styles.prow}>
-            <Pressable onPress={() => Alert.alert('준비 중', '프로필 사진 변경은 다음 단계에서 추가됩니다.')}>
+            <Pressable disabled={avatarUploading} onPress={onAvatar}>
               {abs(me.profileImageUrl)
                 ? <Image source={{ uri: abs(me.profileImageUrl) }} style={styles.avatarImg} />
-                : <View style={styles.avatar}><Text style={styles.avatarT}>{me.nickname?.[0] || '?'}</Text></View>}
+                : <View style={styles.avatar}><Text style={styles.avatarT}>{avatarUploading ? '…' : (me.nickname?.[0] || '?')}</Text></View>}
             </Pressable>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={styles.nick}>{me.nickname}</Text>
@@ -174,6 +196,8 @@ export default function MyPageScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      {aiModalId && <AiRecipeModal aiRecipeId={aiModalId} onClose={() => setAiModalId(null)} />}
     </SafeAreaView>
   )
 }
@@ -184,6 +208,7 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   h: { fontSize: 22, fontWeight: '800', color: colors.text },
   logout: { color: colors.textSoft, fontSize: 13, fontWeight: '600' },
+  adminLink: { color: colors.primaryDeep, fontSize: 13, fontWeight: '700' },
   profile: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.lineSoft, borderRadius: 14, padding: 18, marginBottom: 14, ...cardShadow },
   prow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primaryTint, alignItems: 'center', justifyContent: 'center' },

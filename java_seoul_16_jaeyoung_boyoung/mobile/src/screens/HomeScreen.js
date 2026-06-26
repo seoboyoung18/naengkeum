@@ -38,7 +38,7 @@ export default function HomeScreen({ navigation }) {
   const total = summary.fridgeCount + summary.freezerCount + summary.roomTempCount
   const dText = (d) => (d < 0 ? `${Math.abs(d)}일 지남` : d === 0 ? '오늘까지' : `${d}일 남음`)
   const search = () => navigation.navigate('레시피', { keyword: keyword.trim() })
-  const soon = () => Alert.alert('준비 중', 'AI 추천은 다음 단계에서 추가됩니다.')
+  const goAi = () => navigation.navigate('AiRecommend')
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -51,7 +51,7 @@ export default function HomeScreen({ navigation }) {
           <TextInput style={styles.searchInput} value={keyword} onChangeText={setKeyword} placeholder="레시피·재료 검색" placeholderTextColor="#9AA0A6" returnKeyType="search" onSubmitEditing={search} />
         </View>
 
-        <Pressable style={styles.aiBanner} onPress={soon}>
+        <Pressable style={styles.aiBanner} onPress={goAi}>
           <View style={{ flex: 1 }}>
             <Text style={styles.aiTitle}>냉장고 재료로 AI 추천 받기</Text>
             <Text style={styles.aiSub}>남은 재료로 만들 수 있는 레시피를 추천해 드려요</Text>

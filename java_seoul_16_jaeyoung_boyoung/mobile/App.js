@@ -20,6 +20,8 @@ import ChallengeScreen from './src/screens/ChallengeScreen'
 import ChallengeDetailScreen from './src/screens/ChallengeDetailScreen'
 import UserProfileScreen from './src/screens/UserProfileScreen'
 import FollowListScreen from './src/screens/FollowListScreen'
+import AiRecommendScreen from './src/screens/AiRecommendScreen'
+import AdminScreen from './src/screens/AdminScreen'
 
 const Tab = createBottomTabNavigator()
 const AuthStack = createNativeStackNavigator()
@@ -64,6 +66,8 @@ function MainNavigator() {
       <RootStack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} options={{ ...headerOpts, title: '챌린지' }} />
       <RootStack.Screen name="UserProfile" component={UserProfileScreen} options={{ ...headerOpts, title: '프로필' }} />
       <RootStack.Screen name="FollowList" component={FollowListScreen} options={{ ...headerOpts, title: '팔로우' }} />
+      <RootStack.Screen name="AiRecommend" component={AiRecommendScreen} options={{ ...headerOpts, title: 'AI 추천' }} />
+      <RootStack.Screen name="Admin" component={AdminScreen} options={{ ...headerOpts, title: '관리자' }} />
     </RootStack.Navigator>
   )
 }

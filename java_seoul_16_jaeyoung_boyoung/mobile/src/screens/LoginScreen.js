@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }) {
     }
   }
 
-  const soon = () => Alert.alert('준비 중', '회원가입·소셜 로그인은 다음 단계에서 추가됩니다.')
+  const soon = () => Alert.alert('준비 중', '모바일 소셜 로그인은 백엔드 딥링크(앱 스킴) 리다이렉트 설정이 필요해요. 현재는 이메일 로그인을 이용해 주세요.')
 
   return (
     <KeyboardAvoidingView style={styles.wrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

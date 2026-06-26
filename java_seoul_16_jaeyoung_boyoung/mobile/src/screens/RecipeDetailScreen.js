@@ -2,8 +2,9 @@ import { useState, useCallback } from 'react'
 import { View, Text, Image, Pressable, ScrollView, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import { fetchRecipeDetail, updateRecipeReview } from '../api/recipe'
+import { fetchRecipeDetail, updateRecipeReview, uploadRecipeImage } from '../api/recipe'
 import { addRecipeWish, removeRecipeWish } from '../api/wishlist'
+import { pickImage } from '../lib/pickImage'
 import { API_BASE } from '../config'
 import ReviewSection from '../components/ReviewSection'
 import ReportButton from '../components/ReportButton'
@@ -18,6 +19,19 @@ export default function RecipeDetailScreen({ route, navigation }) {
   const [error, setError] = useState('')
   const [myReview, setMyReview] = useState('')
   const [savingReview, setSavingReview] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  async function onUpload() {
+    const { file, error: pErr, canceled } = await pickImage()
+    if (canceled) return
+    if (pErr) { Alert.alert('알림', pErr); return }
+    setUploading(true)
+    try {
+      const { imageUrl } = await uploadRecipeImage(recipe.recipeId, file)
+      setRecipe((r) => ({ ...r, thumbnailUrl: imageUrl }))
+    } catch (e) { Alert.alert('실패', e.response?.data?.message || '사진 업로드에 실패했어요') }
+    finally { setUploading(false) }
+  }
 
   const load = useCallback(async () => {
     setError('')
@@ -68,8 +82,8 @@ export default function RecipeDetailScreen({ route, navigation }) {
       <View style={styles.hero}>
         {hero ? <Image source={{ uri: hero }} style={styles.heroImg} /> : <Ionicons name="image-outline" size={56} color="#c7ccd1" />}
         {recipe.isOwner && (
-          <Pressable style={styles.uploadBtn} onPress={() => Alert.alert('준비 중', '사진 업로드는 다음 단계(카메라/갤러리 연동)에서 추가됩니다.')}>
-            <Text style={styles.uploadT}>📷 {hero ? '사진 변경' : '사진 올리기'}</Text>
+          <Pressable style={styles.uploadBtn} disabled={uploading} onPress={onUpload}>
+            <Text style={styles.uploadT}>{uploading ? '올리는 중…' : `📷 ${hero ? '사진 변경' : '사진 올리기'}`}</Text>
           </Pressable>
         )}
       </View>
