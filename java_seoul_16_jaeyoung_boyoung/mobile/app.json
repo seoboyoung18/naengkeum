@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "냉큼",
+    "slug": "naengkeum",
+    "scheme": "naengkeum",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "primaryColor": "#00D992",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#23272E"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.naengkeum.app"
+    },
+    "android": {
+      "package": "com.naengkeum.app"
+    }
+  }
+}
