@@ -12,7 +12,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Optional;
 
 /**
  * OAuth2 인가요청(state/nonce 등)을 HTTP 세션 대신 <b>쿠키</b>에 저장한다.
@@ -30,6 +32,14 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     public static final String OAUTH2_REQUEST_COOKIE = "oauth2_auth_request";
+    /**
+     * 모바일 앱이 인가요청을 시작할 때 함께 넘기는 복귀용 앱 스킴 리다이렉트(app_redirect 파라미터)를
+     * 담는 쿠키. 값은 Base64(URL-safe)로 인코딩한다(스킴 URL의 ':' '/' 가 쿠키 값 제약을 어기지 않도록).
+     * 웹 로그인은 이 파라미터를 보내지 않으므로 쿠키가 없고 → 기존 웹 리다이렉트 흐름 그대로.
+     */
+    public static final String APP_REDIRECT_COOKIE = "oauth2_app_redirect";
+    /** 모바일 앱이 전달하는 복귀 리다이렉트 파라미터명. */
+    public static final String APP_REDIRECT_PARAM = "app_redirect";
     private static final int COOKIE_MAX_AGE_SECONDS = 180;
 
     @Override
@@ -47,7 +57,33 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             removeAuthorizationRequestCookies(request, response);
             return;
         }
-        addCookie(response, serialize(authorizationRequest), request.isSecure());
+        boolean secure = request.isSecure();
+        writeCookie(response, OAUTH2_REQUEST_COOKIE, serialize(authorizationRequest), COOKIE_MAX_AGE_SECONDS, secure);
+
+        // 모바일 흐름이면 복귀용 앱 리다이렉트를 쿠키로 실어 콜백까지 이어준다(웹은 파라미터 없음 → 미저장).
+        String appRedirect = request.getParameter(APP_REDIRECT_PARAM);
+        if (StringUtils.hasText(appRedirect)) {
+            String encoded = Base64.getUrlEncoder().encodeToString(appRedirect.getBytes(StandardCharsets.UTF_8));
+            writeCookie(response, APP_REDIRECT_COOKIE, encoded, COOKIE_MAX_AGE_SECONDS, secure);
+        }
+    }
+
+    /** 성공 핸들러용: 저장해 둔 앱 복귀 리다이렉트(app_redirect)를 복원한다. 없으면 비어있음(=웹 흐름). */
+    public Optional<String> readAppRedirect(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return Optional.empty();
+        }
+        for (Cookie c : cookies) {
+            if (APP_REDIRECT_COOKIE.equals(c.getName()) && StringUtils.hasText(c.getValue())) {
+                try {
+                    return Optional.of(new String(Base64.getUrlDecoder().decode(c.getValue()), StandardCharsets.UTF_8));
+                } catch (Exception e) {
+                    return Optional.empty();
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -59,14 +95,11 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         return authRequest;
     }
 
-    /** 성공/실패 핸들러에서 인가요청 쿠키를 제거할 때 호출. */
+    /** 성공/실패 핸들러에서 인가요청·앱리다이렉트 쿠키를 제거할 때 호출. */
     public void removeAuthorizationRequestCookies(HttpServletRequest request, HttpServletResponse response) {
-        Cookie cookie = new Cookie(OAUTH2_REQUEST_COOKIE, "");
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(0);
-        cookie.setSecure(request.isSecure());
-        response.addCookie(cookie);
+        boolean secure = request.isSecure();
+        writeCookie(response, OAUTH2_REQUEST_COOKIE, "", 0, secure);
+        writeCookie(response, APP_REDIRECT_COOKIE, "", 0, secure);
     }
 
     // ----- 내부 헬퍼 -----
@@ -84,11 +117,11 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         return java.util.Optional.empty();
     }
 
-    private void addCookie(HttpServletResponse response, String value, boolean secure) {
-        Cookie cookie = new Cookie(OAUTH2_REQUEST_COOKIE, value);
+    private void writeCookie(HttpServletResponse response, String name, String value, int maxAge, boolean secure) {
+        Cookie cookie = new Cookie(name, value);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setMaxAge(COOKIE_MAX_AGE_SECONDS);
+        cookie.setMaxAge(maxAge);
         cookie.setSecure(secure);
         response.addCookie(cookie);
     }

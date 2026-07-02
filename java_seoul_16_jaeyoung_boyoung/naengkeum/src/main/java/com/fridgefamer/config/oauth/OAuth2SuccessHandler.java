@@ -35,6 +35,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Value("${app.frontend.oauth-redirect-path}")
     private String oauthRedirectPath;
 
+    /**
+     * 모바일 앱 복귀 리다이렉트 허용 스킴 목록(오픈 리다이렉트 방지). 여기 접두어로 시작하는 값만 허용한다.
+     * naengkeum:// = 독립 실행/dev-build 앱 스킴, exp(s):// = Expo Go 개발 클라이언트.
+     */
+    @Value("${app.mobile.allowed-redirect-prefixes:naengkeum://,exp://,exps://}")
+    private String allowedRedirectPrefixesRaw;
+
     public OAuth2SuccessHandler(JwtProvider jwtProvider,
                                 HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository) {
         this.jwtProvider = jwtProvider;
@@ -56,6 +63,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 소셜 로그인은 기본 만료(24h) 사용. rememberMe 개념 없음.
         String token = jwtProvider.createToken(memberId, nickname, role, false);
 
+        // 모바일 복귀 리다이렉트(쿠키)는 쿠키 정리 전에 읽어둔다.
+        String appRedirect = authorizationRequestRepository.readAppRedirect(request).orElse(null);
+
         // 인가요청 쿠키 정리
         authorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
 
@@ -64,13 +74,35 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             return;
         }
 
-        String targetUrl = UriComponentsBuilder
-                .fromUriString(frontendBaseUrl + oauthRedirectPath)
-                .fragment("token=" + token)
-                .build(true)   // token은 JWT(URL-safe base64)라 추가 인코딩 불필요
-                .toUriString();
+        String targetUrl;
+        if (appRedirect != null && isAllowedAppRedirect(appRedirect)) {
+            // 모바일: 앱 스킴으로 복귀 (naengkeum://oauth#token=...). 토큰은 JWT(URL-safe)라 그대로 붙인다.
+            targetUrl = appRedirect + (appRedirect.contains("#") ? "&" : "#") + "token=" + token;
+            log.info("소셜 로그인 성공 — 모바일 앱으로 리다이렉트 (memberId={})", memberId);
+        } else {
+            if (appRedirect != null) {
+                log.warn("허용되지 않은 app_redirect 무시 → 웹으로 리다이렉트 (memberId={})", memberId);
+            }
+            // 웹(기존 흐름): 프론트 콜백 페이지로 fragment 전달
+            targetUrl = UriComponentsBuilder
+                    .fromUriString(frontendBaseUrl + oauthRedirectPath)
+                    .fragment("token=" + token)
+                    .build(true)   // token은 JWT(URL-safe base64)라 추가 인코딩 불필요
+                    .toUriString();
+        }
 
         clearAuthenticationAttributes(request);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    }
+
+    /** app_redirect가 허용 스킴 접두어로 시작하는지 검증(오픈 리다이렉트 방지). */
+    private boolean isAllowedAppRedirect(String appRedirect) {
+        for (String prefix : allowedRedirectPrefixesRaw.split(",")) {
+            String p = prefix.trim();
+            if (!p.isEmpty() && appRedirect.startsWith(p)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

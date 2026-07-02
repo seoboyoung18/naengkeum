@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { login as loginApi } from '../api/auth'
 import { setUnauthorizedHandler } from '../api/http'
 import { getToken, loadToken, saveToken } from '../lib/token'
+import { openSocialLogin } from '../lib/socialAuth'
 
 // ── JWT payload 디코드 (UI용 읽기 전용, role 추출) ──
 // RN 환경별 atob 부재 대비 순수 JS base64 디코더.
@@ -67,6 +68,26 @@ export const useAuth = create((set, get) => ({
       role: p?.role || null,
     })
     return data
+  },
+
+  /** 원시 JWT로 로그인 상태 반영(소셜 로그인 공용) */
+  loginWithToken: async (token) => {
+    await saveToken(token)
+    const p = decodePayload(token)
+    set({
+      token,
+      memberId: p?.sub ? Number(p.sub) : null,
+      nickname: p?.nickname || null,
+      role: p?.role || null,
+    })
+  },
+
+  /** 소셜 로그인 — provider: 'google' | 'kakao'. 취소 시 null 반환 */
+  socialLogin: async (provider) => {
+    const token = await openSocialLogin(provider)
+    if (!token) return null
+    await get().loginWithToken(token)
+    return token
   },
 
   setNickname: (nickname) => set({ nickname }),

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  View, Text, TextInput, Pressable, StyleSheet, Alert,
+  View, Text, TextInput, Pressable, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -9,10 +9,12 @@ import { colors, radius, cardShadow } from '../theme'
 
 export default function LoginScreen({ navigation }) {
   const login = useAuth((s) => s.login)
+  const socialLogin = useAuth((s) => s.socialLogin)
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
   const [remember, setRemember] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [social, setSocial] = useState('')   // 진행 중인 소셜 provider
   const [err, setErr] = useState('')
 
   async function onSubmit() {
@@ -28,7 +30,18 @@ export default function LoginScreen({ navigation }) {
     }
   }
 
-  const soon = () => Alert.alert('준비 중', '모바일 소셜 로그인은 백엔드 딥링크(앱 스킴) 리다이렉트 설정이 필요해요. 현재는 이메일 로그인을 이용해 주세요.')
+  async function onSocial(provider) {
+    setErr('')
+    setSocial(provider)
+    try {
+      await socialLogin(provider)
+      // 성공 시 App.js가 token 변화를 감지해 자동으로 메인 탭 전환. 취소면 null → 화면 유지.
+    } catch (e) {
+      setErr(e.message || '소셜 로그인에 실패했습니다')
+    } finally {
+      setSocial('')
+    }
+  }
 
   return (
     <KeyboardAvoidingView style={styles.wrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -79,11 +92,11 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.line} />
           </View>
 
-          <Pressable style={[styles.social, { backgroundColor: '#FEE500' }]} onPress={soon}>
-            <Text style={[styles.socialT, { color: '#191600' }]}>카카오로 시작하기</Text>
+          <Pressable style={[styles.social, { backgroundColor: '#FEE500' }, social && { opacity: 0.6 }]} onPress={() => onSocial('kakao')} disabled={!!social}>
+            <Text style={[styles.socialT, { color: '#191600' }]}>{social === 'kakao' ? '카카오 로그인 중…' : '카카오로 시작하기'}</Text>
           </Pressable>
-          <Pressable style={[styles.social, { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line }]} onPress={soon}>
-            <Text style={[styles.socialT, { color: '#3C4043' }]}>Google로 시작하기</Text>
+          <Pressable style={[styles.social, { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line }, social && { opacity: 0.6 }]} onPress={() => onSocial('google')} disabled={!!social}>
+            <Text style={[styles.socialT, { color: '#3C4043' }]}>{social === 'google' ? 'Google 로그인 중…' : 'Google로 시작하기'}</Text>
           </Pressable>
         </View>
       </ScrollView>
