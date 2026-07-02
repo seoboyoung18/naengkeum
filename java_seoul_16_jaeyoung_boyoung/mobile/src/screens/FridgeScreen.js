@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { listFridge, deleteFridgeItem } from '../api/fridge'
 import { getSeasonings } from '../api/seasoning'
+import FridgeItemModal from '../components/FridgeItemModal'
+import SeasoningModal from '../components/SeasoningModal'
 import { colors, radius, cardShadow } from '../theme'
 
 const STORAGES = [
@@ -35,6 +37,9 @@ export default function FridgeScreen() {
   const [sort, setSort] = useState('EXPIRY_ASC')
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
+  const [editItem, setEditItem] = useState(null)   // 수정 대상(재료 모달)
+  const [itemModal, setItemModal] = useState(false)
+  const [seasoningModal, setSeasoningModal] = useState(false)
 
   const load = useCallback(async (st = storage, so = sort) => {
     setErr('')
@@ -59,7 +64,8 @@ export default function FridgeScreen() {
 
   function selectStorage(k) { setStorage(k); setLoading(true); load(k, sort) }
   function selectSort(k) { setSort(k); setLoading(true); load(storage, k) }
-  const soon = () => Alert.alert('준비 중', '재료/조미료 추가·수정은 다음 단계에서 추가됩니다.')
+  function openAdd() { setEditItem(null); setItemModal(true) }
+  function openEdit(item) { setEditItem(item); setItemModal(true) }
 
   function onDelete(item) {
     Alert.alert('삭제', `'${item.name}'을(를) 삭제할까요?`, [
@@ -80,8 +86,8 @@ export default function FridgeScreen() {
         <View style={styles.head}>
           <Text style={styles.h}>내 냉장고</Text>
           <View style={styles.actions}>
-            <Pressable style={styles.addBtn} onPress={soon}><Text style={styles.addBtnT}>＋ 재료</Text></Pressable>
-            <Pressable style={[styles.addBtn, styles.addAlt]} onPress={soon}><Text style={[styles.addBtnT, { color: colors.primaryDeep }]}>＋ 조미료</Text></Pressable>
+            <Pressable style={styles.addBtn} onPress={openAdd}><Text style={styles.addBtnT}>＋ 재료</Text></Pressable>
+            <Pressable style={[styles.addBtn, styles.addAlt]} onPress={() => setSeasoningModal(true)}><Text style={[styles.addBtnT, { color: colors.primaryDeep }]}>＋ 조미료</Text></Pressable>
           </View>
         </View>
 
@@ -127,10 +133,10 @@ export default function FridgeScreen() {
               const d = dday(it.dDay)
               return (
                 <View key={it.fridgeItemId} style={styles.row}>
-                  <View style={{ flex: 1 }}>
+                  <Pressable style={{ flex: 1 }} onPress={() => openEdit(it)}>
                     <Text style={styles.name}>{it.name} <Text style={styles.qty}>{it.qty}{it.unit}</Text></Text>
-                    <Text style={styles.subline}>{STORAGE_LABEL[it.storageType]} · {it.expiryDate}</Text>
-                  </View>
+                    <Text style={styles.subline}>{STORAGE_LABEL[it.storageType]} · {it.expiryDate}{it.memo ? ` · ${it.memo}` : ''}</Text>
+                  </Pressable>
                   <View style={[styles.ddayBadge, { backgroundColor: d.bg }]}><Text style={[styles.ddayT, { color: d.fg }]}>{d.t}</Text></View>
                   <Pressable hitSlop={8} onPress={() => onDelete(it)} style={styles.del}>
                     <Ionicons name="trash-outline" size={18} color="#8b95a1" />
@@ -141,6 +147,18 @@ export default function FridgeScreen() {
           </View>
         )}
       </ScrollView>
+
+      <FridgeItemModal
+        visible={itemModal}
+        item={editItem}
+        onClose={() => setItemModal(false)}
+        onSaved={() => load(storage, sort)}
+      />
+      <SeasoningModal
+        visible={seasoningModal}
+        onClose={() => setSeasoningModal(false)}
+        onSaved={() => load(storage, sort)}
+      />
     </SafeAreaView>
   )
 }

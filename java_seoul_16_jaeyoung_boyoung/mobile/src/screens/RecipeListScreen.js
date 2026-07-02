@@ -21,7 +21,7 @@ const COOK_TIMES = [
 ]
 const SIZE = 12
 
-export default function RecipeListScreen({ route }) {
+export default function RecipeListScreen({ route, navigation }) {
   const [keyword, setKeyword] = useState('')
   const [sort, setSort] = useState('LATEST')
   const [cook, setCook] = useState({ min: null, max: null })
@@ -92,7 +92,7 @@ export default function RecipeListScreen({ route }) {
   function pickSort(k) { setSort(k); load(true, { sort: k }) }
   function pickCook(c) { setCook({ min: c.min, max: c.max }); load(true, { cook: { min: c.min, max: c.max } }) }
   function toggleFridge() { const v = !useMyFridge; setUseMyFridge(v); load(true, { useMyFridge: v }) }
-  const soon = () => Alert.alert('준비 중', '레시피 상세는 다음 단계에서 추가됩니다.')
+  const openDetail = (id) => navigation.navigate('RecipeDetail', { recipeId: id })
 
   async function toggleWish(item) {
     const prev = item.isWishlisted
@@ -141,7 +141,7 @@ export default function RecipeListScreen({ route }) {
           contentContainerStyle={{ paddingBottom: 32, gap: 12 }}
           ListHeaderComponent={<View style={{ paddingHorizontal: 16 }}>{Header}</View>}
           renderItem={({ item }) => (
-            <RecipeCard recipe={item} onOpen={soon} onToggleWish={toggleWish} style={{ flex: 1 }} />
+            <RecipeCard recipe={item} onOpen={openDetail} onToggleWish={toggleWish} style={{ flex: 1 }} />
           )}
           ListEmptyComponent={err ? <Text style={styles.err}>{err}</Text> : <Text style={styles.empty}>검색 결과가 없습니다.</Text>}
           onEndReachedThreshold={0.4}
