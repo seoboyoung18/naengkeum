@@ -1,0 +1,136 @@
+# ============================================================================
+#  냉큼(Naeng-Keum) — application.yml (공통 설정)
+#
+#  실행 프로파일 선택 우선순위:
+#   1. JVM 인자:           -Dspring.profiles.active=prod
+#   2. 환경변수:           SPRING_PROFILES_ACTIVE=prod
+#   3. 본 파일의 active:    dev (아래 기본값)
+# ============================================================================
+
+spring:
+  application:
+    name: naengkeum
+  # ⭐ 추가: 매핑 안 된 URL을 NoResourceFoundException으로 전환
+  web:
+    resources:
+      add-mappings: false   # 정적 리소스 자동 매핑 비활성화
+  # ----- 파일 업로드 (레시피 사진, 최대 5MB) -----
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  mvc:
+    throw-exception-if-no-handler-found: true   # 핸들러 없으면 즉시 예외
+  # ⚠️ 임시: ②-3에서 SecurityConfig 만들면 이 블록 통째로 삭제
+  # autoconfigure:
+  #   exclude:
+  #     - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+  profiles:
+    # 기본 dev. 운영 배포 시 환경변수로 prod 지정
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+    # dev가 활성화되면 application-local.yml(개인 비밀값)도 자동으로 함께 로드.
+    # application-local.yml은 .gitignore 처리되어 각자 로컬에만 존재(없어도 무해).
+    group:
+      dev: "local"
+
+  # ----- Flyway 공통 설정 -----
+  # 환경별 locations는 application-dev.yml / application-prod.yml에서 override
+  flyway:
+    enabled: true
+    baseline-on-migrate: true       # 기존 DB에 처음 적용할 때 baseline 생성
+    validate-on-migrate: true       # 마이그레이션 파일 변경 감지
+    out-of-order: false             # 버전 순서 엄격 준수 (V1→V2→V3)
+    table: flyway_schema_history    # 마이그레이션 이력 테이블명
+
+  # ----- 소셜 로그인 (OAuth2 Client) -----
+  # 🚨 client-id/secret은 절대 Git에 커밋 금지 — 반드시 환경변수로 주입.
+  #    기본값은 더미("changeme")라 키 없이도 앱은 정상 기동하고, 소셜 버튼을
+  #    실제로 누를 때만 제공자 측에서 invalid_client 에러가 난다.
+  #    구글: https://console.cloud.google.com → OAuth 2.0 클라이언트 ID
+  #    카카오: https://developers.kakao.com → 내 애플리케이션 → REST API 키
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:changeme}
+            client-secret: ${GOOGLE_CLIENT_SECRET:changeme}
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID:changeme}
+            client-secret: ${KAKAO_CLIENT_SECRET:changeme}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-name: Kakao
+            scope:
+              - account_email
+              - profile_nickname
+        provider:
+          # 카카오는 표준 제공자가 아니라 엔드포인트를 직접 명시해야 한다.
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+# ----- MyBatis 공통 설정 -----
+mybatis:
+  # XML Mapper 위치 (Java 인터페이스의 메서드와 1:1 매칭)
+  mapper-locations: classpath:mapper/**/*.xml
+
+  # 타입 별칭 자동 등록 (DTO를 패키지로 일괄 등록 시 사용 — 추후 활용)
+  type-aliases-package: com.fridgefamer.dto
+
+  configuration:
+    # DB의 snake_case ↔ Java의 camelCase 자동 매핑
+    # 예: member_id → memberId 자동 매핑 (수동 @Result 불필요)
+    map-underscore-to-camel-case: true
+
+    # SELECT 결과의 NULL 컬럼도 매핑 (기본은 무시)
+    call-setters-on-nulls: true
+
+    # SQL 로그 출력 형식 (개발 시 디버깅용)
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# ----- 서버 설정 -----
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+# 업로드 저장 위치 / 공개 URL prefix
+app:
+  upload:
+    dir: ${UPLOAD_DIR:./uploads}        # 로컬 디스크 저장 루트 (gitignore 권장)
+    public-path: /images                # 정적 서빙 URL prefix
+  # 소셜 로그인 성공/실패 후 돌아갈 프론트엔드 주소.
+  # 운영 배포 시 FRONTEND_BASE_URL 환경변수로 실제 도메인 지정.
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+    oauth-redirect-path: /oauth/callback   # 토큰을 전달받는 프론트 라우트
+
+# ============================================================================
+#  OpenAI (AI 레시피 추천 / 코칭용 — WBS-③·④)
+#
+#  🚨 키 보안: 절대 Git에 커밋 금지. 반드시 OPENAI_API_KEY 환경변수로 주입.
+#     키가 없으면 AI 엔드포인트는 503(AI_SERVICE_ERROR)을 반환한다.
+# ============================================================================
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  # 기본값은 SSAFY GMS GPT 프록시(OpenAI 호환). 순정 OpenAI 사용 시 OPENAI_BASE_URL 오버라이드.
+  base-url: ${OPENAI_BASE_URL:https://gms.ssafy.io/gmsapi/api.openai.com/v1}
+  model: ${OPENAI_MODEL:gpt-4.1-mini}
+
+# ----- 로깅 -----
+logging:
+  level:
+    root: INFO
+    com.fridgefamer: DEBUG
+    # MyBatis 실행 SQL 모두 출력 (개발용. prod에서는 INFO로)
+    com.fridgefamer.mapper: DEBUG

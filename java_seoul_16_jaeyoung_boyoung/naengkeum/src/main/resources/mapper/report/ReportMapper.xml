@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  ReportMapper XML — Report 그룹 (report 테이블).
+
+  - recipe_id / review_id 중 하나만 채워 INSERT (나머지 null) → DB XOR CHECK 통과.
+  - 중복 신고는 UNIQUE(reporter_id, recipe_id) / (reporter_id, review_id) 위반으로 처리
+    (애플리케이션 선검사 없이 DuplicateKeyException → 409 자동 변환).
+-->
+<mapper namespace="com.fridgefamer.mapper.report.ReportMapper">
+
+    <insert id="insertReport">
+        INSERT INTO report (reporter_id, recipe_id, review_id, reason)
+        VALUES (#{reporterId}, #{recipeId}, #{reviewId}, #{reason})
+    </insert>
+
+</mapper>

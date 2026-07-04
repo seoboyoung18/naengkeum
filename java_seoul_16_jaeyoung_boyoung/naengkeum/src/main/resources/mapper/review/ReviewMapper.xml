@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  ReviewMapper XML — Review 그룹 (review 테이블).
+
+  - isOwner = (rv.member_id <=> #{viewerId}) : MySQL null-safe 비교라 0/1만 반환(절대 NULL X).
+    viewerId=null이면 member_id(NOT NULL)와 항상 불일치 → 0(false).
+  - 중복 작성은 DB UNIQUE(member_id,recipe_id) 위반으로 처리(애플리케이션 선검사 안 함).
+-->
+<mapper namespace="com.fridgefamer.mapper.review.ReviewMapper">
+
+    <sql id="itemColumns">
+        rv.review_id              AS reviewId,
+        rv.member_id              AS memberId,
+        m.nickname,
+        rv.rating,
+        rv.content,
+        (rv.member_id &lt;=&gt; #{viewerId}) AS isOwner,
+        rv.created_at             AS createdAt
+    </sql>
+
+    <!-- =========================================================== -->
+    <!--  조회                                                       -->
+    <!-- =========================================================== -->
+
+    <select id="selectByRecipe"
+            resultType="com.fridgefamer.dto.response.review.ReviewItem">
+        SELECT <include refid="itemColumns"/>
+          FROM review rv
+          JOIN member m ON m.member_id = rv.member_id
+         WHERE rv.recipe_id = #{recipeId}
+         ORDER BY rv.created_at DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByRecipe" resultType="long">
+        SELECT COUNT(*) FROM review WHERE recipe_id = #{recipeId}
+    </select>
+
+    <select id="selectRatingDist"
+            resultType="com.fridgefamer.dto.response.review.RatingCount">
+        SELECT rating, COUNT(*) AS count
+          FROM review
+         WHERE recipe_id = #{recipeId}
+         GROUP BY rating
+    </select>
+
+    <select id="selectById"
+            resultType="com.fridgefamer.dto.response.review.ReviewItem">
+        SELECT <include refid="itemColumns"/>
+          FROM review rv
+          JOIN member m ON m.member_id = rv.member_id
+         WHERE rv.review_id = #{reviewId}
+         LIMIT 1
+    </select>
+
+    <select id="findOwnerId" resultType="java.lang.Long">
+        SELECT member_id FROM review WHERE review_id = #{reviewId} LIMIT 1
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  변경                                                       -->
+    <!-- =========================================================== -->
+
+    <insert id="insertReview"
+            useGeneratedKeys="true"
+            keyProperty="cmd.reviewId"
+            keyColumn="review_id">
+        INSERT INTO review (member_id, recipe_id, rating, content)
+        VALUES (#{cmd.memberId}, #{cmd.recipeId}, #{cmd.rating}, #{cmd.content})
+    </insert>
+
+    <update id="updateReview">
+        UPDATE review
+           SET rating = #{rating},
+               content = #{content}
+         WHERE review_id = #{reviewId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM review WHERE review_id = #{reviewId}
+    </delete>
+
+</mapper>

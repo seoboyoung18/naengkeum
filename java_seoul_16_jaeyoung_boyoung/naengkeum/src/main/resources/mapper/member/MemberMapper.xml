@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  MemberMapper XML — Auth + Member 그룹.
+
+  - namespace: 매핑되는 Java 인터페이스 풀패키지 경로 (정확히 일치)
+  - statement id: Java 메서드명과 1:1 매칭
+  - map-underscore-to-camel-case 가 켜져 있으므로 DTO record 매핑 시
+    member_id → memberId, is_active → isActive 자동 변환.
+-->
+<mapper namespace="com.fridgefamer.mapper.member.MemberMapper">
+
+    <!-- =========================================================== -->
+    <!--  Auth 그룹                                                  -->
+    <!-- =========================================================== -->
+
+    <select id="countByEmail" resultType="int">
+        SELECT COUNT(*) FROM member WHERE email = #{email}
+    </select>
+
+    <select id="countByNickname" resultType="int">
+        SELECT COUNT(*) FROM member WHERE nickname = #{nickname}
+    </select>
+
+    <insert id="insertMember"
+            useGeneratedKeys="true"
+            keyProperty="cmd.memberId"
+            keyColumn="member_id">
+        INSERT INTO member
+            (email, password, nickname, allergies, marketing_agree, is_active)
+        VALUES
+            (#{cmd.email},
+             #{cmd.password},
+             #{cmd.nickname},
+             #{cmd.allergies},
+             #{cmd.marketingAgree},
+             1)
+    </insert>
+
+    <select id="findAuthByEmail"
+            resultType="com.fridgefamer.dto.response.auth.MemberAuthRow">
+        SELECT
+            member_id   AS memberId,
+            email       AS email,
+            password    AS password,
+            nickname    AS nickname,
+            is_active   AS isActive,
+            role        AS role
+          FROM member
+         WHERE email = #{email}
+         LIMIT 1
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  소셜 로그인(OAuth2) 그룹 — V13                              -->
+    <!-- =========================================================== -->
+
+    <select id="findBySocial"
+            resultType="com.fridgefamer.dto.response.auth.MemberAuthRow">
+        SELECT
+            member_id   AS memberId,
+            email       AS email,
+            password    AS password,
+            nickname    AS nickname,
+            is_active   AS isActive,
+            role        AS role
+          FROM member
+         WHERE social_provider = #{provider}
+           AND social_id = #{socialId}
+         LIMIT 1
+    </select>
+
+    <update id="linkSocial">
+        UPDATE member
+           SET social_provider = #{provider},
+               social_id = #{socialId}
+         WHERE member_id = #{memberId}
+           AND social_provider = 'LOCAL'
+    </update>
+
+    <insert id="insertSocialMember"
+            useGeneratedKeys="true"
+            keyProperty="cmd.memberId"
+            keyColumn="member_id">
+        INSERT INTO member
+            (email, password, nickname, social_provider, social_id, role, is_active)
+        VALUES
+            (#{cmd.email},
+             NULL,
+             #{cmd.nickname},
+             #{cmd.provider},
+             #{cmd.socialId},
+             'USER',
+             1)
+    </insert>
+
+    <!-- =========================================================== -->
+    <!--  Member 그룹 — 기본 조회 / 수정                              -->
+    <!-- =========================================================== -->
+
+    <select id="findActiveById"
+            resultType="com.fridgefamer.dto.response.member.MemberBasicRow">
+        SELECT
+            member_id         AS memberId,
+            email,
+            password,
+            nickname,
+            profile_image_url AS profileImageUrl,
+            allergies,
+            is_active         AS isActive
+          FROM member
+         WHERE member_id = #{memberId}
+           AND is_active = 1
+         LIMIT 1
+    </select>
+
+    <select id="countByNicknameExcept" resultType="int">
+        SELECT COUNT(*) FROM member
+         WHERE nickname = #{nickname}
+           AND member_id &lt;&gt; #{memberId}
+    </select>
+
+    <update id="updateNickname">
+        UPDATE member SET nickname = #{nickname}
+         WHERE member_id = #{memberId} AND is_active = 1
+    </update>
+
+    <update id="updatePassword">
+        UPDATE member SET password = #{password}
+         WHERE member_id = #{memberId} AND is_active = 1
+    </update>
+
+    <update id="updateAllergies">
+        UPDATE member SET allergies = #{allergies}
+         WHERE member_id = #{memberId} AND is_active = 1
+    </update>
+
+    <update id="updateProfileImage">
+        UPDATE member SET profile_image_url = #{imageUrl}
+         WHERE member_id = #{memberId} AND is_active = 1
+    </update>
+
+    <update id="softDeleteById">
+        UPDATE member SET is_active = 0
+         WHERE member_id = #{memberId} AND is_active = 1
+    </update>
+
+    <!-- =========================================================== -->
+    <!--  Member 그룹 — 통계 카운트                                  -->
+    <!-- =========================================================== -->
+
+    <select id="countFridgeByMemberId" resultType="int">
+        SELECT COUNT(*) FROM fridge_item WHERE member_id = #{memberId}
+    </select>
+
+    <select id="countReviewByMemberId" resultType="int">
+        SELECT COUNT(*) FROM review WHERE member_id = #{memberId}
+    </select>
+
+    <select id="countWishlistByMemberId" resultType="int">
+        SELECT COUNT(*) FROM wishlist WHERE member_id = #{memberId}
+    </select>
+
+    <select id="countFollowerByMemberId" resultType="int">
+        SELECT COUNT(*) FROM follow WHERE followee_id = #{memberId}
+    </select>
+
+    <select id="countFollowingByMemberId" resultType="int">
+        SELECT COUNT(*) FROM follow WHERE follower_id = #{memberId}
+    </select>
+
+    <!--
+      통계 5종 한 방 — 서브쿼리. 페이로드가 작아 N+1 회피보다 가독성을 우선.
+      record MyStats(int fridgeCount, int reviewCount, int wishlistCount,
+                     int followerCount, int followingCount)
+    -->
+    <select id="selectMyStats"
+            resultType="com.fridgefamer.dto.response.member.MyPageResponse$MyStats">
+        SELECT
+            (SELECT COUNT(*) FROM fridge_item WHERE member_id = #{memberId}) AS fridgeCount,
+            (SELECT COUNT(*) FROM review      WHERE member_id = #{memberId}) AS reviewCount,
+            (SELECT COUNT(*) FROM wishlist    WHERE member_id = #{memberId}) AS wishlistCount,
+            (SELECT COUNT(*) FROM follow      WHERE followee_id = #{memberId}) AS followerCount,
+            (SELECT COUNT(*) FROM follow      WHERE follower_id = #{memberId}) AS followingCount
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  Member 그룹 — 목록                                         -->
+    <!-- =========================================================== -->
+
+    <select id="selectMyReviews"
+            resultType="com.fridgefamer.dto.response.member.MyReviewItem">
+        SELECT
+            r.review_id    AS reviewId,
+            r.recipe_id    AS recipeId,
+            rc.title       AS recipeTitle,
+            rc.image_url   AS recipeThumbnailUrl,
+            r.rating,
+            r.content,
+            r.created_at   AS createdAt
+          FROM review r
+          JOIN recipe rc ON rc.recipe_id = r.recipe_id
+         WHERE r.member_id = #{memberId}
+         ORDER BY r.created_at DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!--
+      /me/following — 본인이 팔로우하는 유저 목록.
+      isFollowing은 항상 true(이 목록의 정의가 그러함). 1 으로 박아 응답.
+    -->
+    <select id="selectFollowing"
+            resultType="com.fridgefamer.dto.response.member.FollowUserItem">
+        SELECT
+            m.member_id    AS memberId,
+            m.nickname     AS nickname,
+            (SELECT COUNT(*) FROM review WHERE member_id = m.member_id) AS reviewCount,
+            1              AS isFollowing
+          FROM follow f
+          JOIN member m ON m.member_id = f.followee_id
+         WHERE f.follower_id = #{memberId}
+           AND m.is_active = 1
+         ORDER BY f.created_at DESC
+    </select>
+
+    <!--
+      /me/followers — 본인을 팔로우하는 유저 목록.
+      isFollowing은 "본인이 그 유저를 맞팔로우 중인가" — EXISTS 서브쿼리.
+    -->
+    <select id="selectFollowers"
+            resultType="com.fridgefamer.dto.response.member.FollowUserItem">
+        SELECT
+            m.member_id    AS memberId,
+            m.nickname     AS nickname,
+            (SELECT COUNT(*) FROM review WHERE member_id = m.member_id) AS reviewCount,
+            EXISTS (
+                SELECT 1 FROM follow f2
+                 WHERE f2.follower_id = #{memberId}
+                   AND f2.followee_id = m.member_id
+            )              AS isFollowing
+          FROM follow f
+          JOIN member m ON m.member_id = f.follower_id
+         WHERE f.followee_id = #{memberId}
+           AND m.is_active = 1
+         ORDER BY f.created_at DESC
+    </select>
+
+    <select id="selectBadges"
+            resultType="com.fridgefamer.dto.response.member.BadgeItem">
+        SELECT
+            b.badge_id   AS badgeId,
+            b.name,
+            b.icon_url   AS iconUrl,
+            mb.earned_at AS earnedAt
+          FROM member_badge mb
+          JOIN badge b ON b.badge_id = mb.badge_id
+         WHERE mb.member_id = #{memberId}
+         ORDER BY mb.earned_at DESC
+    </select>
+
+    <!--
+      /{userId}/profile — 단건.
+      비로그인이면 viewerId=null → isFollowing은 EXISTS가 항상 false로 평가됨.
+    -->
+    <select id="selectOtherProfile"
+            resultType="com.fridgefamer.dto.response.member.OtherProfileResponse">
+        SELECT
+            m.member_id        AS memberId,
+            m.nickname         AS nickname,
+            m.profile_image_url AS profileImageUrl,
+            (SELECT COUNT(*) FROM review WHERE member_id = m.member_id) AS reviewCount,
+            (SELECT COUNT(*) FROM recipe WHERE author_id = m.member_id AND is_public = TRUE) AS recipeCount,
+            (SELECT COUNT(*) FROM follow WHERE followee_id = m.member_id) AS followerCount,
+            <choose>
+                <when test="viewerId != null">
+                    EXISTS (
+                        SELECT 1 FROM follow f
+                         WHERE f.follower_id = #{viewerId}
+                           AND f.followee_id = m.member_id
+                    )
+                </when>
+                <otherwise>
+                    0
+                </otherwise>
+            </choose>             AS isFollowing
+          FROM member m
+         WHERE m.member_id = #{memberId}
+           AND m.is_active = 1
+         LIMIT 1
+    </select>
+
+</mapper>

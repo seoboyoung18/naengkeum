@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  IngredientMapper XML — Ingredient 그룹 (ingredient_dictionary 테이블).
+
+  - map-underscore-to-camel-case 가 켜져 있으나, record 생성자 매핑 안정성을 위해
+    컬럼은 명시적 AS 별칭으로 record 컴포넌트명과 1:1 맞춘다(Fridge 그룹과 동일 컨벤션).
+  - 자동완성은 접두 일치 우선(ORDER BY prefix DESC) → 이름순.
+  - keyword/name 은 #{} 바인딩이라 SQL injection 안전.
+-->
+<mapper namespace="com.fridgefamer.mapper.ingredient.IngredientMapper">
+
+    <!-- =========================================================== -->
+    <!--  GET /api/ingredients/autocomplete                          -->
+    <!-- =========================================================== -->
+    <select id="selectAutocomplete"
+            resultType="com.fridgefamer.dto.response.ingredient.IngredientAutocompleteItem">
+        SELECT ingredient_dict_id AS ingredientDictId,
+               name,
+               category
+          FROM ingredient_dictionary
+         WHERE name LIKE CONCAT('%', #{keyword}, '%')
+         ORDER BY (name LIKE CONCAT(#{keyword}, '%')) DESC,
+                  name ASC
+         LIMIT #{limit}
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  GET /api/ingredients/suggest                               -->
+    <!-- =========================================================== -->
+    <!--
+      정확일치 1건. TRUE AS found 로 record 의 found=true 채움.
+      미존재 시 결과 없음 → 서비스가 found=false 폴백 응답 생성.
+    -->
+    <select id="selectByName"
+            resultType="com.fridgefamer.dto.response.ingredient.IngredientSuggestResponse">
+        SELECT name,
+               category,
+               default_storage_type AS defaultStorageType,
+               fridge_days          AS fridgeDays,
+               freezer_days         AS freezerDays,
+               room_temp_days       AS roomTempDays,
+               storage_tip          AS storageTip,
+               TRUE                 AS found
+          FROM ingredient_dictionary
+         WHERE name = #{name}
+         LIMIT 1
+    </select>
+
+</mapper>

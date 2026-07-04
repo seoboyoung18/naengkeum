@@ -1,0 +1,65 @@
+# ============================================================================
+#  냉큼 — EC2 단일 인스턴스 배포용 Docker Compose
+#  구성: mysql 8 + app(Spring) + nginx(Vue dist 서빙 + 프록시)
+#  실행: docker compose up -d --build   (같은 폴더에 .env 필요)
+# ============================================================================
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-data:/var/lib/mysql
+    # DB는 내부 네트워크로만 접근(외부 포트 미개방). 디버깅 필요 시 "127.0.0.1:3306:3306" 추가.
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: ./naengkeum
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      # 소셜 로그인 키 (보영 담당 — 없으면 더미라 일반 로그인만 동작)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-changeme}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-changeme}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-changeme}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-changeme}
+    volumes:
+      # ★ 업로드 파일 영속화 + 시드 이미지(seed-*) 제공. 호스트 경로 = 레포의 naengkeum/uploads
+      - ./naengkeum/uploads:/app/uploads
+    # 앱 포트는 외부 미개방 — nginx를 통해서만 접근.
+
+  nginx:
+    build: ./frontend   # vite build(PROD)면 API_BASE가 자동 상대경로
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # certbot standalone로 발급한 호스트 인증서를 읽기전용 마운트
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+
+volumes:
+  mysql-data:

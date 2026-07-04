@@ -1,0 +1,10 @@
+target/
+uploads/
+*.log
+.git
+.gitignore
+.idea
+.vscode
+HELP.md
+# 로컬 비밀값(운영은 환경변수/.env로 주입)
+src/main/resources/application-local.yml

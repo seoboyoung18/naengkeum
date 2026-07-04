@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  FridgeMapper XML — Fridge 그룹 (fridge_item 테이블).
+
+  - map-underscore-to-camel-case 가 켜져 있으나, dDay 같은 계산 컬럼은
+    명시적으로 AS dDay 별칭을 준다.
+  - sort/storageType 필터는 문자열 연결 없이 <choose>/<if>로만 분기(SQL injection 방어).
+-->
+<mapper namespace="com.fridgefamer.mapper.fridge.FridgeMapper">
+
+    <!-- 재사용 컬럼 목록(dDay 계산 포함) -->
+    <sql id="itemColumns">
+        fridge_item_id AS fridgeItemId,
+        name,
+        qty,
+        unit,
+        storage_type   AS storageType,
+        expiry_date    AS expiryDate,
+        DATEDIFF(expiry_date, CURDATE()) AS dDay,
+        memo
+    </sql>
+
+    <!-- =========================================================== -->
+    <!--  조회                                                       -->
+    <!-- =========================================================== -->
+
+    <select id="selectByMember"
+            resultType="com.fridgefamer.dto.response.fridge.FridgeItem">
+        SELECT <include refid="itemColumns"/>
+          FROM fridge_item
+         WHERE member_id = #{memberId}
+        <if test="storageType != null and storageType != 'ALL'">
+           AND storage_type = #{storageType}
+        </if>
+        <choose>
+            <when test="sort == 'CREATED_DESC'">ORDER BY created_at DESC</when>
+            <when test="sort == 'NAME_ASC'">ORDER BY name ASC</when>
+            <otherwise>ORDER BY expiry_date ASC</otherwise>
+        </choose>
+    </select>
+
+    <select id="selectSummary"
+            resultType="com.fridgefamer.dto.response.fridge.FridgeSummary">
+        SELECT
+            COALESCE(SUM(storage_type = 'FRIDGE'), 0)    AS fridgeCount,
+            COALESCE(SUM(storage_type = 'FREEZER'), 0)   AS freezerCount,
+            COALESCE(SUM(storage_type = 'ROOM_TEMP'), 0) AS roomTempCount
+          FROM fridge_item
+         WHERE member_id = #{memberId}
+    </select>
+
+    <select id="selectExpiring"
+            resultType="com.fridgefamer.dto.response.fridge.FridgeItem">
+        SELECT <include refid="itemColumns"/>
+          FROM fridge_item
+         WHERE member_id = #{memberId}
+           AND DATEDIFF(expiry_date, CURDATE()) &lt;= #{days}
+         ORDER BY expiry_date ASC
+    </select>
+
+    <select id="selectItemById"
+            resultType="com.fridgefamer.dto.response.fridge.FridgeItem">
+        SELECT <include refid="itemColumns"/>
+          FROM fridge_item
+         WHERE fridge_item_id = #{fridgeItemId}
+         LIMIT 1
+    </select>
+
+    <select id="findOwnerId" resultType="java.lang.Long">
+        SELECT member_id FROM fridge_item
+         WHERE fridge_item_id = #{fridgeItemId}
+         LIMIT 1
+    </select>
+
+    <!--
+      레시피 재료 중 보유한 것의 ingredient_id.
+      매칭 기준: 재료명(name) 일치. 냉장고/레시피 모두 name 비정규화 보존이라 name 비교.
+    -->
+    <select id="selectOwnedIngredientIds" resultType="java.lang.Long">
+        SELECT ri.ingredient_id
+          FROM recipe_ingredient ri
+         WHERE ri.recipe_id = #{recipeId}
+           AND EXISTS (
+               SELECT 1 FROM fridge_item fi
+                WHERE fi.member_id = #{memberId}
+                  AND fi.name = ri.name
+           )
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  변경                                                       -->
+    <!-- =========================================================== -->
+
+    <insert id="insertFridgeItem"
+            useGeneratedKeys="true"
+            keyProperty="cmd.fridgeItemId"
+            keyColumn="fridge_item_id">
+        INSERT INTO fridge_item
+            (member_id, name, qty, unit, storage_type, expiry_date, memo)
+        VALUES
+            (#{cmd.memberId},
+             #{cmd.name},
+             #{cmd.qty},
+             #{cmd.unit},
+             #{cmd.storageType},
+             #{cmd.expiryDate},
+             #{cmd.memo})
+    </insert>
+
+    <update id="updateFridgeItem">
+        UPDATE fridge_item
+           SET name         = #{cmd.name},
+               qty          = #{cmd.qty},
+               unit         = #{cmd.unit},
+               storage_type = #{cmd.storageType},
+               expiry_date  = #{cmd.expiryDate},
+               memo         = #{cmd.memo}
+         WHERE fridge_item_id = #{fridgeItemId}
+    </update>
+
+    <!-- 레시피 공개 시 재고 부분 차감(수량만 갱신). 차감 후 0이면 서비스가 deleteById로 삭제. -->
+    <update id="updateQty">
+        UPDATE fridge_item
+           SET qty = #{qty}
+         WHERE fridge_item_id = #{fridgeItemId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM fridge_item WHERE fridge_item_id = #{fridgeItemId}
+    </delete>
+
+</mapper>

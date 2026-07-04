@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  SeasoningMapper XML — 조미료 그룹 (seasoning / member_seasoning).
+
+  - map-underscore-to-camel-case 가 켜져 있어 seasoning_id → seasoningId 자동 매핑.
+  - owned 는 계산 컬럼이므로 명시적으로 AS owned 별칭 부여(1/0 → boolean).
+  - insertOwned 는 IN 목록을 seasoning 테이블과 조인(SELECT)해 유효한 id만 삽입.
+-->
+<mapper namespace="com.fridgefamer.mapper.seasoning.SeasoningMapper">
+
+    <!-- 마스터 전체 + 회원 보유여부 -->
+    <select id="selectCatalogWithOwned"
+            resultType="com.fridgefamer.dto.response.seasoning.SeasoningItem">
+        SELECT s.seasoning_id                       AS seasoningId,
+               s.name                               AS name,
+               s.storage_type                       AS storageType,
+               s.storage_tip                        AS storageTip,
+               (ms.member_seasoning_id IS NOT NULL) AS owned
+          FROM seasoning s
+          LEFT JOIN member_seasoning ms
+                 ON ms.seasoning_id = s.seasoning_id
+                AND ms.member_id    = #{memberId}
+         ORDER BY s.sort_order, s.name
+    </select>
+
+    <!-- 회원 보유 조미료 이름만 (AI 추천 보유판정용) -->
+    <select id="selectOwnedNames" resultType="string">
+        SELECT s.name
+          FROM member_seasoning ms
+          JOIN seasoning s ON s.seasoning_id = ms.seasoning_id
+         WHERE ms.member_id = #{memberId}
+         ORDER BY s.sort_order, s.name
+    </select>
+
+    <!-- 조미료 마스터 전체 이름 (레시피 공개 시 조미료 차감 제외 판정용, 보유 무관) -->
+    <select id="selectAllCatalogNames" resultType="string">
+        SELECT name FROM seasoning ORDER BY sort_order, name
+    </select>
+
+    <!-- set 동기화 1: 회원 보유 전체 삭제 -->
+    <delete id="deleteOwnedByMember">
+        DELETE FROM member_seasoning WHERE member_id = #{memberId}
+    </delete>
+
+    <!-- set 동기화 2: 유효한 seasoning_id만 일괄 삽입 -->
+    <insert id="insertOwned">
+        INSERT INTO member_seasoning (member_id, seasoning_id)
+        SELECT #{memberId}, s.seasoning_id
+          FROM seasoning s
+         WHERE s.seasoning_id IN
+        <foreach collection="ids" item="sid" open="(" close=")" separator=",">
+            #{sid}
+        </foreach>
+    </insert>
+
+</mapper>

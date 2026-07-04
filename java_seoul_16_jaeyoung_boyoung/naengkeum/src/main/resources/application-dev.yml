@@ -1,0 +1,66 @@
+# ============================================================================
+#  냉큼(Naeng-Keum) — application-dev.yml
+#  로컬 개발 환경 설정 (SSAFY 학습용)
+#
+#  ⚠️ DB 비밀번호는 환경변수 DB_PASSWORD가 있으면 우선 사용.
+#     SSAFY 학습 환경에서는 환경변수 없이도 'ssafy' 기본값으로 동작.
+#     운영 환경에서는 반드시 DB_PASSWORD 환경변수 설정.
+# ============================================================================
+
+spring:
+  # ----- DB 연결 -----
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:naengkeum}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:ssafy}
+    password: ${DB_PASSWORD:ssafy}
+
+    # HikariCP 커넥션 풀 (Spring Boot 기본)
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  # ----- Flyway dev 전용 -----
+  # V* (운영 공통) + D* (개발 fixtures) 둘 다 적용
+  flyway:
+    locations:
+      - classpath:db/migration   # V1, V2, V3 (마스터)
+      - classpath:db/fixtures    # D1 (테스트 회원/가짜 냉장고)
+
+# ----- 개발 편의 -----
+spring.devtools:
+  restart:
+    enabled: true               # 코드 변경 시 자동 재시작
+  livereload:
+    enabled: true
+
+# ----- 로깅 (개발 상세) -----
+logging:
+  level:
+    org.springframework.security: DEBUG    # JWT 디버깅 시 유용
+    org.flywaydb: INFO
+
+# ============================================================================
+#  JWT 설정 (WBS-②-3 추가)
+#
+#  🚨 secret 키 보안:
+#   - 개발용은 임의 32+자 문자열 (HS256 최소 256bit = 32byte 필요)
+#   - 운영 환경에서는 반드시 JWT_SECRET 환경변수로 주입 (절대 Git에 커밋 금지)
+#   - 키 유출 시 모든 발급된 토큰이 위조 가능해지므로 즉시 교체
+# ============================================================================
+jwt:
+  secret: ${JWT_SECRET:naengkeum-dev-secret-key-must-be-at-least-32-bytes-long-for-hs256}
+  # 기본 만료시간 (밀리초) — 24시간
+  expiration: 86400000
+  # rememberMe 만료시간 — 30일
+  long-expiration: 2592000000
+  # HTTP 헤더 이름과 토큰 prefix
+  header: Authorization
+  prefix: "Bearer "
+# ============================================================================
+#  식약처 공공 API (WBS-④ 데이터 적재용)
+# ============================================================================
+foodsafety:
+  api-key: ${FOODSAFETY_API_KEY:sample}
+  base-url: https://openapi.foodsafetykorea.go.kr/api

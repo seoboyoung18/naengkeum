@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  WishlistMapper XML — Wishlist 그룹 (wishlist / ai_recipe).
+
+  - 목록은 일반 레시피 / AI 레시피를 UNION ALL로 합쳐 최신순.
+    XOR 제약상 wishlist 행은 recipe_id 또는 ai_recipe_id 중 하나만 채워져 있음.
+  - 중복 찜은 UNIQUE(member_id,recipe_id|ai_recipe_id) → DuplicateKeyException → 409.
+  - ai_recipe의 JSON 컬럼은 직렬화된 배열 문자열을 그대로 INSERT(MySQL이 JSON 파싱·검증).
+-->
+<mapper namespace="com.fridgefamer.mapper.wishlist.WishlistMapper">
+
+    <!-- =========================================================== -->
+    <!--  GET /api/wishlist/me                                       -->
+    <!-- =========================================================== -->
+    <select id="selectByMember"
+            resultType="com.fridgefamer.dto.response.wishlist.WishlistItem">
+        SELECT * FROM (
+            SELECT w.wishlist_id AS wishlistId,
+                   'RECIPE'      AS type,
+                   w.recipe_id   AS recipeId,
+                   NULL          AS aiRecipeId,
+                   r.title       AS title,
+                   r.image_url   AS thumbnailUrl,
+                   r.cook_time   AS cookTime,
+                   w.created_at  AS createdAt
+              FROM wishlist w
+              JOIN recipe r ON r.recipe_id = w.recipe_id
+             WHERE w.member_id = #{memberId}
+               AND w.recipe_id IS NOT NULL
+            UNION ALL
+            SELECT w.wishlist_id,
+                   'AI',
+                   NULL,
+                   w.ai_recipe_id,
+                   a.title,
+                   NULL,
+                   a.cook_time,
+                   w.created_at
+              FROM wishlist w
+              JOIN ai_recipe a ON a.ai_recipe_id = w.ai_recipe_id
+             WHERE w.member_id = #{memberId}
+               AND w.ai_recipe_id IS NOT NULL
+        ) merged
+        ORDER BY merged.createdAt DESC, merged.wishlistId DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByMember" resultType="long">
+        SELECT COUNT(*) FROM wishlist WHERE member_id = #{memberId}
+    </select>
+
+    <!-- =========================================================== -->
+    <!--  일반 레시피 찜                                             -->
+    <!-- =========================================================== -->
+    <insert id="insertRecipeWishlist">
+        INSERT INTO wishlist (member_id, recipe_id)
+        VALUES (#{memberId}, #{recipeId})
+    </insert>
+
+    <delete id="deleteRecipeWishlist">
+        DELETE FROM wishlist
+         WHERE member_id = #{memberId} AND recipe_id = #{recipeId}
+    </delete>
+
+    <!-- =========================================================== -->
+    <!--  AI 레시피 찜                                               -->
+    <!-- =========================================================== -->
+    <insert id="insertAiRecipe"
+            useGeneratedKeys="true"
+            keyProperty="cmd.aiRecipeId"
+            keyColumn="ai_recipe_id">
+        INSERT INTO ai_recipe (member_id, title, summary, ingredients_json, steps_json, cook_time)
+        VALUES (#{cmd.memberId},
+                #{cmd.title},
+                #{cmd.summary},
+                #{cmd.ingredientsJson},
+                #{cmd.stepsJson},
+                #{cmd.cookTime})
+    </insert>
+
+    <insert id="insertAiWishlist">
+        INSERT INTO wishlist (member_id, ai_recipe_id)
+        VALUES (#{memberId}, #{aiRecipeId})
+    </insert>
+
+    <select id="findAiRecipeOwner" resultType="java.lang.Long">
+        SELECT member_id FROM ai_recipe WHERE ai_recipe_id = #{aiRecipeId} LIMIT 1
+    </select>
+
+    <!-- ai_recipe 단건. JSON 컬럼은 텍스트로 읽어 서비스에서 파싱. -->
+    <select id="selectAiRecipe"
+            resultType="com.fridgefamer.dto.response.wishlist.AiRecipeRow">
+        SELECT ai_recipe_id     AS aiRecipeId,
+               member_id        AS memberId,
+               title,
+               summary,
+               ingredients_json AS ingredientsJson,
+               steps_json       AS stepsJson,
+               cook_time        AS cookTime,
+               created_at       AS createdAt
+          FROM ai_recipe
+         WHERE ai_recipe_id = #{aiRecipeId}
+         LIMIT 1
+    </select>
+
+    <delete id="deleteAiRecipe">
+        DELETE FROM ai_recipe WHERE ai_recipe_id = #{aiRecipeId}
+    </delete>
+
+</mapper>

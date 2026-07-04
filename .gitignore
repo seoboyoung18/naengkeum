@@ -1,0 +1,8 @@
+.DS_Store
+
+# 로컬 AI 추천 테스트 페이지 (개발용, 공유 불필요)
+ai-test.html
+
+# 배포 환경변수 실값 (예시 .env.example만 커밋)
+.env
+**/.env
